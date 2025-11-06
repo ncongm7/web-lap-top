@@ -9,6 +9,11 @@ class PhieuGiamGiaService {
     // /api/customer/ctsp/get-bien-the-san-pham/{sanPhamId}
     return http.get(`/api/customer/ctsp/get-bien-the-san-pham/${idsp}`);
   }
+
+  getThongSoKyThuat(id) {
+    // /api/customer/ctsp/thong-so-ky-thuat/{id}
+    return http.get(`/api/customer/ctsp/get-bien-the-san-pham/${id}`);
+  }
 }
 
 export default new PhieuGiamGiaService();

@@ -17,6 +17,13 @@ export const useCtspCustomerStore = defineStore("ctspCustomer", {
         this.ctsp = res?.data?.data || null;
       } catch (e) { this.error = e; } finally { this.loading = false; }
     },
+    async fetchThongSo(id) {
+      this.loading = true; this.error = null;
+      try {
+        const res = await service.getById(id);      // API trả { data: { ... }, message, success }
+        this.ctsp = res?.data?.data || null;
+      } catch (e) { this.error = e; } finally { this.loading = false; }
+    },
     async fetchVariants(idsp) {
       if (!idsp) return;
       this.loading = true; this.error = null;
