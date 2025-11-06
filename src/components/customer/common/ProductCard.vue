@@ -20,12 +20,20 @@
 
             <!-- Thông tin sản phẩm -->
             <div class="product-info">
+                <!-- Mã sản phẩm -->
+                <div class="product-code">{{ product.maSanPham }}</div>
+                
                 <h3 class="product-name">{{ product.tenSanPham }}</h3>
 
                 <!-- Giá -->
                 <div class="product-price">
                     <span class="current-price">{{ formatCurrency(currentPrice) }}</span>
                     <span v-if="hasDiscount" class="original-price">{{ formatCurrency(product.giaCaoNhat) }}</span>
+                </div>
+                
+                <!-- Khoảng giá nếu có nhiều biến thể -->
+                <div v-if="hasPriceRange" class="price-range">
+                    {{ formatCurrency(product.giaThapNhat) }} - {{ formatCurrency(product.giaCaoNhat) }}
                 </div>
 
                 <!-- Rating -->
@@ -78,6 +86,12 @@ const hasDiscount = computed(() => {
 const discountPercent = computed(() => {
     if (!hasDiscount.value) return 0
     return Math.round(props.product.giamGia)
+})
+
+// Kiểm tra có khoảng giá không (khi giá thấp nhất khác giá cao nhất)
+const hasPriceRange = computed(() => {
+    return props.product.giaThapNhat && props.product.giaCaoNhat && 
+           props.product.giaThapNhat !== props.product.giaCaoNhat
 })
 
 // Handle thêm vào giỏ
@@ -206,6 +220,16 @@ const handleAddToCart = async () => {
     gap: 8px;
 }
 
+.product-code {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
 .product-name {
     font-size: 16px;
     font-weight: 600;
@@ -236,6 +260,16 @@ const handleAddToCart = async () => {
     font-size: 14px;
     color: #94a3b8;
     text-decoration: line-through;
+}
+
+.price-range {
+    font-size: 14px;
+    color: #059669;
+    font-weight: 600;
+    background: #ecfdf5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
 }
 
 .product-rating {
