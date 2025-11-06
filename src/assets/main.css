@@ -1,0 +1,29 @@
+@import './base.css';
+
+/* Reset Vite starter constraints: make app full width and responsive */
+#app {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+/* Anchor defaults (keep simple; colors handled per component/theme) */
+a,
+.green {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+@media (hover: hover) {
+  a:hover {
+    opacity: 0.9;
+  }
+}
+
+/* Ensure body doesn't center app or constrain layout */
+body {
+  display: block;
+}
