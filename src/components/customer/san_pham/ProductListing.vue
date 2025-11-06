@@ -33,8 +33,9 @@
               <option value="newest">Mới nhất</option>
               <option value="price-asc">Giá: Thấp → Cao</option>
               <option value="price-desc">Giá: Cao → Thấp</option>
-              <option value="bestseller">Bán chạy nhất</option>
               <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+              <option value="bestseller">Phổ biến nhất</option>
             </select>
           </div>
         </div>
@@ -107,10 +108,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useSanPhamStore } from '@/stores/customer/san_pham_stores'
 import ProductCard from '@/components/customer/common/ProductCard.vue'
 import ProductFilters from './ProductFilters.vue'
+import sanPhamService from '@/service/customer/san_pham_service'
 
 // Store
 const sanPhamStore = useSanPhamStore()
@@ -126,31 +128,37 @@ const selectedFilters = ref({
 })
 
 
-// Computed properties
-const {
-  products,
-  loading,
-  error,
-  totalElements,
-  totalPages,
-  currentPage,
-  searchSuggestions,
-  sortBy,
-  hasProducts,
-  isFirstPage,
-  isLastPage,
-  hasActiveFilters
-} = sanPhamStore
+// Computed properties - Use computed to ensure reactivity
+const products = computed(() => sanPhamStore.products)
+const loading = computed(() => sanPhamStore.loading)
+const error = computed(() => sanPhamStore.error)
+const totalElements = computed(() => sanPhamStore.totalElements)
+const totalPages = computed(() => sanPhamStore.totalPages)
+const currentPage = computed(() => sanPhamStore.currentPage)
+const searchSuggestions = computed(() => sanPhamStore.searchSuggestions)
+const sortBy = computed(() => sanPhamStore.sortBy)
+const hasProducts = computed(() => sanPhamStore.hasProducts)
+const isFirstPage = computed(() => sanPhamStore.isFirstPage)
+const isLastPage = computed(() => sanPhamStore.isLastPage)
+
+// Local computed for hasActiveFilters to include local state
+const hasActiveFilters = computed(() => {
+  return selectedFilters.value.keyword !== null || 
+         selectedFilters.value.status !== null || 
+         priceRange.value.min !== null || 
+         priceRange.value.max !== null ||
+         searchQuery.value !== ''
+})
 
 const currentSort = computed({
-  get: () => sortBy,
+  get: () => sortBy.value,
   set: (value) => sanPhamStore.updateSort(value)
 })
 
 const visiblePages = computed(() => {
   const pages = []
-  const start = Math.max(1, currentPage - 2)
-  const end = Math.min(totalPages, start + 4)
+  const start = Math.max(1, currentPage.value - 2)
+  const end = Math.min(totalPages.value, start + 4)
   
   for (let i = start; i <= end; i++) {
     pages.push(i)
@@ -211,8 +219,18 @@ const setPricePreset = (preset) => {
 }
 
 const updateFilter = (filterName, value) => {
+  console.log('🔍 Filter updated:', filterName, value)
   selectedFilters.value[filterName] = value
-  sanPhamStore.updateFilter(filterName, value)
+  
+  // Map local filter names to store filter names if needed
+  const filterMapping = {
+    keyword: 'keyword',
+    status: 'status' // This will be mapped to trangThai in the service layer
+  }
+  
+  const storeFilterName = filterMapping[filterName] || filterName
+  console.log('🔍 Calling store updateFilter:', storeFilterName, value)
+  sanPhamStore.updateFilter(storeFilterName, value)
 }
 
 const clearAllFilters = () => {
@@ -233,6 +251,7 @@ const clearAllFilters = () => {
 
 const handleSortChange = () => {
   // Sort change is handled by computed property
+  console.log('🔄 Sort changed to:', currentSort.value)
 }
 
 const goToPage = (page) => {
@@ -251,6 +270,69 @@ const retryLoad = () => {
   sanPhamStore.fetchProducts()
 }
 
+// Test function để debug API trực tiếp
+const testAdvancedSearch = async () => {
+  try {
+    console.log('🧪 Testing advanced search API directly...')
+    const testFilters = { keyword: 'phương' }
+    const testParams = { page: 0, size: 12 }
+    
+    const response = await sanPhamService.advancedSearch(testFilters, testParams)
+    console.log('🧪 Direct API test result:', response.data)
+  } catch (error) {
+    console.error('🧪 Direct API test failed:', error)
+  }
+}
+
+// Debug function để kiểm tra store state
+const debugStoreState = () => {
+  console.log('🔍 Debug Store State:')
+  console.log('- Store products:', sanPhamStore.products)
+  console.log('- Store products length:', sanPhamStore.products.length)
+  console.log('- Component products computed:', products.value)
+  console.log('- Component products length:', products.value.length)
+  console.log('- Loading:', loading.value)
+  console.log('- Error:', error.value)
+  console.log('- Total elements:', totalElements.value)
+  console.log('- Total pages:', totalPages.value)
+  console.log('- Current page:', currentPage.value)
+  console.log('- Has products:', hasProducts.value)
+  console.log('- Should show pagination:', hasProducts.value && totalPages.value > 1)
+}
+
+// Test sorting function
+const testSorting = async () => {
+  console.log('🧪 Testing sorting functionality...')
+  const sortOptions = ['newest', 'price-asc', 'price-desc', 'name-asc', 'name-desc', 'bestseller']
+  
+  for (const sortOption of sortOptions) {
+    console.log(`🧪 Testing sort: ${sortOption}`)
+    sanPhamStore.updateSort(sortOption)
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s between tests
+  }
+}
+
+// Test pagination function
+const testPagination = () => {
+  console.log('🧪 Testing pagination...')
+  console.log('- Current page:', currentPage.value)
+  console.log('- Total pages:', totalPages.value)
+  console.log('- Total elements:', totalElements.value)
+  console.log('- Page size:', sanPhamStore.pageSize)
+  console.log('- Has products:', hasProducts.value)
+  console.log('- Is first page:', isFirstPage.value)
+  console.log('- Is last page:', isLastPage.value)
+  console.log('- Visible pages:', visiblePages.value)
+}
+
+// Expose test functions to window for debugging
+if (typeof window !== 'undefined') {
+  window.testAdvancedSearch = testAdvancedSearch
+  window.debugStoreState = debugStoreState
+  window.testSorting = testSorting
+  window.testPagination = testPagination
+}
+
 const handleAddToCart = (product) => {
   // TODO: Implement add to cart functionality
   console.log('Add to cart:', product)
@@ -262,6 +344,27 @@ const handleClickOutside = (event) => {
     showSuggestions.value = false
   }
 }
+
+// Watch products changes for debugging
+watch(products, (newProducts, oldProducts) => {
+  console.log('🎯 Products changed in component!')
+  console.log('🎯 Old products count:', oldProducts?.length || 0)
+  console.log('🎯 New products count:', newProducts?.length || 0)
+  console.log('🎯 New products:', newProducts)
+}, { deep: true })
+
+// Watch loading state
+watch(loading, (newLoading) => {
+  console.log('⏳ Loading state changed:', newLoading)
+})
+
+// Watch pagination state
+watch([totalPages, hasProducts], ([newTotalPages, newHasProducts]) => {
+  console.log('📄 Pagination state changed:')
+  console.log('- Total pages:', newTotalPages)
+  console.log('- Has products:', newHasProducts)
+  console.log('- Should show pagination:', newHasProducts && newTotalPages > 1)
+})
 
 // Lifecycle
 onMounted(() => {

@@ -137,12 +137,23 @@ const fetchFeaturedProducts = async () => {
         loadingReviews.value = true
         productsError.value = null
 
-        // TODO: Replace with real API call when backend is ready
-        // await homeStore.fetchHomeData()
+        // Sử dụng homeStore để fetch data thật
+        await homeStore.fetchHomeData()
+        
+        // Lấy data từ store
+        featuredProducts.value = homeStore.featuredProducts
+        activePromotions.value = homeStore.activePromotions
+        
+        console.log('🏠 HomePage loaded products:', featuredProducts.value.length)
+        console.log('🏠 Featured products data:', featuredProducts.value)
+        console.log('🏠 HomeStore error:', homeStore.error)
 
-        // Mock data for testing UI
-        setTimeout(() => {
-            featuredProducts.value = [
+        // Chỉ dùng mock data khi thực sự cần thiết (để test UI)
+        const USE_MOCK_DATA = false // Set true để test UI, false để dùng real data
+        
+        if (USE_MOCK_DATA && featuredProducts.value.length === 0) {
+            setTimeout(() => {
+                featuredProducts.value = [
                 {
                     id: 1,
                     tenSanPham: 'Dell XPS 13 2024',
@@ -236,19 +247,40 @@ const fetchFeaturedProducts = async () => {
                 }
             ]
 
-            loadingProducts.value = false
-            loadingPromotions.value = false
-            loadingReviews.value = false
-        }, 500)
+                loadingProducts.value = false
+                loadingPromotions.value = false
+                loadingReviews.value = false
+            }, 500)
+        }
 
     } catch (error) {
-        console.error('Error loading homepage data:', error)
-        productsError.value = 'Không thể tải dữ liệu. Vui lòng thử lại.'
+        console.error('❌ Error loading homepage data:', error)
+        productsError.value = homeStore.error || 'Không thể tải dữ liệu. Vui lòng thử lại.'
     } finally {
         loadingProducts.value = false
         loadingPromotions.value = false
         loadingReviews.value = false
     }
+}
+
+// Test function để debug API
+const testFeaturedProductsAPI = async () => {
+    try {
+        console.log('🧪 Testing featured products API directly...')
+        const { getFeaturedProducts } = await import('@/service/customer/homeService')
+        const products = await getFeaturedProducts() // Lấy tất cả sản phẩm
+        console.log('🧪 Direct API test result:', products)
+        console.log('🧪 Products count:', products.length)
+        return products
+    } catch (error) {
+        console.error('🧪 Direct API test failed:', error)
+        return []
+    }
+}
+
+// Expose test function to window
+if (typeof window !== 'undefined') {
+    window.testFeaturedProductsAPI = testFeaturedProductsAPI
 }
 
 // Handle add to cart
