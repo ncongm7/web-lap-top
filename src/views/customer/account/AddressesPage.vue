@@ -166,17 +166,40 @@ const fetchCustomerInfo = async () => {
       return
     }
 
+    console.log('🔍 Fetching customer info với userId:', userId)
+
     loading.value = true
     const response = await addressService.getCustomerById(userId)
-    customerInfo.value = response.data || response
+    console.log('🔍 Response từ API:', response)
+
+    // Xử lý response - có thể là ResponseObject hoặc trực tiếp
+    if (response?.data) {
+      customerInfo.value = response.data
+    } else if (response?.isSuccess !== false) {
+      // Nếu không phải error response
+      customerInfo.value = response
+    } else {
+      // Error response
+      throw new Error(response.message || 'Khách hàng không tồn tại')
+    }
 
     // Fetch địa chỉ nếu có maKhachHang
     if (customerInfo.value?.maKhachHang) {
       await fetchAddresses()
+    } else {
+      console.warn('⚠️ Không có maKhachHang trong customerInfo:', customerInfo.value)
+      toast.warning('Không tìm thấy mã khách hàng. Vui lòng đăng nhập lại.')
     }
   } catch (error) {
-    console.error('Error fetching customer info:', error)
-    toast.error('Không thể lấy thông tin khách hàng')
+    console.error('❌ Error fetching customer info:', error)
+    const errorMessage =
+      error.response?.data?.message || error.message || 'Không thể lấy thông tin khách hàng'
+    toast.error(errorMessage)
+
+    // Nếu lỗi 404, có thể user chưa có khách hàng - cần đăng ký lại
+    if (error.response?.status === 404) {
+      console.error('⚠️ Khách hàng không tồn tại. Có thể cần đăng ký lại.')
+    }
   } finally {
     loading.value = false
   }
