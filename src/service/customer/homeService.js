@@ -47,7 +47,7 @@ export async function getTopReviews(limit = 5) {
     })
     return response.data.data || response.data
   } catch (error) {
-    console.error('❌ [HomeService] Lỗi khi lấy đánh giá:', error)
+    console.error(' [HomeService] Lỗi khi lấy đánh giá:', error)
     throw error
   }
 }
