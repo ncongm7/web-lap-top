@@ -34,10 +34,9 @@ const voucherService = {
 
   /**
    * Validate voucher code
-   * @param {string} code - Mã voucher
    * @returns {Promise<Object>} Validation result
    */
-  async validateVoucher(code) {
+  async validateVoucher() {
     // TODO: Implement if backend has dedicated validation endpoint
     // For now, just try to apply and see the result
     return { valid: true }

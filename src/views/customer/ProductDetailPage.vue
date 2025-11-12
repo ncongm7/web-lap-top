@@ -190,6 +190,7 @@ const titleLine = computed(() => {
     .filter(Boolean)
     .join(" | ");
 });
+
 // Định dạng VND
 function formatVND(n) {
   if (n == null) return "";

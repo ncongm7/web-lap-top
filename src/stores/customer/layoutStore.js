@@ -1,17 +1,15 @@
 import { defineStore } from 'pinia'
-import { useCartStore } from './cartStore'
 
 /**
  * Store quản lý state chung cho layout (header, footer, cart icon...)
  */
 export const useLayoutStore = defineStore('customer-layout', {
   state: () => ({
+    cartItemCount: 0,
     user: null,
     isAuthenticated: false,
     isMobileMenuOpen: false,
     isSearchOpen: false,
-    showLoginModal: false,
-    pendingNavigation: null, // Lưu route đang chờ sau khi đăng nhập
   }),
 
   getters: {
@@ -28,14 +26,6 @@ export const useLayoutStore = defineStore('customer-layout', {
      */
     isLoggedIn: (state) => {
       return state.isAuthenticated && state.user !== null
-    },
-
-    /**
-     * Lấy số lượng sản phẩm trong giỏ hàng từ cartStore
-     */
-    cartItemCount: () => {
-      const cartStore = useCartStore()
-      return cartStore.cartCount
     },
   },
 
@@ -60,6 +50,13 @@ export const useLayoutStore = defineStore('customer-layout', {
     },
 
     /**
+     * Cập nhật số lượng item trong giỏ hàng
+     */
+    updateCartCount(count) {
+      this.cartItemCount = count
+    },
+
+    /**
      * Set user sau khi login thành công
      */
     setUser(user, token) {
@@ -79,10 +76,7 @@ export const useLayoutStore = defineStore('customer-layout', {
     logout() {
       this.user = null
       this.isAuthenticated = false
-
-      // Xóa giỏ hàng khi logout
-      const cartStore = useCartStore()
-      cartStore.clearCart()
+      this.cartItemCount = 0
 
       // Xóa localStorage
       localStorage.removeItem('customer_token')
@@ -110,31 +104,6 @@ export const useLayoutStore = defineStore('customer-layout', {
      */
     toggleSearch() {
       this.isSearchOpen = !this.isSearchOpen
-    },
-
-    /**
-     * Hiển thị modal đăng nhập
-     */
-    openLoginModal(pendingRoute = null) {
-      this.showLoginModal = true
-      this.pendingNavigation = pendingRoute
-    },
-
-    /**
-     * Đóng modal đăng nhập
-     */
-    closeLoginModal() {
-      this.showLoginModal = false
-      this.pendingNavigation = null
-    },
-
-    /**
-     * Lấy và xóa pending navigation
-     */
-    getPendingNavigation() {
-      const route = this.pendingNavigation
-      this.pendingNavigation = null
-      return route
     },
   },
 })

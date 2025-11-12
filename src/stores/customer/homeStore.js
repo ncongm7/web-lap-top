@@ -39,17 +39,27 @@ export const useHomeStore = defineStore('customer-home', {
       try {
         console.log('🔄 [HomeStore] Đang fetch dữ liệu trang chủ...')
 
-        // Fetch song song
-        const [productsData, promotionsData] = await Promise.all([
-          getFeaturedProducts(8),
-          getActivePromotions(),
-        ])
+        // Fetch products first (promotions might fail)
+        try {
+          const productsData = await getFeaturedProducts() // Lấy tất cả sản phẩm
+          this.featuredProducts = productsData || []
+          console.log('✅ [HomeStore] Products loaded:', this.featuredProducts.length)
+        } catch (productError) {
+          console.error('❌ [HomeStore] Failed to load products:', productError)
+          this.featuredProducts = []
+        }
 
-        // Update state
-        this.featuredProducts = productsData || []
-        this.activePromotions = promotionsData || []
+        // Fetch promotions separately
+        try {
+          const promotionsData = await getActivePromotions()
+          this.activePromotions = promotionsData || []
+          console.log('✅ [HomeStore] Promotions loaded:', this.activePromotions.length)
+        } catch (promotionError) {
+          console.error('❌ [HomeStore] Failed to load promotions:', promotionError)
+          this.activePromotions = []
+        }
 
-        console.log('✅ [HomeStore] Đã fetch dữ liệu:', {
+        console.log('✅ [HomeStore] Final data:', {
           products: this.featuredProducts.length,
           promotions: this.activePromotions.length,
         })

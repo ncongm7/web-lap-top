@@ -51,7 +51,7 @@ http.interceptors.request.use(async (config) => {
   try {
     const token = await getAuthToken();
     config.headers.Authorization = `Bearer ${token}`;
-  } catch (error) {
+  } catch {
     // If login fails, we block the request to make the error obvious.
     console.error("DEV MODE: Request blocked because auto-login failed.", config.url);
     // Cancel the request

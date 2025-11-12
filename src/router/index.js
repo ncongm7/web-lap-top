@@ -18,7 +18,7 @@ const router = createRouter({
         {
           path: 'products',
           name: 'products',
-          component: () => import('@/views/customer/ProductListPage.vue'),
+          component: () => import('@/views/customer/ProductsPage.vue'),
           meta: { title: 'Danh sách sản phẩm - LaptopStore' },
         },
         {
