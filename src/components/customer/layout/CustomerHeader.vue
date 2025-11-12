@@ -39,11 +39,11 @@
                     <!-- Header Actions -->
                     <div class="header-actions">
                         <!-- Cart Icon -->
-                        <a @click.prevent="handleCartClick" class="action-btn cart-btn" style="cursor: pointer;">
+                        <router-link to="/cart" class="action-btn cart-btn">
                             <i class="icon">🛒</i>
                             <span v-if="cartCount > 0" class="badge">{{ cartCount }}</span>
                             <span class="label">Giỏ hàng</span>
-                        </a>
+                        </router-link>
 
                         <!-- User Menu -->
                         <UserMenu />
@@ -95,13 +95,10 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useLayoutStore } from '@/stores/customer/layoutStore'
-import authService from '@/service/customer/authService'
 import SearchBar from './SearchBar.vue'
 import UserMenu from './UserMenu.vue'
 
-const router = useRouter()
 const layoutStore = useLayoutStore()
 
 const cartCount = computed(() => layoutStore.cartItemCount)
@@ -113,18 +110,6 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
     layoutStore.closeMobileMenu()
-}
-
-// Handle click vào giỏ hàng
-const handleCartClick = () => {
-    // Kiểm tra đăng nhập
-    if (!authService.isAuthenticated()) {
-        // Hiển thị modal đăng nhập và lưu route đích
-        layoutStore.openLoginModal('/cart')
-    } else {
-        // Đã đăng nhập, điều hướng đến trang giỏ hàng
-        router.push('/cart')
-    }
 }
 </script>
 

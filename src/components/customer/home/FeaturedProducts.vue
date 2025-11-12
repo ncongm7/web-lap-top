@@ -13,9 +13,59 @@
                 <button @click="$emit('retry')" class="retry-btn">Thử lại</button>
             </div>
 
-            <div v-else class="products-grid">
-                <ProductCard v-for="product in products" :key="product.id" :product="product"
-                    @add-to-cart="handleAddToCart" />
+            <div v-else class="products-slider-container">
+                <div 
+                    class="slider-wrapper"
+                    @mouseenter="stopAutoSlide"
+                    @mouseleave="startAutoSlide"
+                >
+                    <button 
+                        class="slider-btn prev-btn" 
+                        @click="prevSlide"
+                        :disabled="currentSlide === 0"
+                        :class="{ disabled: currentSlide === 0 }"
+                    >
+                        ‹
+                    </button>
+                    
+                    <div class="products-slider" ref="sliderRef">
+                        <div 
+                            class="slider-track" 
+                            :style="{ transform: `translateX(-${currentSlide * slideWidth}%)` }"
+                        >
+                            <div 
+                                v-for="product in products" 
+                                :key="product.id" 
+                                class="slide-item"
+                            >
+                                <ProductCard 
+                                    :product="product"
+                                    @add-to-cart="handleAddToCart" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        class="slider-btn next-btn" 
+                        @click="nextSlide"
+                        :disabled="currentSlide >= maxSlides"
+                        :class="{ disabled: currentSlide >= maxSlides }"
+                    >
+                        ›
+                    </button>
+                </div>
+                
+                <!-- Slider indicators -->
+                <div class="slider-indicators">
+                    <button
+                        v-for="(slide, index) in totalSlides"
+                        :key="index"
+                        class="indicator"
+                        :class="{ active: currentSlide === index }"
+                        @click="goToSlide(index)"
+                    ></button>
+                </div>
             </div>
 
             <div v-if="!loading && !error && products.length > 0" class="section-footer">
@@ -28,10 +78,11 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import ProductCard from '@/components/customer/common/ProductCard.vue'
 import LoadingSpinner from '@/components/customer/common/LoadingSpinner.vue'
 
-defineProps({
+const props = defineProps({
     products: {
         type: Array,
         default: () => []
@@ -48,9 +99,75 @@ defineProps({
 
 const emit = defineEmits(['add-to-cart', 'retry'])
 
+// Slider state
+const currentSlide = ref(0)
+const sliderRef = ref(null)
+const itemsPerSlide = 4 // Hiển thị 4 sản phẩm mỗi slide
+const slideWidth = 100 // 100% width per slide
+
+// Computed properties
+const totalSlides = computed(() => {
+    return Math.ceil(props.products.length / itemsPerSlide)
+})
+
+const maxSlides = computed(() => {
+    return Math.max(0, totalSlides.value - 1)
+})
+
+// Slider methods
+const nextSlide = () => {
+    if (currentSlide.value < maxSlides.value) {
+        currentSlide.value++
+    }
+}
+
+const prevSlide = () => {
+    if (currentSlide.value > 0) {
+        currentSlide.value--
+    }
+}
+
+const goToSlide = (index) => {
+    if (index >= 0 && index <= maxSlides.value) {
+        currentSlide.value = index
+    }
+}
+
+// Auto-slide functionality
+let autoSlideInterval = null
+
+const startAutoSlide = () => {
+    autoSlideInterval = setInterval(() => {
+        if (currentSlide.value >= maxSlides.value) {
+            currentSlide.value = 0
+        } else {
+            nextSlide()
+        }
+    }, 5000) // Auto slide every 5 seconds
+}
+
+const stopAutoSlide = () => {
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval)
+        autoSlideInterval = null
+    }
+}
+
+// Event handlers
 const handleAddToCart = (product) => {
     emit('add-to-cart', product)
 }
+
+// Lifecycle
+onMounted(() => {
+    if (props.products.length > itemsPerSlide) {
+        startAutoSlide()
+    }
+})
+
+onBeforeUnmount(() => {
+    stopAutoSlide()
+})
 </script>
 
 <style scoped>
@@ -87,11 +204,92 @@ const handleAddToCart = (product) => {
     margin: 0;
 }
 
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
+/* Slider Styles */
+.products-slider-container {
+    position: relative;
     margin-bottom: 48px;
+}
+
+.slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.products-slider {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.slider-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    width: 100%;
+}
+
+.slide-item {
+    flex: 0 0 25%; /* 4 items per slide = 25% each */
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.slider-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.slider-btn:hover:not(.disabled) {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+    transform: scale(1.05);
+}
+
+.slider-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.slider-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background: #10b981;
+    transform: scale(1.2);
+}
+
+.indicator:hover {
+    background: #64748b;
 }
 
 .error-state {
@@ -143,24 +341,16 @@ const handleAddToCart = (product) => {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-@media (min-width: 1441px) {
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: clamp(24px, 2vw, 40px);
-    }
-}
-
-@media (max-width: 1440px) and (min-width: 1025px) {
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 24px;
-    }
-}
-
+/* Responsive Design */
 @media (max-width: 1024px) {
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 20px;
+    .slide-item {
+        flex: 0 0 33.333%; /* 3 items per slide on tablet */
+    }
+    
+    .slider-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
     }
 }
 
@@ -172,10 +362,37 @@ const handleAddToCart = (product) => {
     .section-title {
         font-size: 28px;
     }
+    
+    .slide-item {
+        flex: 0 0 50%; /* 2 items per slide on mobile */
+    }
+    
+    .slider-wrapper {
+        gap: 8px;
+    }
+    
+    .slider-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+}
 
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 16px;
+@media (max-width: 480px) {
+    .slide-item {
+        flex: 0 0 100%; /* 1 item per slide on small mobile */
+        padding: 0 4px;
+    }
+    
+    .slider-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .indicator {
+        width: 10px;
+        height: 10px;
     }
 }
 </style>

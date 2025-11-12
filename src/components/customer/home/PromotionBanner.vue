@@ -29,11 +29,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import LoadingSpinner from '@/components/customer/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/helpers'
 
-const props = defineProps({
+defineProps({
     promotions: {
         type: Array,
         default: () => []
@@ -42,14 +41,6 @@ const props = defineProps({
         type: Boolean,
         default: false
     }
-})
-
-// Calculate discount percentage from promotion data
-const promotionsWithDiscount = computed(() => {
-    return props.promotions.map(promo => ({
-        ...promo,
-        discount: Math.round(promo.phanTramGiam || 20) // Default 20% if not provided
-    }))
 })
 </script>
 
