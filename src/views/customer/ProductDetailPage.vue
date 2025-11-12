@@ -18,8 +18,22 @@
             <!-- Giá + danh sách biến thể + mua ngay -->
             <div class="col-md-6 mb-3">
               <div class="border rounded p-3 mb-3">
-                <div class="h3 text-danger mb-2">{{ formatVND(store.ctsp.giaBan) }}</div>
-                <div class="small text-muted">Giá đã gồm VAT (nếu có)</div>
+                <div v-if="hasDiscount(store.ctsp)">
+                  <div class="d-flex align-items-baseline gap-2 mb-1">
+                    <div class="h3 text-danger mb-0">
+                      {{ formatVND(store.ctsp.giaSauGiam) }}
+                    </div>
+                    <del class="text-muted">
+                      {{ formatVND(store.ctsp.giaTruocGiam) }}
+                    </del>
+                    <span class="badge bg-danger-subtle text-danger" v-if="discountPercent(store.ctsp)">-{{ discountPercent(store.ctsp) }}%</span>
+                  </div>
+                  <div class="small text-muted">Giá đã gồm VAT (nếu có)</div>
+                </div>
+                <div v-else>
+                  <div class="h3 text-danger mb-1">{{ formatVND(store.ctsp.giaBan ?? store.ctsp.giaSauGiam) }}</div>
+                  <div class="small text-muted">Giá đã gồm VAT (nếu có)</div>
+                </div>
               </div>
 
               <div class="mb-3" v-if="variantsToShow.length">
@@ -34,14 +48,25 @@
                   >
                     <div class="d-flex justify-content-between">
                       <span class="me-2">{{ variantSummary(v) }}</span>
-                      <span v-if="v.giaBan" class="fw-semibold text-danger">{{ formatVND(v.giaBan) }}</span>
+                      <span class="text-end">
+                        <template v-if="hasDiscount(v)">
+                          <span class="fw-semibold text-danger">{{ formatVND(v.giaSauGiam) }}</span>
+                          <small class="text-muted ms-1"><del>{{ formatVND(v.giaTruocGiam) }}</del></small>
+                        </template>
+                        <template v-else>
+                          <span class="fw-semibold text-danger">{{ formatVND(v.giaBan ?? v.giaSauGiam) }}</span>
+                        </template>
+                      </span>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <button class="btn btn-danger btn-lg w-100" @click="buyNow">
+              <button v-if="inStock" class="btn btn-danger btn-lg w-100" @click="buyNow">
                 MUA NGAY
+              </button>
+              <button v-else class="btn btn-outline-primary btn-lg w-100" @click="contactNow">
+                LIÊN HỆ
               </button>
             </div>
 
@@ -61,7 +86,7 @@
               </div>
               <div class="border rounded p-3">
                 <div class="fw-bold text-danger text-center mb-2">
-                  🛍️ YÊN TÂM MUA SẮM TẠI LAPTOP AZ
+                  🛍️ YÊN TÂM MUA SẮM TẠI VietLapTop
                 </div>
                 <ul class="mb-0">
                   <li>⭐ Chất lượng sản phẩm là hàng đầu</li>
@@ -147,8 +172,9 @@ watch(
       await store.fetchById(id);
       const idsp = store.ctsp?.idsp;
       if (idsp) await store.fetchVariants(idsp);
-    } catch (e) {
-      // error đã set trong store
+      } catch (err) {
+        // error đã set trong store (log để biết nguyên nhân trong dev)
+        console.debug(err);
     } finally {
       store.loading = false;
     }
@@ -164,7 +190,6 @@ const titleLine = computed(() => {
     .filter(Boolean)
     .join(" | ");
 });
-
 // Định dạng VND
 function formatVND(n) {
   if (n == null) return "";
@@ -195,6 +220,37 @@ const variantsToShow = computed(() => {
   const cur = String(store.ctsp?.idctsp || "");
   return (store.variants || []).filter((v) => String(v.idctsp || v.id) !== cur);
 });
+
+// Số lượng khả dụng: thử các trường phổ biến (soLuongTon, soLuong, soLuongCon)
+const availableQty = computed(() => {
+  const s = store.ctsp || {};
+  const q = s.soLuongTon ?? s.soLuong ?? s.soLuongCon ?? 0;
+  return Number(q || 0);
+});
+
+// Trạng thái còn hàng
+const inStock = computed(() => availableQty.value > 0);
+
+function contactNow() {
+  // Chuyển sang trang liên hệ để khách hàng biết cách mua/kỹ thuật
+  router.push({ name: 'contact' });
+}
+
+// Có giảm giá không?
+const hasDiscount = (item) => {
+  if (!item) return false;
+  const a = Number(item?.giaTruocGiam ?? item?.giaBan ?? 0);
+  const b = Number(item?.giaSauGiam   ?? item?.giaBan ?? 0);
+  return b > 0 && a > 0 && b < a;
+};
+
+// % giảm (nếu cần hiện)
+const discountPercent = (item) => {
+  if (!hasDiscount(item)) return 0;
+  const a = Number(item.giaTruocGiam);
+  const b = Number(item.giaSauGiam);
+  return Math.round(((a - b) / a) * 100);
+};
 
 // Helper tạo "Tên (Mô tả)"
 const withDesc = (name, desc) => {
