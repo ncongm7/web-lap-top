@@ -83,7 +83,7 @@ export async function getFeaturedProducts() {
  */
 export async function getActivePromotions() {
   try {
-    const response = await axiosInstance.get('/api/v1/customer/dot-giam-gia/active')
+    const response = await axios.get('/api/v1/customer/dot-giam-gia/active')
     return response.data.data || response.data
   } catch (error) {
     console.error('❌ [HomeService] Lỗi khi lấy khuyến mãi:', error)
@@ -98,7 +98,7 @@ export async function getActivePromotions() {
  */
 export async function getTopReviews(limit = 5) {
   try {
-    const response = await axiosInstance.get('/api/v1/customer/danh-gia/top-rated', {
+    const response = await axios.get('/api/v1/customer/danh-gia/top-rated', {
       params: { limit },
     })
     return response.data.data || response.data

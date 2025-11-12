@@ -66,7 +66,7 @@
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue'
 
-const props = defineProps({
+defineProps({
   appliedVoucher: {
     type: Object,
     default: null,

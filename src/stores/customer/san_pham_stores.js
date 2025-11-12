@@ -45,21 +45,6 @@ export const useSanPhamStore = defineStore('sanPham', () => {
     error.value = null
   }
   
-  const setProducts = (data) => {
-    products.value = data.content || []
-    totalElements.value = data.totalElements || 0
-    totalPages.value = data.totalPages || 0
-    currentPage.value = data.number || 0
-    pageSize.value = data.size || 12
-  }
-  
-  const clearProducts = () => {
-    products.value = []
-    totalElements.value = 0
-    totalPages.value = 0
-    currentPage.value = 0
-  }
-  
   // Fetch products with current filters and search
   const fetchProducts = async (page = currentPage.value) => {
     try {
