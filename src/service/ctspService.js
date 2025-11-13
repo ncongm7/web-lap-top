@@ -1,19 +1,21 @@
-import http from "@/shared/http";
+import http from '@/shared/http'
 
-class PhieuGiamGiaService {
+// DEPRECATED: File này không còn sử dụng
+// Sử dụng san_pham_service.js thay thế
+class CtspService {
   getById(id) {
-    // /api/customer/ctsp/{id}
-    return http.get(`/api/customer/ctsp/${id}`);
+    // Sử dụng API mới
+    return http.get(`/api/chi-tiet-san-pham/${id}`)
   }
-  getDanhSachSanPham(idsp) {
-    // /api/customer/ctsp/get-bien-the-san-pham/{sanPhamId}
-    return http.get(`/api/customer/ctsp/get-bien-the-san-pham/${idsp}`);
+  getDanhSachSanPham(sanPhamId) {
+    // Sử dụng API mới
+    return http.get(`/api/chi-tiet-san-pham/san-pham/${sanPhamId}`)
   }
 
   getThongSoKyThuat(id) {
-    // /api/customer/ctsp/thong-so-ky-thuat/{id}
-    return http.get(`/api/customer/ctsp/get-bien-the-san-pham/${id}`);
+    // API này cần kiểm tra lại endpoint
+    return http.get(`/api/chi-tiet-san-pham/${id}`)
   }
 }
 
-export default new PhieuGiamGiaService();
+export default new CtspService()

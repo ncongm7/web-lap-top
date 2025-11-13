@@ -1,8 +1,8 @@
 // Pinia store cho chi tiết CTSP & biến thể
-import { defineStore } from "pinia";
-import service from "@/service/ctspService"; // bạn đang dùng service này
+import { defineStore } from 'pinia'
+import { sanPhamService } from '@/service/customer/san_pham_service'
 
-export const useCtspCustomerStore = defineStore("ctspCustomer", {
+export const useCtspCustomerStore = defineStore('ctspCustomer', {
   state: () => ({
     ctsp: null,
     variants: [],
@@ -10,27 +10,34 @@ export const useCtspCustomerStore = defineStore("ctspCustomer", {
     error: null,
   }),
   actions: {
-    async fetchById(id) {
-      this.loading = true; this.error = null;
+    async fetchById(ctspId) {
+      this.loading = true
+      this.error = null
       try {
-        const res = await service.getById(id);      // API trả { data: { ... }, message, success }
-        this.ctsp = res?.data?.data || null;
-      } catch (e) { this.error = e; } finally { this.loading = false; }
+        const res = await sanPhamService.getProductDetailById(ctspId)
+        this.ctsp = res?.data || null
+      } catch (e) {
+        this.error = e
+        console.error('Error fetching CTSP by ID:', e)
+      } finally {
+        this.loading = false
+      }
     },
-    async fetchThongSo(id) {
-      this.loading = true; this.error = null;
+
+    async fetchVariants(sanPhamId) {
+      if (!sanPhamId) return
+      this.loading = true
+      this.error = null
       try {
-        const res = await service.getById(id);      // API trả { data: { ... }, message, success }
-        this.ctsp = res?.data?.data || null;
-      } catch (e) { this.error = e; } finally { this.loading = false; }
-    },
-    async fetchVariants(idsp) {
-      if (!idsp) return;
-      this.loading = true; this.error = null;
-      try {
-        const res = await service.getDanhSachSanPham(idsp); // trả mảng DTO
-        this.variants = res?.data || [];
-      } catch (e) { this.error = e; } finally { this.loading = false; }
+        // Lấy danh sách chi tiết sản phẩm kèm giảm giá theo ID sản phẩm
+        const res = await sanPhamService.getProductDetailsWithDiscount(sanPhamId)
+        this.variants = res?.data || []
+      } catch (e) {
+        this.error = e
+        console.error('Error fetching product variants:', e)
+      } finally {
+        this.loading = false
+      }
     },
   },
-});
+})
