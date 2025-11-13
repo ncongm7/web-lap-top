@@ -22,7 +22,7 @@
             <!-- Thông tin sản phẩm -->
             <div class="product-info">
                 <!-- Mã sản phẩm -->
-                <div class="product-code">{{ product.maSanPham || `SP-${product.id}` }}</div>
+                <div class="product-code">Mã Sản Phẩm: {{ product.maSanPham || `SP-${product.id}` }}</div>
                 
                 <h3 class="product-name">{{ product.tenSanPham }}</h3>
 
