@@ -131,27 +131,6 @@ const loadProductDetails = async () => {
     }
 }
 
-// Tính giá hiện tại (sau giảm giá)
-const currentPrice = computed(() => {
-    return props.product.giamGia ? props.product.giaThapNhat : props.product.giaThapNhat
-})
-
-// Computed properties cũ đã được thay thế bởi hasActiveDiscount và discountPercent mới
-
-// Kiểm tra có khoảng giá không (khi giá thấp nhất khác giá cao nhất)
-const hasPriceRange = computed(() => {
-    return props.product.giaThapNhat && props.product.giaCaoNhat && 
-           props.product.giaThapNhat !== props.product.giaCaoNhat
-})
-
-// Kiểm tra có khoảng giá từ variants không
-const hasPriceRangeFromVariants = computed(() => {
-    if (!props.product.variants || props.product.variants.length === 0) return false
-    const minPrice = getMinPrice(props.product.variants)
-    const maxPrice = getMaxPrice(props.product.variants)
-    return minPrice !== maxPrice && minPrice > 0 && maxPrice > 0
-})
-
 // Computed properties cho giảm giá
 const hasActiveDiscount = computed(() => {
     return productDetails.value && productDetails.value.length > 0 && 
@@ -428,33 +407,6 @@ const getProductThumbnail = () => {
     console.log('❌ No valid image found, using placeholder')
     // Fallback to a simple data URL placeholder
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='
-}
-
-// Lấy giá thấp nhất từ variants (tương tự ProductList.vue)
-const getMinPrice = (variants) => {
-    console.log('💰 ProductCard - getMinPrice variants:', variants)
-    if (!variants || variants.length === 0) {
-        console.log('💰 No variants, returning 0')
-        return 0
-    }
-    const prices = variants.map(v => v.giaBan || 0)
-    console.log('💰 Variant prices:', prices)
-    const minPrice = Math.min(...prices)
-    console.log('💰 Min price:', minPrice)
-    return minPrice
-}
-
-// Lấy giá cao nhất từ variants (tương tự ProductList.vue)
-const getMaxPrice = (variants) => {
-    console.log('💰 ProductCard - getMaxPrice variants:', variants)
-    if (!variants || variants.length === 0) {
-        console.log('💰 No variants, returning 0')
-        return 0
-    }
-    const prices = variants.map(v => v.giaBan || 0)
-    const maxPrice = Math.max(...prices)
-    console.log('💰 Max price:', maxPrice)
-    return maxPrice
 }
 
 // Handle thêm vào giỏ

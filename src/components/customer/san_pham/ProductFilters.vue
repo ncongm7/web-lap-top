@@ -68,9 +68,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   selectedFilters: {
     type: Object,
     required: true
@@ -100,11 +100,6 @@ const statusOptions = [
   { label: 'Còn hàng', value: 1 },
   { label: 'Hết hàng', value: 0 }
 ]
-
-// Methods
-const isPricePresetActive = (preset) => {
-  return props.priceRange.min === preset.min && props.priceRange.max === preset.max
-}
 
 const updatePriceRange = (type, value) => {
   const numValue = value ? Number(value) : null

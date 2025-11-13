@@ -120,7 +120,6 @@ const sanPhamStore = useSanPhamStore()
 // Reactive data
 const searchQuery = ref('')
 const showSuggestions = ref(false)
-const selectedSuggestionIndex = ref(-1)
 const priceRange = ref({ min: null, max: null })
 const selectedFilters = ref({
   keyword: null,
@@ -135,7 +134,6 @@ const error = computed(() => sanPhamStore.error)
 const totalElements = computed(() => sanPhamStore.totalElements)
 const totalPages = computed(() => sanPhamStore.totalPages)
 const currentPage = computed(() => sanPhamStore.currentPage)
-const searchSuggestions = computed(() => sanPhamStore.searchSuggestions)
 const sortBy = computed(() => sanPhamStore.sortBy)
 const hasProducts = computed(() => sanPhamStore.hasProducts)
 const isFirstPage = computed(() => sanPhamStore.isFirstPage)
@@ -165,40 +163,6 @@ const visiblePages = computed(() => {
   }
   return pages
 })
-
-// Methods
-const handleSearchInput = async () => {
-  if (searchQuery.value.length >= 2) {
-    await sanPhamStore.getSearchSuggestions(searchQuery.value)
-    showSuggestions.value = true
-  } else {
-    showSuggestions.value = false
-  }
-}
-
-const handleSearch = () => {
-  showSuggestions.value = false
-  sanPhamStore.searchProducts(searchQuery.value)
-}
-
-const clearSearch = () => {
-  searchQuery.value = ''
-  showSuggestions.value = false
-  sanPhamStore.clearSearch()
-  sanPhamStore.fetchProducts()
-}
-
-const selectSuggestion = (suggestion) => {
-  searchQuery.value = suggestion.tenSanPham
-  showSuggestions.value = false
-  sanPhamStore.searchProducts(suggestion.tenSanPham)
-}
-
-const highlightKeyword = (text, keyword) => {
-  if (!keyword) return text
-  const regex = new RegExp(`(${keyword})`, 'gi')
-  return text.replace(regex, '<mark>$1</mark>')
-}
 
 const updatePriceFilter = () => {
   sanPhamStore.updateFilters({
