@@ -68,6 +68,11 @@
             <span>Tài khoản của tôi</span>
           </router-link>
 
+          <router-link to="/account/orders" class="dropdown-item" @click="closeDropdown">
+            <i class="icon">📦</i>
+            <span>Đơn hàng của tôi</span>
+          </router-link>
+
           <router-link to="/account/addresses" class="dropdown-item" @click="closeDropdown">
             <i class="icon">📍</i>
             <span>Địa chỉ</span>
