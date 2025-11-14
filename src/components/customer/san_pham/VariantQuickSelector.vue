@@ -29,7 +29,7 @@
         </div>
 
         <!-- Thông tin phiên bản đã chọn -->
-        <div v-if="selectedVariant" class="selected-variant-info">
+        <!-- <div v-if="selectedVariant" class="selected-variant-info">
             <div class="info-row">
                 <span class="info-label">Phiên bản đã chọn:</span>
                 <span class="info-value">{{ selectedVariant.summary }}</span>
@@ -50,7 +50,7 @@
                     {{ selectedVariant.stock > 0 ? `${selectedVariant.stock} sản phẩm` : 'Hết hàng' }}
                 </span>
             </div>
-        </div>
+        </div> -->
     </div>
 </template>
 
@@ -72,9 +72,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 // Current selected variant
-const selectedVariant = computed(() => {
-    return props.variants.find((v) => v.id === props.modelValue) || null
-})
+// const selectedVariant = computed(() => {
+//     return props.variants.find((v) => v.id === props.modelValue) || null
+// })
 
 // Select variant
 const selectVariant = (variant) => {
