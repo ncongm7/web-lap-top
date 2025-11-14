@@ -75,6 +75,19 @@ const router = createRouter({
           component: () => import('@/views/customer/RegisterPage.vue'),
           meta: { title: 'Đăng ký - LaptopStore', hideForAuth: true },
         },
+        // Direct order routes (không cần vào account)
+        {
+          path: 'orders',
+          name: 'orders',
+          component: () => import('@/views/customer/OrdersPage.vue'),
+          meta: { title: 'Đơn hàng của tôi - LaptopStore', requiresAuth: true },
+        },
+        {
+          path: 'orders/:id',
+          name: 'order-detail',
+          component: () => import('@/views/customer/OrderDetailPage.vue'),
+          meta: { title: 'Chi tiết đơn hàng - LaptopStore', requiresAuth: true },
+        },
         // Account routes
         {
           path: 'account',

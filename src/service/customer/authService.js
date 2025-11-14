@@ -24,6 +24,7 @@ const authService = {
    */
   register: async (registerData) => {
     try {
+      
       const response = await axios.post(`${API_URL}/api/auth/register`, registerData)
       return response.data
     } catch (error) {
