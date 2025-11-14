@@ -198,70 +198,79 @@ watch(() => props.maxQuantity, (newMax) => {
 }
 
 .quantity-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .quantity-label {
     display: block;
     font-weight: 600;
-    font-size: 0.95rem;
-    color: #495057;
-    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    color: #000000;
+    margin-bottom: 0.875rem;
+    letter-spacing: -0.01em;
 }
 
 .quantity-controls {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0.625rem;
+    margin-bottom: 0.625rem;
 }
 
 .quantity-btn {
-    width: 40px;
-    height: 40px;
-    border: 2px solid #dee2e6;
-    border-radius: 6px;
-    background: white;
-    color: #495057;
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid #d2d2d7;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #000000;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .quantity-btn:hover:not(:disabled) {
-    border-color: #dc3545;
-    color: #dc3545;
-    background: #fff5f5;
+    border-color: #0071e3;
+    color: #0071e3;
+    background: #f5f5f7;
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0, 113, 227, 0.15);
 }
 
 .quantity-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
+    background: #f5f5f7;
 }
 
 .quantity-input {
-    width: 80px;
-    height: 40px;
+    width: 88px;
+    height: 44px;
     text-align: center;
-    border: 2px solid #dee2e6;
-    border-radius: 6px;
+    border: 1.5px solid #d2d2d7;
+    border-radius: 12px;
     font-size: 1rem;
     font-weight: 600;
-    color: #212529;
-    transition: all 0.2s;
+    color: #000000;
+    background: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .quantity-input:focus {
     outline: none;
-    border-color: #dc3545;
-    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    border-color: #0071e3;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12), 0 1px 3px rgba(0, 113, 227, 0.2);
 }
 
 .quantity-input:disabled {
-    background: #f8f9fa;
+    background: #f5f5f7;
     cursor: not-allowed;
+    color: #86868b;
 }
 
 /* Hide spinner arrows */
@@ -276,23 +285,24 @@ watch(() => props.maxQuantity, (newMax) => {
 }
 
 .stock-info {
-    font-size: 0.85rem;
-    color: #6c757d;
+    font-size: 0.8125rem;
+    color: #86868b;
 }
 
 .stock-text {
     font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
-/* Action Buttons */
+/* Action Buttons - Premium Pill Design */
 .action-buttons {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    gap: 0.875rem;
 }
 
 .action-buttons:has(.btn-buy-now) {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.5fr 1fr;
 }
 
 .btn-add-cart,
@@ -300,57 +310,59 @@ watch(() => props.maxQuantity, (newMax) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.875rem 1.5rem;
+    gap: 0.625rem;
+    padding: 1rem 2rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 980px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    min-height: 50px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 54px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.01em;
 }
 
 .btn-add-cart {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: #0071e3;
     color: white;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3), 0 1px 3px rgba(0, 113, 227, 0.2);
 }
 
 .btn-add-cart:hover:not(:disabled) {
-    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
-    transform: translateY(-2px);
+    background: #0077ed;
+    box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4), 0 2px 6px rgba(0, 113, 227, 0.25);
+    transform: translateY(-2px) scale(1.01);
 }
 
 .btn-add-cart:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .btn-add-cart:disabled {
-    background: #dee2e6;
-    color: #6c757d;
+    background: #d2d2d7;
+    color: #86868b;
     cursor: not-allowed;
     box-shadow: none;
 }
 
 .btn-buy-now {
-    background: white;
-    color: #dc3545;
-    border: 2px solid #dc3545;
+    background: #000000;
+    color: white;
+    border: 2px solid transparent;
 }
 
 .btn-buy-now:hover:not(:disabled) {
-    background: #fff5f5;
-    border-color: #c82333;
-    transform: translateY(-2px);
+    background: #1d1d1f;
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .btn-buy-now:disabled {
-    background: #f8f9fa;
-    color: #6c757d;
-    border-color: #dee2e6;
+    background: #f5f5f7;
+    color: #86868b;
+    border-color: #d2d2d7;
     cursor: not-allowed;
 }
 
@@ -374,19 +386,21 @@ watch(() => props.maxQuantity, (newMax) => {
 .out-of-stock-message {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0.625rem;
+    padding: 1rem 1.25rem;
     background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 6px;
+    border: 1.5px solid #ffc107;
+    border-radius: 12px;
     color: #856404;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
     margin-top: 1rem;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
 }
 
 .out-of-stock-message svg {
     flex-shrink: 0;
+    opacity: 0.9;
 }
 
 /* Mobile Responsive */

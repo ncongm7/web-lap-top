@@ -217,133 +217,162 @@ const formatPrice = (price) => {
 </script>
 
 <style scoped>
+/* Design System Variables */
+:root {
+    --vs-primary: #000000;
+    --vs-secondary: #86868b;
+    --vs-accent: #0071e3;
+    --vs-success: #34c759;
+    --vs-error: #ff3b30;
+    --vs-bg: #ffffff;
+    --vs-bg-secondary: #f5f5f7;
+    --vs-border: #d2d2d7;
+    --vs-shadow: rgba(0, 0, 0, 0.08);
+    --vs-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .variant-selector {
     width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .selector-title {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
-    color: #212529;
+    color: var(--vs-primary);
+    letter-spacing: -0.01em;
 }
 
 .attribute-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .group-label {
     font-weight: 600;
-    font-size: 0.95rem;
-    color: #495057;
-    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--vs-secondary);
+    margin-bottom: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .options-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.625rem;
 }
 
+/* Apple-style Chip Design */
 .option-chip {
     position: relative;
-    padding: 0.75rem 1rem;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    background: white;
+    padding: 1rem 1.25rem;
+    border: 1.5px solid var(--vs-border);
+    border-radius: 12px;
+    background: var(--vs-bg);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--vs-transition);
     text-align: center;
-    font-size: 0.9rem;
-    min-height: 60px;
+    font-size: 0.875rem;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 0.375rem;
+    box-shadow: 0 1px 3px var(--vs-shadow);
 }
 
 .option-chip:hover:not(:disabled) {
-    border-color: #dc3545;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
-    transform: translateY(-1px);
+    border-color: var(--vs-accent);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
+    transform: translateY(-2px) scale(1.02);
 }
 
 .option-chip.active {
-    border-color: #dc3545;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border-color: var(--vs-accent);
+    background: var(--vs-accent);
     color: white;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3), 0 1px 3px rgba(0, 113, 227, 0.2);
+    transform: translateY(-1px);
 }
 
 .option-chip.disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
-    background: #f8f9fa;
+    background: var(--vs-bg-secondary);
+    border-color: var(--vs-border);
+    transform: none;
 }
 
 .option-chip.out-of-stock {
-    opacity: 0.5;
-    background: #f8f9fa;
+    opacity: 0.4;
+    background: var(--vs-bg-secondary);
     cursor: not-allowed;
+    position: relative;
 }
 
 .option-chip.out-of-stock::after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #dc3545;
-    transform: translateY(-50%) rotate(-15deg);
+    left: 10%;
+    right: 10%;
+    height: 1.5px;
+    background: var(--vs-error);
+    transform: translateY(-50%) rotate(-12deg);
+    opacity: 0.8;
 }
 
 .option-text {
     font-weight: 500;
-    line-height: 1.3;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
 }
 
 .option-chip.active .option-text {
     color: white;
+    font-weight: 600;
 }
 
 .stock-badge {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    background: #dc3545;
+    top: 6px;
+    right: 6px;
+    font-size: 0.625rem;
+    padding: 3px 6px;
+    background: var(--vs-error);
     color: white;
-    border-radius: 4px;
+    border-radius: 6px;
     font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .price-badge {
-    font-size: 0.8rem;
-    color: #dc3545;
+    font-size: 0.75rem;
+    color: var(--vs-accent);
     font-weight: 600;
 }
 
 .option-chip.active .price-badge {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
 }
 
-/* Selected Variant Info */
+/* Selected Variant Info - Premium Card */
 .selected-variant-info {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #dc3545;
+    margin-top: 2rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--vs-bg-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--vs-border);
+    box-shadow: 0 2px 8px var(--vs-shadow);
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .info-row:last-child {
@@ -351,72 +380,87 @@ const formatPrice = (price) => {
 }
 
 .info-label {
-    font-weight: 600;
-    color: #6c757d;
-    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--vs-secondary);
+    font-size: 0.875rem;
 }
 
 .info-value {
-    font-weight: 500;
-    color: #212529;
-    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--vs-primary);
+    font-size: 0.9375rem;
 }
 
 .price-row .info-value {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
 }
 
 .price-row .price {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: #dc3545;
+    color: var(--vs-primary);
+    letter-spacing: -0.02em;
 }
 
 .original-price {
-    font-size: 0.9rem;
-    color: #6c757d;
+    font-size: 0.875rem;
+    color: var(--vs-secondary);
     font-weight: 400;
+    text-decoration: line-through;
 }
 
 .text-success {
-    color: #28a745 !important;
+    color: var(--vs-success) !important;
+    font-weight: 600;
 }
 
 .text-danger {
-    color: #dc3545 !important;
+    color: var(--vs-error) !important;
+    font-weight: 600;
 }
 
 /* Mobile Responsive */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     .options-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         gap: 0.5rem;
     }
 
     .option-chip {
-        padding: 0.6rem 0.75rem;
-        font-size: 0.85rem;
-        min-height: 55px;
+        padding: 0.875rem 1rem;
+        font-size: 0.8125rem;
+        min-height: 58px;
     }
 
     .selector-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .selected-variant-info {
-        padding: 0.75rem;
+        padding: 1rem 1.25rem;
     }
 
     .info-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.25rem;
+        gap: 0.375rem;
     }
 
     .price-row .price {
-        font-size: 1.1rem;
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .options-grid {
+        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    }
+
+    .option-chip {
+        padding: 0.75rem 0.875rem;
+        min-height: 54px;
     }
 }
 </style>
