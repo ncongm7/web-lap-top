@@ -64,17 +64,18 @@ const props = defineProps({
     // Danh sách thuộc tính cần hiển thị (theo thứ tự)
     attributeKeys: {
         type: Array,
-        default: () => ['ram', 'storage', 'color'],
+        default: () => ['cpu', 'gpu', 'ram', 'dungLuongOCung'],
     },
     // Labels cho các thuộc tính
     attributeLabels: {
         type: Object,
         default: () => ({
-            ram: 'RAM',
-            storage: 'Ổ cứng',
-            color: 'Màu sắc',
             cpu: 'CPU',
             gpu: 'GPU',
+            ram: 'RAM',
+            dungLuongOCung: 'Ổ cứng',
+            color: 'Màu sắc',
+            storage: 'Ổ cứng',
             screen: 'Màn hình',
         }),
     },
