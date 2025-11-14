@@ -49,69 +49,9 @@
                     <!-- Column 1: Product Gallery (~40% width) -->
                     <div class="product-gallery-col">
                         <ProductGallery :images="productImages" :product-name="product.name" />
-                    </div>
 
-                    <!-- Column 2: Product Info & Actions (~60% width) -->
-                    <div class="product-info-col">
-                        <!-- 1. Product Title (H1) -->
-                        <header class="product-header">
-                            <h1 class="product-title">{{ product.name }}</h1>
-                        </header>
-
-                        <!-- 2. Product Meta Info -->
-                        <div class="product-meta">
-                            <div class="meta-row">
-                                <span class="meta-label">Mã SP:</span>
-                                <span class="meta-value meta-code">{{ productMetadata.code }}</span>
-                            </div>
-                            <div class="meta-row">
-                                <span class="meta-label">Đánh giá:</span>
-                                <div class="meta-value meta-rating">
-                                    <span v-for="i in 5" :key="i" class="star-icon" :class="{ filled: i <= 5 }">★</span>
-                                    <span class="rating-text">| Bình luận: {{ productMetadata.reviewCount }}</span>
-                                </div>
-                            </div>
-                            <div class="meta-row">
-                                <span class="meta-label">Lượt xem:</span>
-                                <span class="meta-value">{{ productMetadata.views }}</span>
-                            </div>
-                        </div>
-
-                        <!-- 3. Specs Summary -->
-                        <div class="specs-summary-box">
-                            <h3 class="specs-title">Thông số sản phẩm</h3>
-                            <ul class="specs-list">
-                                <li v-for="spec in highlightSpecs" :key="spec.label" class="spec-item">
-                                    <span class="spec-dash">-</span>
-                                    <span class="spec-label">{{ spec.label }}:</span>
-                                    <span class="spec-value">{{ spec.value }}</span>
-                                </li>
-                            </ul>
-                            <button class="specs-expand-btn" @click="scrollToSpecs">
-                                <span>Xem thêm</span>
-                                <svg viewBox="0 0 24 24" fill="currentColor" class="chevron-icon">
-                                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- 4. Price Section -->
-                        <div v-if="selectedVariant" class="price-section">
-                            <div class="price-label">Giá khuyến mãi:</div>
-                            <div class="price-display">
-                                <span class="price-current">{{ formatPrice(selectedVariant.price) }}</span>
-                                <del v-if="selectedVariant.originalPrice && selectedVariant.originalPrice > selectedVariant.price"
-                                    class="price-old">{{ formatPrice(selectedVariant.originalPrice) }}</del>
-                            </div>
-                            <div v-if="selectedVariant.originalPrice && selectedVariant.originalPrice > selectedVariant.price"
-                                class="price-save">
-                                <span class="save-icon">⬇</span>
-                                Tiết kiệm: {{ formatPrice(selectedVariant.originalPrice - selectedVariant.price) }}
-                            </div>
-                        </div>
-
-                        <!-- 5. Promotion Section -->
-                        <div class="promotion-section">
+                        <!-- Promotion Section (moved here) -->
+                        <div class="promotion-section" style="margin-top: 2rem;">
                             <div class="promotion-header">
                                 <svg viewBox="0 0 24 24" fill="currentColor" class="promotion-icon">
                                     <path
@@ -149,10 +89,54 @@
                                 </li>
                             </ul>
                         </div>
+                    </div>
 
-                        <!-- 6. Variant Selector -->
+                    <!-- Column 2: Product Info & Actions (~60% width) -->
+                    <div class="product-info-col">
+                        <!-- 1. Product Title (H1) -->
+                        <header class="product-header">
+                            <h1 class="product-title">{{ product.name }}</h1>
+                        </header>
+
+                        <!-- 2. Product Meta Info -->
+                        <div class="product-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">Mã SP:</span>
+                                <span class="meta-value meta-code">{{ productMetadata.code }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Đánh giá:</span>
+                                <div class="meta-value meta-rating">
+                                    <span v-for="i in 5" :key="i" class="star-icon" :class="{ filled: i <= 5 }">★</span>
+                                    <span class="rating-text">| Bình luận: {{ productMetadata.reviewCount }}</span>
+                                </div>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Lượt xem:</span>
+                                <span class="meta-value">{{ productMetadata.views }}</span>
+                            </div>
+                        </div>
+
+                        <!-- specs-summary removed per request -->
+
+                        <!-- 4. Price Section -->
+                        <div v-if="selectedVariant" class="price-section">
+                            <div class="price-label">Giá khuyến mãi:</div>
+                            <div class="price-display">
+                                <span class="price-current">{{ formatPrice(selectedVariant.price) }}</span>
+                                <del v-if="selectedVariant.originalPrice && selectedVariant.originalPrice > selectedVariant.price"
+                                    class="price-old">{{ formatPrice(selectedVariant.originalPrice) }}</del>
+                            </div>
+                            <div v-if="selectedVariant.originalPrice && selectedVariant.originalPrice > selectedVariant.price"
+                                class="price-save">
+                                <span class="save-icon">⬇</span>
+                                Tiết kiệm: {{ formatPrice(selectedVariant.originalPrice - selectedVariant.price) }}
+                            </div>
+                        </div>
+
+                        <!-- 5. Variant Selector -->
                         <div class="variant-section">
-                            <VariantSelector :variants="formattedVariants" v-model="selectedVariantId"
+                            <VariantQuickSelector :variants="formattedVariants" v-model="selectedVariantId"
                                 @change="handleVariantChange" />
                         </div>
 
@@ -390,7 +374,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProductGallery from '@/components/customer/san_pham/ProductGallery.vue'
-import VariantSelector from '@/components/customer/san_pham/VariantSelector.vue'
+import VariantQuickSelector from '@/components/customer/san_pham/VariantQuickSelector.vue'
 import AddToCartForm from '@/components/customer/san_pham/AddToCartForm.vue'
 import { sanPhamService } from '@/service/customer/san_pham_service'
 import cartService from '@/service/customer/cartService'
@@ -424,17 +408,15 @@ const formattedVariants = computed(() => {
         return {
             id: variantId,
             attributes: {
-                ram: v.tenRam,
-                storage: v.dungLuongOCung,
-                color: v.tenMauSac,
                 cpu: v.tenCpu,
                 gpu: v.tenGpu,
-                screen: v.kichThuocManHinh,
+                ram: v.tenRam,
+                dungLuongOCung: v.dungLuongOCung,
             },
             price: v.giaSauGiam || v.giaBan,
             originalPrice: v.giaTruocGiam || v.giaBan,
             stock: v.soLuongTon || v.soLuong || 0,
-            summary: [v.tenCpu, v.tenRam, v.dungLuongOCung, v.tenMauSac].filter(Boolean).join(' | '),
+            summary: [v.tenCpu, v.tenGpu, v.tenRam, v.dungLuongOCung].filter(Boolean).join(' | '),
             ...v, // Keep all original data
         }
     })
@@ -481,20 +463,7 @@ const productSpecs = computed(() => {
     ].filter((s) => s.value)
 })
 
-const highlightSpecs = computed(() => {
-    if (!selectedVariant.value) return []
-
-    const v = selectedVariant.value
-    const specs = [
-        { label: 'Bộ vi xử lý', value: withDesc(v.tenCpu, v.moTaCpu) },
-        { label: 'Card đồ họa', value: withDesc(v.tenGpu, v.moTaGpu) },
-        { label: 'Bộ nhớ RAM', value: withDesc(v.tenRam, v.moTaRam) },
-        { label: 'Ổ cứng', value: withDesc(v.dungLuongOCung, v.moTaOCung) },
-        { label: 'Màn hình', value: withDesc(v.kichThuocManHinh, v.moTaManHinh) },
-    ].filter((spec) => spec.value)
-
-    return specs.slice(0, 4)
-})
+// highlightSpecs removed — UI no longer displays the compact specs list
 
 const productMetadata = computed(() => {
     const variant = selectedVariant.value
@@ -626,14 +595,7 @@ const handleBuyNow = async ({ productId, productName, quantity }) => {
     }
 }
 
-const scrollToSpecs = () => {
-    if (specsSectionRef.value) {
-        specsSectionRef.value.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-        })
-    }
-}
+// scrollToSpecs removed because the compact specs UI was deleted
 
 // Utility functions
 const formatPrice = (price) => {
@@ -703,7 +665,7 @@ onMounted(() => {
 .pdp-content {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem; /* reduced horizontal padding for tighter layout */
 }
 
 /* ========================================== */
@@ -782,7 +744,7 @@ onMounted(() => {
 /* ROW STRUCTURE */
 /* ========================================== */
 .pdp-row {
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem; /* reduced vertical spacing between rows */
 }
 
 /* ========================================== */
@@ -828,10 +790,10 @@ onMounted(() => {
 .product-main-grid {
     display: grid;
     grid-template-columns: 40% 60%;
-    gap: 4rem;
+    gap: 1.5rem; /* tighter gap */
     background: var(--pdp-bg);
-    border-radius: 20px;
-    padding: 3rem;
+    border-radius: 12px;
+    padding: 1.25rem; /* reduced padding */
     box-shadow: 0 2px 12px var(--pdp-shadow);
 }
 
@@ -921,7 +883,7 @@ onMounted(() => {
     background: var(--pdp-bg-secondary);
     border: 1px solid var(--pdp-border);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 0.75rem; /* reduced */
 }
 
 .specs-title {
@@ -995,7 +957,7 @@ onMounted(() => {
     background: var(--pdp-bg);
     border: 2px solid var(--pdp-error);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 0.75rem; /* reduced */
 }
 
 .price-label {
@@ -1045,7 +1007,7 @@ onMounted(() => {
     background: #fff9e6;
     border: 2px solid #ffd700;
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 0.75rem; /* reduced */
 }
 
 .promotion-header {
@@ -1184,7 +1146,7 @@ onMounted(() => {
 }
 
 .tabs-content {
-    padding: 2.5rem;
+    padding: 1rem; /* reduced */
 }
 
 .tab-panel {
@@ -1234,7 +1196,7 @@ onMounted(() => {
 }
 
 .spec-label-cell {
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 0.75rem; /* reduced */
     font-weight: 600;
     color: var(--pdp-secondary);
     width: 30%;
@@ -1242,19 +1204,11 @@ onMounted(() => {
 }
 
 .spec-value-cell {
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 0.75rem; /* reduced */
     color: var(--pdp-primary);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-}
-
-.color-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--pdp-border);
-    flex-shrink: 0;
+    gap: 0.5rem;
 }
 
 /* Empty Placeholder */
@@ -1263,8 +1217,8 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 4rem 2rem;
+    gap: 0.75rem;
+    padding: 2rem 1rem; /* reduced */
     text-align: center;
 }
 
