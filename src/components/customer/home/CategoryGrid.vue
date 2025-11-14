@@ -1,219 +1,178 @@
 <template>
-    <section class="category-grid">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Danh mục sản phẩm</h2>
-                <p class="section-desc">Tìm laptop phù hợp với nhu cầu của bạn</p>
-            </div>
+  <section class="category-grid">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Danh mục sản phẩm</h2>
+        <p class="section-desc">Khám phá các dòng laptop phù hợp với nhu cầu của bạn</p>
+      </div>
 
-            <div class="categories-grid">
-                <router-link v-for="category in categories" :key="category.id" :to="category.link" class="category-card"
-                    :style="{ backgroundColor: category.bgColor }">
-                    <div class="category-icon">{{ category.icon }}</div>
-                    <div class="category-info">
-                        <h3 class="category-name">{{ category.name }}</h3>
-                        <p class="category-count">{{ category.count }} sản phẩm</p>
-                    </div>
-                    <div class="category-arrow">→</div>
-                </router-link>
-            </div>
-        </div>
-    </section>
+      <div class="categories-container">
+        <router-link
+          v-for="category in categories"
+          :key="category.id"
+          :to="category.link"
+          class="category-card"
+          :style="{ backgroundColor: category.bgColor || '#f8fafc' }"
+        >
+          <div class="category-icon">{{ category.icon || '📦' }}</div>
+          <h3 class="category-name">{{ category.name }}</h3>
+          <p class="category-count">{{ category.count || 0 }} sản phẩm</p>
+        </router-link>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
 defineProps({
-    categories: {
-        type: Array,
-        default: () => [
-            {
-                id: 1,
-                name: 'Laptop Gaming',
-                icon: '🎮',
-                count: 150,
-                link: '/products?category=gaming',
-                bgColor: '#dbeafe'
-            },
-            {
-                id: 2,
-                name: 'Laptop Văn Phòng',
-                icon: '💼',
-                count: 230,
-                link: '/products?category=office',
-                bgColor: '#dcfce7'
-            },
-            {
-                id: 3,
-                name: 'Laptop Đồ Họa',
-                icon: '🎨',
-                count: 85,
-                link: '/products?category=graphics',
-                bgColor: '#fef3c7'
-            },
-            {
-                id: 4,
-                name: 'Laptop Sinh Viên',
-                icon: '🎓',
-                count: 180,
-                link: '/products?category=student',
-                bgColor: '#fce7f3'
-            },
-            {
-                id: 5,
-                name: 'Laptop Mỏng Nhẹ',
-                icon: '✨',
-                count: 120,
-                link: '/products?category=ultrabook',
-                bgColor: '#e0e7ff'
-            },
-            {
-                id: 6,
-                name: 'Laptop Cao Cấp',
-                icon: '⭐',
-                count: 95,
-                link: '/products?category=premium',
-                bgColor: '#fae8ff'
-            }
-        ]
-    }
+  categories: {
+    type: Array,
+    default: () => [],
+  },
 })
 </script>
 
 <style scoped>
 .category-grid {
-    padding: 60px 0;
-    background: #ffffff;
-    overflow: hidden;
-    width: 100%;
+  padding: 60px 0;
+  background: #ffffff;
+  overflow: hidden;
+  width: 100%;
 }
 
 .container {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0 clamp(16px, 3vw, 60px);
-    width: 100%;
-    box-sizing: border-box;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 60px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-header {
-    text-align: center;
-    margin-bottom: clamp(32px, 4vw, 60px);
+  text-align: center;
+  margin-bottom: clamp(32px, 4vw, 48px);
 }
 
 .section-title {
-    font-size: clamp(28px, 2.5vw, 42px);
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 12px 0;
+  font-size: clamp(28px, 2.5vw, 42px);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
 }
 
 .section-desc {
-    font-size: 16px;
-    color: #64748b;
-    margin: 0;
+  font-size: clamp(14px, 1.2vw, 18px);
+  color: #64748b;
+  margin: 0;
 }
 
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px;
+.categories-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .category-card {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 24px;
-    border-radius: 12px;
-    text-decoration: none;
-    transition: all 0.3s;
-    border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  border-radius: 16px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 180px;
 }
 
 .category-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: #10b981;
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .category-icon {
-    font-size: 48px;
-    flex-shrink: 0;
-}
-
-.category-info {
-    flex: 1;
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
 }
 
 .category-name {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  text-align: center;
 }
 
 .category-count {
-    font-size: 14px;
-    color: #64748b;
-    margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  text-align: center;
 }
 
-.category-arrow {
-    font-size: 24px;
-    color: #10b981;
-    flex-shrink: 0;
-    transition: transform 0.3s;
-}
-
-.category-card:hover .category-arrow {
-    transform: translateX(4px);
-}
-
-@media (min-width: 1441px) {
-    .categories-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: clamp(24px, 2vw, 40px);
-    }
-}
-
-@media (max-width: 1440px) and (min-width: 1025px) {
-    .categories-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 24px;
-    }
-}
-
+/* Responsive Design */
 @media (max-width: 1024px) {
-    .categories-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-    }
+  .categories-container {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
 }
 
 @media (max-width: 768px) {
-    .category-grid {
-        padding: 40px 0;
-    }
+  .category-grid {
+    padding: 40px 0;
+  }
 
-    .section-title {
-        font-size: 28px;
-    }
+  .section-title {
+    font-size: 28px;
+  }
 
-    .categories-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
+  .categories-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 
-    .category-card {
-        padding: 20px;
-    }
+  .category-card {
+    padding: 24px 16px;
+    min-height: 160px;
+  }
 
-    .category-icon {
-        font-size: 40px;
-    }
+  .category-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
 
-    .category-name {
-        font-size: 18px;
-    }
+  .category-name {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .categories-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .category-card {
+    padding: 20px 12px;
+    min-height: 140px;
+  }
+
+  .category-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .category-name {
+    font-size: 14px;
+  }
+
+  .category-count {
+    font-size: 12px;
+  }
 }
 </style>

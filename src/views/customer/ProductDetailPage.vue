@@ -281,8 +281,27 @@ const attrRows = computed(() => {
     ].filter((r) => r.value); // Ẩn dòng trống
 });
 
-// Mua ngay (demo)
+// Mua ngay - điều hướng đến checkout với sản phẩm đã chọn
 function buyNow() {
-    alert("Mua ngay: " + (store.ctsp?.tenSp || ""));
+    if (!store.ctsp) {
+        alert("Vui lòng chọn sản phẩm");
+        return;
+    }
+
+    // Lưu thông tin sản phẩm vào sessionStorage để checkout page có thể lấy
+    const checkoutData = {
+        product: {
+            idCtsp: store.ctsp.idctsp || store.ctsp.id,
+            tenSp: store.ctsp.tenSp || (store.ctsp.sanPham?.tenSanPham || 'Sản phẩm'),
+            giaBan: store.ctsp.giaBan,
+            giaSauGiam: store.ctsp.giaSauGiam,
+            soLuong: 1,
+            imageUrl: imageUrl
+        }
+    };
+    sessionStorage.setItem('checkout_data', JSON.stringify(checkoutData));
+
+    // Điều hướng đến trang checkout
+    router.push({ name: 'checkout' });
 }
 </script>
