@@ -12,19 +12,19 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          component: () => import('@/views/customer/HomePage.vue'),
+          component: () => import('@/views/customer/login/HomePage.vue'),
           meta: { title: 'Trang chủ - VietLapTop' },
         },
         {
           path: 'products',
           name: 'products',
-          component: () => import('@/views/customer/ProductsPage.vue'),
+          component: () => import('@/views/customer/product/ProductsPage.vue'),
           meta: { title: 'Danh sách sản phẩm - LaptopStore' },
         },
         {
           path: 'products/:id',
           name: 'product-detail',
-          component: () => import('@/views/customer/ProductDetailPage.vue'),
+          component: () => import('@/views/customer/product-detail/ProductDetailPage.vue'),
           meta: { title: 'Chi tiết sản phẩm - LaptopStore' },
         },
         {
@@ -66,26 +66,26 @@ const router = createRouter({
         {
           path: 'login',
           name: 'login',
-          component: () => import('@/views/customer/LoginPage.vue'),
+          component: () => import('@/views/customer/login/LoginPage.vue'),
           meta: { title: 'Đăng nhập - LaptopStore', hideForAuth: true },
         },
         {
           path: 'register',
           name: 'register',
-          component: () => import('@/views/customer/RegisterPage.vue'),
+          component: () => import('@/views/customer/login/RegisterPage.vue'),
           meta: { title: 'Đăng ký - LaptopStore', hideForAuth: true },
         },
         // Direct order routes (không cần vào account)
         {
           path: 'orders',
           name: 'orders',
-          component: () => import('@/views/customer/OrdersPage.vue'),
+          component: () => import('@/views/order/OrdersPage.vue'),
           meta: { title: 'Đơn hàng của tôi - LaptopStore', requiresAuth: true },
         },
         {
           path: 'orders/:id',
           name: 'order-detail',
-          component: () => import('@/views/customer/OrderDetailPage.vue'),
+          component: () => import('@/views/order/OrderDetailPage.vue'),
           meta: { title: 'Chi tiết đơn hàng - LaptopStore', requiresAuth: true },
         },
         // Account routes

@@ -1,0 +1,420 @@
+/* ========================================== */
+/* DESIGN SYSTEM - E-COMMERCE STANDARD */
+/* ========================================== */
+:root {
+    --pdp-primary: #000000;
+    --pdp-secondary: #86868b;
+    --pdp-accent: #0071e3;
+    --pdp-success: #34c759;
+    --pdp-error: #ff3b30;
+    --pdp-warning: #ff9500;
+    --pdp-bg: #ffffff;
+    --pdp-bg-secondary: #f5f5f7;
+    --pdp-border: #d2d2d7;
+    --pdp-shadow: rgba(0, 0, 0, 0.08);
+    --pdp-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================== */
+/* BASE CONTAINER */
+/* ========================================== */
+.pdp-page {
+    min-height: 100vh;
+    background: var(--pdp-bg-secondary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pdp-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* ========================================== */
+/* LOADING & ERROR STATES */
+/* ========================================== */
+.pdp-state {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--pdp-border);
+    border-top-color: var(--pdp-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.state-icon svg {
+    width: 64px;
+    height: 64px;
+    stroke: var(--pdp-error);
+    stroke-width: 2px;
+}
+
+.state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--pdp-primary);
+    margin: 0;
+}
+
+.state-text {
+    font-size: 1rem;
+    color: var(--pdp-secondary);
+    margin: 0;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    background: var(--pdp-accent);
+    color: white;
+    border: none;
+    border-radius: 980px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--pdp-transition);
+}
+
+.primary-button:hover {
+    background: #0077ed;
+    transform: translateY(-2px);
+}
+
+.primary-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ========================================== */
+/* ROW STRUCTURE */
+/* ========================================== */
+.pdp-row {
+    margin-bottom: 1.5rem;
+}
+
+/* ========================================== */
+/* ROW 1: BREADCRUMB */
+/* ========================================== */
+.breadcrumb-row {
+    padding: 1.5rem 0;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+    color: var(--pdp-accent);
+    text-decoration: none;
+    transition: var(--pdp-transition);
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    color: var(--pdp-secondary);
+}
+
+.breadcrumb-current {
+    color: var(--pdp-secondary);
+}
+
+/* ========================================== */
+/* ROW 2: MAIN PRODUCT INFO (2 COLUMNS) */
+/* ========================================== */
+.product-main-row {
+    margin-bottom: 4rem;
+}
+
+.product-main-grid {
+    display: grid;
+    grid-template-columns: 42% 58%;
+    gap: 2rem;
+    background: var(--pdp-bg);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 22px rgba(16, 24, 40, 0.06);
+}
+
+.product-gallery-col {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-right: 0.5rem;
+}
+
+.product-info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.product-header {
+    border-bottom: 1px solid var(--pdp-border);
+    padding-bottom: 1.5rem;
+}
+
+.product-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.03em;
+    color: var(--pdp-primary);
+}
+
+.variant-section,
+.action-section {
+    padding: 0;
+}
+
+/* ========================================== */
+/* ROW 3: DETAIL TABS & SIDEBAR (2 COLUMNS) */
+/* ========================================== */
+.detail-row {
+    margin-bottom: 4rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    gap: 2.5rem;
+}
+
+.detail-main-col {
+    background: var(--pdp-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 22px rgba(16, 24, 40, 0.04);
+    border: 1px solid var(--pdp-border);
+    padding: 1rem;
+}
+
+.detail-tabs-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs-navigation {
+    display: flex;
+    border-bottom: 1px solid var(--pdp-border);
+    background: var(--pdp-bg-secondary);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.tab-nav-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    padding: 1.25rem 1.5rem;
+    background: none;
+    border: none;
+    color: var(--pdp-secondary);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: var(--pdp-transition);
+    position: relative;
+}
+
+.tab-nav-btn:hover {
+    background: rgba(0, 113, 227, 0.05);
+    color: var(--pdp-accent);
+}
+
+.tab-nav-btn.active {
+    color: var(--pdp-accent);
+    background: var(--pdp-bg);
+}
+
+.tab-nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--pdp-accent);
+}
+
+.tab-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2px;
+}
+
+.tabs-content {
+    padding: 1.25rem;
+    background: transparent;
+}
+
+.tab-panel {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.description-content {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--pdp-primary);
+}
+
+.description-content p {
+    margin-bottom: 1.5rem;
+}
+
+.empty-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.placeholder-icon {
+    width: 64px;
+    height: 64px;
+    stroke: var(--pdp-secondary);
+    stroke-width: 2px;
+}
+
+.placeholder-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--pdp-secondary);
+    margin: 0;
+}
+
+.detail-sidebar-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ========================================== */
+/* ROW 4: REVIEWS (2 COLUMNS) */
+/* ========================================== */
+.reviews-row {
+    margin-bottom: 4rem;
+}
+
+.reviews-grid {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 2rem;
+}
+
+.review-summary-col {
+    height: fit-content;
+}
+
+.review-list-col {
+    min-height: 400px;
+}
+
+/* ========================================== */
+/* RESPONSIVE DESIGN */
+/* ========================================== */
+@media (max-width: 1024px) {
+    .product-main-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .product-gallery-col {
+        position: static;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reviews-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .pdp-content {
+        padding: 0 1rem;
+    }
+
+    .product-main-grid {
+        padding: 2rem 1.5rem;
+        gap: 2rem;
+    }
+
+    .product-title {
+        font-size: 2rem;
+    }
+
+    .tabs-navigation {
+        flex-direction: column;
+    }
+
+    .tab-nav-btn.active::after {
+        left: 0;
+        right: auto;
+        width: 4px;
+        height: 100%;
+        top: 0;
+        bottom: 0;
+    }
+
+    .tabs-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-title {
+        font-size: 1.5rem;
+    }
+
+    .breadcrumb {
+        font-size: 0.8125rem;
+    }
+}
+
