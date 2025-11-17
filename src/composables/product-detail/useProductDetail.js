@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
 import { sanPhamService } from '@/service/customer/san_pham_service'
-import { withDescription } from '@/utils/product-detail/formatters'
 
 /**
  * ========================================
@@ -15,7 +14,6 @@ export function useProductDetail(productId) {
   const product = ref(null)
   const variants = ref([])
   const selectedVariantId = ref(null)
-  const productImagesMap = ref({})
 
   /**
    * Current selected variant
@@ -29,10 +27,8 @@ export function useProductDetail(productId) {
    */
   const formattedVariants = computed(() => {
     return variants.value.map((v) => {
-      const variantId = v.idctsp || v.id || v.idCTSP
-
       return {
-        id: variantId,
+        id: v.idctsp,
         attributes: {
           cpu: v.tenCpu,
           gpu: v.tenGpu,
@@ -41,9 +37,9 @@ export function useProductDetail(productId) {
           color: v.tenMauSac,
           screen: v.kichThuocManHinh,
         },
-        price: v.giaSauGiam || v.giaBan,
-        originalPrice: v.giaTruocGiam || v.giaBan,
-        stock: v.soLuongTon || v.soLuong || 0,
+        price: v.giaBan,
+        originalPrice: v.giaBan,
+        stock: (v.soLuongTon || 0) - (v.soLuongTamGiu || 0),
         summary: [v.tenCpu, v.tenGpu, v.tenRam, v.dungLuongOCung].filter(Boolean).join(' | '),
         ...v, // Keep all original data
       }
@@ -54,21 +50,18 @@ export function useProductDetail(productId) {
    * Product images for selected variant
    */
   const productImages = computed(() => {
-    if (!selectedVariantId.value) return []
-
-    const images = productImagesMap.value[selectedVariantId.value] || []
-
-    if (images.length === 0) {
+    const variant = selectedVariant.value
+    if (!variant || !variant.hinhAnhs || variant.hinhAnhs.length === 0) {
       return [
         {
-          url: 'https://laptopaz.vn/media/product/3789_46549_ap7.jpg',
+          url: 'https://via.placeholder.com/600x600.png?text=No+Image',
           alt: product.value?.name || 'Sản phẩm',
         },
       ]
     }
 
-    return images.map((img, index) => ({
-      url: img.url || img.duongDanHinhAnh,
+    return variant.hinhAnhs.map((url, index) => ({
+      url: url,
       alt: `${product.value?.name || 'Sản phẩm'} - Ảnh ${index + 1}`,
     }))
   })
@@ -82,14 +75,12 @@ export function useProductDetail(productId) {
     const v = selectedVariant.value
     return [
       { key: 'name', label: 'Tên sản phẩm', value: v.tenSp },
-      { key: 'cpu', label: 'CPU', value: withDescription(v.tenCpu, v.moTaCpu) },
-      { key: 'gpu', label: 'GPU', value: withDescription(v.tenGpu, v.moTaGpu) },
-      { key: 'ram', label: 'RAM', value: withDescription(v.tenRam, v.moTaRam) },
-      { key: 'storage', label: 'Ổ cứng', value: withDescription(v.dungLuongOCung, v.moTaOCung) },
-      { key: 'screen', label: 'Màn hình', value: withDescription(v.kichThuocManHinh, v.moTaManHinh) },
-      { key: 'battery', label: 'Pin', value: withDescription(v.dungLuongPin, v.moTaPin) },
-      { key: 'color', label: 'Màu sắc', value: v.tenMauSac, hex: v.hexCodeMauSac },
-      { key: 'weight', label: 'Trọng lượng', value: v.trongLuong },
+      { key: 'cpu', label: 'CPU', value: v.tenCpu },
+      { key: 'gpu', label: 'GPU', value: v.tenGpu },
+      { key: 'ram', label: 'RAM', value: v.tenRam },
+      { key: 'storage', label: 'Ổ cứng', value: v.dungLuongOCung },
+      { key: 'screen', label: 'Màn hình', value: v.kichThuocManHinh },
+      { key: 'color', label: 'Màu sắc', value: v.tenMauSac },
     ].filter((s) => s.value)
   })
 
@@ -99,10 +90,10 @@ export function useProductDetail(productId) {
   const productMetadata = computed(() => {
     const variant = selectedVariant.value
     return {
-      code: variant?.maSp || variant?.sku || variant?.model || variant?.id || product.value?.id || 'Đang cập nhật',
+      code: variant?.maSanPham || product.value?.id || 'Đang cập nhật',
       rating: '5.0',
       reviewCount: '128',
-      views: variant?.luotXem || variant?.viewCount || '1.2K',
+      views: '1.2K',
     }
   })
 
@@ -119,11 +110,12 @@ export function useProductDetail(productId) {
     error.value = null
 
     try {
+      // The service is expected to return a list of variants (CTSPResponseCustomer)
       const response = await sanPhamService.getProductDetails(productId)
       variants.value = response.data || []
 
       if (variants.value.length === 0) {
-        throw new Error('Sản phẩm không có phiên bản nào')
+        throw new Error('Sản phẩm không có phiên bản nào hoặc đã hết hàng.')
       }
 
       console.log('✅ Loaded variants:', variants.value)
@@ -132,46 +124,20 @@ export function useProductDetail(productId) {
       const firstVariant = variants.value[0]
       product.value = {
         id: productId,
-        name: firstVariant.tenSp || firstVariant.tenSanPham,
-        description: firstVariant.moTaSp || firstVariant.moTa || '',
+        name: firstVariant.tenSp,
+        description: '', // Description is not in the DTO
       }
 
-      // Auto select first variant
-      selectedVariantId.value = firstVariant.idctsp || firstVariant.id || firstVariant.idCTSP
+      // Auto select first available variant
+      const availableVariant = variants.value.find(v => v.soLuongTon > 0) || firstVariant;
+      selectedVariantId.value = availableVariant.idctsp
 
-      // Load images for all variants
-      await loadAllVariantImages()
     } catch (err) {
       console.error('Error loading product:', err)
       error.value = err.response?.data?.message || err.message || 'Không thể tải sản phẩm'
     } finally {
       loading.value = false
     }
-  }
-
-  /**
-   * Load images for all variants
-   */
-  const loadAllVariantImages = async () => {
-    const imagePromises = variants.value.map(async (variant) => {
-      try {
-        const variantId = variant.idctsp || variant.id || variant.idCTSP
-
-        if (!variantId) {
-          console.warn('⚠️ Variant missing ID:', variant)
-          return
-        }
-
-        const response = await sanPhamService.getImagesByProductDetailId(variantId)
-        productImagesMap.value[variantId] = response.data || []
-      } catch (err) {
-        const variantId = variant.idctsp || variant.id || variant.idCTSP
-        console.error(`Error loading images for variant ${variantId}:`, err)
-        productImagesMap.value[variantId] = []
-      }
-    })
-
-    await Promise.all(imagePromises)
   }
 
   /**
@@ -189,7 +155,6 @@ export function useProductDetail(productId) {
     product,
     variants,
     selectedVariantId,
-    productImagesMap,
 
     // Computed
     selectedVariant,
