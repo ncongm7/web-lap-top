@@ -79,13 +79,13 @@ const router = createRouter({
         {
           path: 'orders',
           name: 'orders',
-          component: () => import('@/views/order/OrdersPage.vue'),
+          component: () => import('@/views/customer/order/OrdersPage.vue'),
           meta: { title: 'Đơn hàng của tôi - LaptopStore', requiresAuth: true },
         },
         {
           path: 'orders/:id',
           name: 'order-detail',
-          component: () => import('@/views/order/OrderDetailPage.vue'),
+          component: () => import('@/views/customer/order/OrderDetailPage.vue'),
           meta: { title: 'Chi tiết đơn hàng - LaptopStore', requiresAuth: true },
         },
         // Account routes

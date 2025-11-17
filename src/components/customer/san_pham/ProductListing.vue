@@ -31,11 +31,8 @@
               class="sort-select"
             >
               <option value="newest">Mới nhất</option>
-              <option value="price-asc">Giá: Thấp → Cao</option>
-              <option value="price-desc">Giá: Cao → Thấp</option>
               <option value="name-asc">Tên A-Z</option>
               <option value="name-desc">Tên Z-A</option>
-              <option value="bestseller">Phổ biến nhất</option>
             </select>
           </div>
         </div>
@@ -267,7 +264,7 @@ const debugStoreState = () => {
 // Test sorting function
 const testSorting = async () => {
   console.log('🧪 Testing sorting functionality...')
-  const sortOptions = ['newest', 'price-asc', 'price-desc', 'name-asc', 'name-desc', 'bestseller']
+  const sortOptions = ['newest', 'name-asc', 'name-desc']
   
   for (const sortOption of sortOptions) {
     console.log(`🧪 Testing sort: ${sortOption}`)

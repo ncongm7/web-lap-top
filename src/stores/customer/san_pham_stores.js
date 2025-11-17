@@ -76,13 +76,7 @@ export const useSanPhamStore = defineStore('sanPham', () => {
         response = await sanPhamService.getAllProducts(params)
       }
       
-      let productsData = response.data.content || []
-      
-      // Apply frontend sorting for price if needed
-      if (sortBy.value === 'price-asc' || sortBy.value === 'price-desc') {
-        productsData = sortProductsByPrice(productsData, sortBy.value)
-        console.log('💰 Applied frontend price sorting')
-      }
+      const productsData = response.data.content || []
       
       products.value = productsData
       totalElements.value = response.data.totalElements || 0
@@ -112,39 +106,14 @@ export const useSanPhamStore = defineStore('sanPham', () => {
   }
   
   // Frontend sorting for price (since backend doesn't have aggregated price fields)
-  const sortProductsByPrice = (products, sortType) => {
-    console.log('💰 Sorting products by price:', sortType)
-    
-    return [...products].sort((a, b) => {
-      // Get price from giaThapNhat or giaCaoNhat if available
-      let priceA = a.giaThapNhat || a.giaCaoNhat || 0
-      let priceB = b.giaThapNhat || b.giaCaoNhat || 0
-      
-      // If no price info, try to extract from product name or use 0
-      if (!priceA && !priceB) {
-        return 0
-      }
-      if (!priceA) return 1  // Move products without price to end
-      if (!priceB) return -1 // Move products without price to end
-      
-      if (sortType === 'price-asc') {
-        return priceA - priceB
-      } else {
-        return priceB - priceA
-      }
-    })
+  const sortProductsByPrice = (products) => {
+    return [...products]
   }
   
   // Get sort parameter for API
   const getSortParam = () => {
     console.log('🔄 Getting sort param for:', sortBy.value)
     switch (sortBy.value) {
-      case 'price-asc':
-        // Sort by product name first, then handle price sorting in frontend if needed
-        return 'tenSanPham,asc'
-      case 'price-desc':
-        // Sort by product name first, then handle price sorting in frontend if needed  
-        return 'tenSanPham,desc'
       case 'name-asc':
         return 'tenSanPham,asc'
       case 'name-desc':
