@@ -69,7 +69,7 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * Thêm sản phẩm vào giỏ hàng
    */
-  const addToCart = async (ctspId, quantity = 1) => {
+  const addToCart = async ({ ctspId, soLuong = 1 }) => {
     loading.value = true
     error.value = null
 
@@ -79,18 +79,23 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
       }
 
-      const response = await cartService.addToCart(khachHangId, { ctspId, quantity })
+      const response = await cartService.addToCart(khachHangId, { ctspId: ctspId, quantity: soLuong })
 
-      if (response.success) {
-        cart.value = response.data
-        return { success: true, message: 'Đã thêm sản phẩm vào giỏ hàng' }
-      } else {
-        throw new Error(response.message || 'Không thể thêm sản phẩm')
+      // Assuming the service returns the updated cart directly
+      // And assuming the response structure from service is just the data
+      cart.value = response.data; // Or handle as per actual API response
+      
+      // Let's throw error if response indicates failure
+      if (response.success === false) {
+         throw new Error(response.message || 'Không thể thêm sản phẩm');
       }
+      
     } catch (err) {
       console.error('❌ Error adding to cart:', err)
-      error.value = err.message || 'Không thể thêm sản phẩm'
-      return { success: false, message: error.value }
+      const errorMessage = err.response?.data?.message || err.message || 'Không thể thêm sản phẩm'
+      error.value = errorMessage
+      // Re-throw the error so the calling component knows about it
+      throw new Error(errorMessage)
     } finally {
       loading.value = false
     }
