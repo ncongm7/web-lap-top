@@ -342,13 +342,34 @@ const handleSubmit = async () => {
 
     const response = await orderService.createOrder(orderData)
 
-    if (response.success) {
+    if (response.success || response.data) {
       // Clear checkout data
       sessionStorage.removeItem('checkout_data')
+      
+      // Get order ID from response
+      const orderId = response.data?.data?.id || response.data?.id
+      const orderCode = response.data?.data?.ma || response.data?.ma || 'N/A'
 
-      // Redirect to order success page or order detail
-      alert('Đặt hàng thành công! Chúng tôi sẽ gửi email xác nhận đến bạn.')
-      router.push({ name: 'account-orders' })
+      // Show clear message about order status
+      alert(
+        `✅ Đặt hàng thành công!\n\n` +
+        `Mã đơn hàng: ${orderCode}\n` +
+        `Trạng thái: Chờ xác nhận\n\n` +
+        `Đơn hàng của bạn đang chờ xác nhận từ quản trị viên. ` +
+        `Chúng tôi sẽ thông báo cho bạn khi đơn hàng được xác nhận.\n\n` +
+        `Bạn có thể theo dõi trạng thái đơn hàng trong trang "Đơn hàng của tôi".`
+      )
+
+      // Redirect to order detail page if we have order ID, otherwise go to orders list
+      if (orderId) {
+        router.push({ 
+          name: 'order-detail', 
+          params: { id: orderId },
+          query: { success: 'true' }
+        })
+      } else {
+        router.push({ name: 'account-orders' })
+      }
     } else {
       throw new Error(response.message || 'Không thể tạo đơn hàng')
     }

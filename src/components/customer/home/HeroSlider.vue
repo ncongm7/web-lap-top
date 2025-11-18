@@ -1,28 +1,51 @@
 <template>
     <div class="hero-slider">
-        <swiper :modules="modules" :slides-per-view="1" :space-between="0" :loop="true" :autoplay="{
-            delay: 5000,
-            disableOnInteraction: false,
-        }" :pagination="{ clickable: true }" :navigation="true" class="hero-swiper">
-            <swiper-slide v-for="(banner, index) in banners" :key="index">
-                <div class="slide-content" :style="{ backgroundColor: banner.bgColor }">
+        <swiper 
+            v-if="banners.length > 0"
+            :modules="modules" 
+            :slides-per-view="1" 
+            :space-between="0" 
+            :loop="banners.length > 1" 
+            :autoplay="{
+                delay: 5000,
+                disableOnInteraction: false,
+            }" 
+            :pagination="{ clickable: true }" 
+            :navigation="banners.length > 1" 
+            class="hero-swiper"
+        >
+            <swiper-slide v-for="(banner, index) in banners" :key="banner.id || index">
+                <div class="slide-content" :style="{ backgroundColor: banner.bgColor || '#047857' }">
                     <div class="container">
-                        <div class="slide-inner" :class="{ 'no-image': !banner.image }">
+                        <div class="slide-inner" :class="{ 'no-image': !banner.bannerImageUrl }">
                             <div class="slide-text">
-                                <h2 class="slide-title">{{ banner.title }}</h2>
-                                <p class="slide-desc">{{ banner.description }}</p>
-                                <router-link :to="banner.link" class="slide-btn">
-                                    {{ banner.buttonText }}
+                                <h2 class="slide-title">{{ banner.tenKm || banner.title }}</h2>
+                                <p class="slide-desc">{{ banner.moTa || banner.description }}</p>
+                                <router-link :to="banner.link || `/promotions/${banner.id}`" class="slide-btn">
+                                    {{ banner.buttonText || 'Xem ngay' }}
                                 </router-link>
                             </div>
-                            <div v-if="banner.image" class="slide-image">
-                                <img :src="banner.image" :alt="banner.title" />
+                            <div v-if="banner.bannerImageUrl" class="slide-image">
+                                <img :src="banner.bannerImageUrl" :alt="banner.tenKm || banner.title" />
                             </div>
                         </div>
                     </div>
                 </div>
             </swiper-slide>
         </swiper>
+        <div v-else class="empty-slider">
+            <div class="container">
+                <div class="slide-inner no-image">
+                    <div class="slide-text">
+                        <h2 class="slide-title">Chào mừng đến với cửa hàng laptop</h2>
+                        <p class="slide-desc">Khám phá các sản phẩm công nghệ hàng đầu</p>
+                        <router-link to="/products" class="slide-btn">
+                            Xem sản phẩm
+                        </router-link>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -36,32 +59,7 @@ import 'swiper/css/navigation'
 defineProps({
     banners: {
         type: Array,
-        default: () => [
-            {
-                title: 'Laptop Gaming Cao Cấp',
-                description: 'Giảm đến 30% các dòng laptop gaming hàng đầu',
-                buttonText: 'Mua ngay',
-                link: '/products?category=gaming',
-                image: '/banners/gaming-laptop.jpg',
-                bgColor: '#1e293b'
-            },
-            {
-                title: 'Laptop Văn Phòng Tiện Lợi',
-                description: 'Năng suất cao, pin trâu, giá tốt nhất',
-                buttonText: 'Khám phá',
-                link: '/products?category=office',
-                image: '/banners/office-laptop.jpg',
-                bgColor: '#0f172a'
-            },
-            {
-                title: 'MacBook Pro M3',
-                description: 'Chip M3 mới nhất, hiệu năng đột phá',
-                buttonText: 'Xem chi tiết',
-                link: '/products?brand=apple',
-                image: '/banners/macbook.jpg',
-                bgColor: '#334155'
-            }
-        ]
+        default: () => []
     }
 })
 
@@ -75,6 +73,15 @@ const modules = [Autoplay, Pagination, Navigation]
     position: relative;
     overflow: hidden;
     width: 100%;
+}
+
+.empty-slider {
+    width: 100%;
+    height: 500px;
+    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    display: flex;
+    align-items: center;
+    color: #ffffff;
 }
 
 .hero-swiper {

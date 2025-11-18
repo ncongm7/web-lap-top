@@ -2,8 +2,21 @@
     <div class="orders-page">
         <!-- Page Header -->
         <div class="page-header">
-            <h1 class="page-title">Đơn Hàng Của Tôi</h1>
-            <p class="page-subtitle">Quản lý và theo dõi đơn hàng của bạn</p>
+            <div class="header-content">
+                <div>
+                    <h1 class="page-title">
+                        <svg class="title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Đơn Hàng Của Tôi
+                    </h1>
+                    <p class="page-subtitle">Quản lý và theo dõi đơn hàng của bạn</p>
+                </div>
+                <div v-if="totalElements > 0" class="header-stats">
+                    <span class="stat-badge">{{ totalElements }} đơn hàng</span>
+                </div>
+            </div>
         </div>
 
         <!-- Toolbar: Filters & Search -->
@@ -218,16 +231,47 @@ onMounted(() => {
     margin-bottom: 32px;
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
 .page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 32px;
     font-weight: 700;
     color: #111827;
     margin-bottom: 8px;
 }
 
+.title-icon {
+    width: 32px;
+    height: 32px;
+    color: #3b82f6;
+}
+
 .page-subtitle {
     font-size: 16px;
     color: #6b7280;
+}
+
+.header-stats {
+    display: flex;
+    align-items: center;
+}
+
+.stat-badge {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Toolbar */
@@ -466,12 +510,27 @@ onMounted(() => {
         padding: 16px;
     }
 
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     .page-title {
         font-size: 24px;
     }
 
+    .title-icon {
+        width: 24px;
+        height: 24px;
+    }
+
     .page-subtitle {
         font-size: 14px;
+    }
+
+    .stat-badge {
+        font-size: 12px;
+        padding: 6px 12px;
     }
 
     .toolbar {

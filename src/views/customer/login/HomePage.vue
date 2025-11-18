@@ -160,24 +160,27 @@ const fetchFeaturedProducts = async () => {
         console.log('✅ [HomePage] Loaded featured products:', featuredProducts.value.length)
         console.log('🔍 [HomePage] Featured products IDs:', featuredProducts.value.map(p => ({ id: p.id, name: p.tenSanPham })))
 
-        // Mock data for promotions and reviews (sẽ thay bằng API sau)
-        activePromotions.value = [
-            {
-                id: 1,
-                name: 'Giảm giá Black Friday',
-                moTa: 'Giảm đến 40% cho các dòng laptop gaming cao cấp',
-                phanTramGiam: 40,
-                ngayKetThuc: '2025-11-30',
-            },
-            {
-                id: 2,
-                name: 'Khuyến mãi sinh viên',
-                moTa: 'Ưu đãi đặc biệt cho sinh viên với giảm giá 20%',
-                phanTramGiam: 20,
-                ngayKetThuc: '2025-12-15',
-            },
-        ]
+        // Lấy promotions từ API
+        console.log('🔄 [HomePage] Fetching promotions from API...')
+        const { getCampaigns } = await import('@/service/customer/promotionService')
+        const promotionsData = await getCampaigns('active', 0, 10)
+        activePromotions.value = promotionsData.campaigns || []
+        console.log('✅ [HomePage] Loaded promotions:', activePromotions.value.length)
 
+        // Cập nhật banners từ promotions (lấy 3 campaigns đầu tiên)
+        if (activePromotions.value.length > 0) {
+            banners.value = activePromotions.value.slice(0, 3).map(campaign => ({
+                id: campaign.id,
+                tenKm: campaign.tenKm,
+                moTa: campaign.moTa,
+                bannerImageUrl: campaign.bannerImageUrl,
+                link: `/promotions/${campaign.id}`,
+                buttonText: 'Xem ngay',
+                bgColor: '#047857'
+            }))
+        }
+
+        // Mock data for reviews (sẽ thay bằng API sau)
         topReviews.value = [
             {
                 id: 1,
@@ -211,7 +214,6 @@ const fetchFeaturedProducts = async () => {
     } catch (error) {
         console.error('Error loading homepage data:', error)
         productsError.value = 'Không thể tải dữ liệu. Vui lòng thử lại.'
-    } finally {
         loadingProducts.value = false
         loadingPromotions.value = false
         loadingReviews.value = false

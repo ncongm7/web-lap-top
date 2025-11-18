@@ -1,5 +1,7 @@
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/customer/cartStore'
+import { useAuthStore } from '@/stores/customer/authStore'
+import authService from '@/service/customer/authService'
 
 /**
  * ========================================
@@ -10,6 +12,7 @@ import { useCartStore } from '@/stores/customer/cartStore'
 export function useProductCart() {
   const router = useRouter()
   const cartStore = useCartStore()
+  const authStore = useAuthStore()
 
   /**
    * Thêm sản phẩm vào giỏ hàng
@@ -17,11 +20,38 @@ export function useProductCart() {
    */
   const handleAddToCart = async ({ productId, productName, quantity }) => {
     try {
-      const khachHangId = localStorage.getItem('userId')
+      // Đảm bảo authStore đã được initialize
+      if (!authStore.user && !authStore.token) {
+        authStore.initialize()
+      }
 
-      if (!khachHangId) {
+      // Kiểm tra authentication bằng authStore hoặc authService
+      // authStore.isAuthenticated là computed property
+      const isAuthenticated = authStore.isAuthenticated || authService.isAuthenticated()
+      
+      console.log('🔐 [useProductCart] Auth check:', {
+        authStoreIsAuthenticated: authStore.isAuthenticated,
+        authServiceIsAuthenticated: authService.isAuthenticated(),
+        token: authStore.token,
+        user: authStore.user,
+        localStorageToken: localStorage.getItem('customer_token'),
+        localStorageUser: localStorage.getItem('customer_user')
+      })
+      
+      if (!isAuthenticated) {
         // Thay vì alert, có thể mở modal đăng nhập
         alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
+        router.push('/login')
+        return false
+      }
+
+      // Lấy khachHangId từ authStore hoặc authService
+      const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
+      
+      console.log('👤 [useProductCart] Customer ID:', khachHangId)
+      
+      if (!khachHangId) {
+        alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
         router.push('/login')
         return false
       }

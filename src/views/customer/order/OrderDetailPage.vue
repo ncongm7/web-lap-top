@@ -145,26 +145,57 @@
 
                     <!-- Order Timeline -->
                     <div class="section">
-                        <h2 class="section-title">Trạng thái đơn hàng</h2>
-                        <div class="timeline">
-                            <div v-for="(step, index) in timelineSteps" :key="step.status"
-                                :class="['timeline-step', { active: isStepActive(step.status), completed: isStepCompleted(step.status) }]">
-                                <div class="timeline-marker">
-                                    <div class="timeline-dot"></div>
-                                    <div v-if="index < timelineSteps.length - 1" class="timeline-line"></div>
-                                </div>
-                                <div class="timeline-content">
-                                    <div class="timeline-title">{{ step.label }}</div>
-                                    <div v-if="step.date" class="timeline-date">{{ formatDate(step.date) }}</div>
-                                </div>
+                        <h2 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Trạng thái đơn hàng
+                        </h2>
+                        <OrderStatusTimeline
+                            :current-status="order.trangThai"
+                            :order-date="order.ngayTao"
+                            :payment-date="order.ngayThanhToan"
+                            :shipping-date="order.ngayGiaoHang"
+                            :completed-date="order.ngayHoanThanh"
+                        />
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div v-if="order.trangThaiThanhToan !== undefined" class="section payment-section">
+                        <h2 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Thông tin thanh toán
+                        </h2>
+                        <div class="payment-info">
+                            <div class="payment-row">
+                                <span class="payment-label">Trạng thái thanh toán:</span>
+                                <span :class="['payment-status', order.trangThaiThanhToan === 1 ? 'paid' : 'unpaid']">
+                                    {{ order.trangThaiThanhToan === 1 ? 'Đã thanh toán' : 'Chưa thanh toán' }}
+                                </span>
+                            </div>
+                            <div v-if="order.ngayThanhToan" class="payment-row">
+                                <span class="payment-label">Ngày thanh toán:</span>
+                                <span class="payment-value">{{ formatDate(order.ngayThanhToan) }}</span>
+                            </div>
+                            <div v-if="order.loaiHoaDon === 1" class="payment-row">
+                                <span class="payment-label">Phương thức:</span>
+                                <span class="payment-value">Thanh toán khi nhận hàng (COD)</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="section actions-section">
-                        <button v-if="canCancelOrder" class="action-button cancel-button" @click="handleCancelOrder"
-                            :disabled="isCancelling">
+                        <button
+                            v-if="canCancelOrder || order.canCancel"
+                            class="action-button cancel-button"
+                            @click="handleCancelOrder"
+                            :disabled="isCancelling"
+                        >
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -198,6 +229,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import orderService from '@/service/customer/orderService'
+import OrderStatusTimeline from '@/components/customer/order/OrderStatusTimeline.vue'
 
 // Router
 const route = useRoute()
@@ -210,17 +242,9 @@ const error = ref(null)
 const isCancelling = ref(false)
 const isReordering = ref(false)
 
-// Timeline configuration
-const timelineSteps = ref([
-    { status: 'CHO_THANH_TOAN', label: 'Chờ thanh toán', date: null },
-    { status: 'DA_THANH_TOAN', label: 'Đã thanh toán', date: null },
-    { status: 'DANG_GIAO', label: 'Đang giao hàng', date: null },
-    { status: 'HOAN_THANH', label: 'Hoàn thành', date: null }
-])
-
 // Computed
 const canCancelOrder = computed(() => {
-    return order.value && order.value.trangThai === 'CHO_THANH_TOAN'
+    return order.value && (order.value.trangThai === 'CHO_THANH_TOAN' || order.value.canCancel === true)
 })
 
 // Methods
@@ -246,9 +270,6 @@ const fetchOrderDetail = async () => {
 
         if (response.data && response.data.data) {
             order.value = response.data.data
-
-            // Cập nhật timeline với ngày thực tế
-            updateTimeline()
         } else {
             throw new Error('Dữ liệu đơn hàng không hợp lệ')
         }
@@ -260,34 +281,6 @@ const fetchOrderDetail = async () => {
     }
 }
 
-const updateTimeline = () => {
-    if (!order.value) return
-
-    // Map ngày tạo vào các bước timeline
-    const orderDate = order.value.ngayTao
-    const paymentDate = order.value.ngayThanhToan
-
-    timelineSteps.value[0].date = orderDate // CHO_THANH_TOAN
-    if (paymentDate) {
-        timelineSteps.value[1].date = paymentDate // DA_THANH_TOAN
-    }
-
-    // TODO: Cập nhật ngày cho DANG_GIAO và HOAN_THANH nếu có field trong DB
-}
-
-const isStepActive = (stepStatus) => {
-    return order.value && order.value.trangThai === stepStatus
-}
-
-const isStepCompleted = (stepStatus) => {
-    if (!order.value) return false
-
-    const statusOrder = ['CHO_THANH_TOAN', 'DA_THANH_TOAN', 'DANG_GIAO', 'HOAN_THANH']
-    const currentIndex = statusOrder.indexOf(order.value.trangThai)
-    const stepIndex = statusOrder.indexOf(stepStatus)
-
-    return stepIndex < currentIndex
-}
 
 const handleCancelOrder = async () => {
     if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
@@ -551,10 +544,19 @@ onMounted(() => {
 }
 
 .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 18px;
     font-weight: 700;
     color: #111827;
     margin-bottom: 20px;
+}
+
+.section-icon {
+    width: 20px;
+    height: 20px;
+    color: #3b82f6;
 }
 
 /* Products Table */
@@ -711,74 +713,57 @@ onMounted(() => {
     font-weight: 600;
 }
 
-/* Timeline */
-.timeline {
-    /* Container cho timeline */
+/* Payment Info */
+.payment-section {
+    border: 2px solid #e5e7eb;
+    background: linear-gradient(to bottom, #ffffff, #f9fafb);
 }
 
-.timeline-step {
-    display: flex;
-    gap: 16px;
-    position: relative;
-}
-
-.timeline-marker {
-    position: relative;
+.payment-info {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+}
+
+.payment-row {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
 }
 
-.timeline-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    border: 3px solid #ffffff;
-    box-shadow: 0 0 0 2px #e5e7eb;
-    z-index: 1;
+.payment-row:last-child {
+    border-bottom: none;
 }
 
-.timeline-step.active .timeline-dot {
-    background: #3b82f6;
-    box-shadow: 0 0 0 2px #3b82f6;
-}
-
-.timeline-step.completed .timeline-dot {
-    background: #10b981;
-    box-shadow: 0 0 0 2px #10b981;
-}
-
-.timeline-line {
-    width: 2px;
-    flex: 1;
-    background: #e5e7eb;
-    margin-top: 4px;
-}
-
-.timeline-step.completed .timeline-line {
-    background: #10b981;
-}
-
-.timeline-content {
-    padding-bottom: 24px;
-}
-
-.timeline-title {
-    font-size: 15px;
-    font-weight: 600;
+.payment-label {
+    font-size: 14px;
     color: #6b7280;
-    margin-bottom: 4px;
+    font-weight: 500;
 }
 
-.timeline-step.active .timeline-title,
-.timeline-step.completed .timeline-title {
+.payment-value {
+    font-size: 14px;
     color: #111827;
+    font-weight: 600;
 }
 
-.timeline-date {
+.payment-status {
+    padding: 4px 12px;
+    border-radius: 12px;
     font-size: 13px;
-    color: #9ca3af;
+    font-weight: 600;
+}
+
+.payment-status.paid {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.payment-status.unpaid {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 /* Actions */

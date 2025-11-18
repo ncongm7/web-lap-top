@@ -5,10 +5,15 @@
 
             <div v-else-if="promotions.length > 0" class="promotions-grid">
                 <div v-for="promotion in promotions" :key="promotion.id" class="promotion-card">
-                    <div class="promotion-badge">{{ promotion.discount }}% OFF</div>
+                    <div v-if="promotion.bannerImageUrl" class="promotion-image">
+                        <img :src="promotion.bannerImageUrl" :alt="promotion.tenKm" />
+                    </div>
+                    <div class="promotion-badge" v-if="promotion.giaTri">
+                        Giảm {{ formatPrice(promotion.giaTri) }}
+                    </div>
                     <div class="promotion-content">
-                        <h3 class="promotion-title">{{ promotion.name }}</h3>
-                        <p class="promotion-desc">{{ promotion.moTa }}</p>
+                        <h3 class="promotion-title">{{ promotion.tenKm || promotion.name }}</h3>
+                        <p class="promotion-desc">{{ promotion.moTa || promotion.description }}</p>
                         <div class="promotion-meta">
                             <span class="promotion-date">
                                 🕐 Đến {{ formatDate(promotion.ngayKetThuc) }}
@@ -42,6 +47,14 @@ defineProps({
         default: false
     }
 })
+
+const formatPrice = (price) => {
+    if (!price) return ''
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(price)
+}
 </script>
 
 <style scoped>
@@ -72,6 +85,21 @@ defineProps({
     overflow: hidden;
     position: relative;
     transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.promotion-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: #f1f5f9;
+}
+
+.promotion-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .promotion-card:hover {

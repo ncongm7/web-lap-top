@@ -27,7 +27,8 @@
         <!-- Footer: Trạng thái -->
         <div class="order-card__footer">
             <span :class="['status-badge', getStatusClass(order.trangThai)]">
-                {{ getStatusText(order.trangThai) }}
+                <span class="status-icon">{{ getStatusIcon(order.trangThai) }}</span>
+                <span class="status-text">{{ getStatusText(order.trangThai) }}</span>
             </span>
         </div>
     </div>
@@ -106,6 +107,17 @@ const getStatusClass = (status) => {
     }
 
     return classMap[status] || 'status-unknown'
+}
+
+const getStatusIcon = (status) => {
+    const iconMap = {
+        'CHO_THANH_TOAN': '⏳',
+        'DA_THANH_TOAN': '✅',
+        'DA_HUY': '❌',
+        'DANG_GIAO': '🚚',
+        'HOAN_THANH': '🎉'
+    }
+    return iconMap[status] || '❓'
 }
 </script>
 
@@ -208,13 +220,32 @@ const getStatusClass = (status) => {
 }
 
 .status-badge {
-    display: inline-block;
-    padding: 6px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
     text-align: center;
-    min-width: 120px;
+    min-width: 140px;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.status-text {
+    line-height: 1;
 }
 
 /* Status Colors */
