@@ -18,7 +18,7 @@ export const sanPhamService = {
   // Tìm kiếm sản phẩm theo từ khóa
   searchProducts(keyword, params = {}) {
     return axios.get(`${API_BASE_URL}/search/keyword/page`, {
-      params: { keyword, ...params }
+      params: { keyword, ...params },
     })
   },
 
@@ -29,30 +29,34 @@ export const sanPhamService = {
       trangThai: filters.status, // Map status -> trangThai for backend
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
-      ...params
+      ...params,
     }
-    
+
     console.log('🌐 API call params before cleanup:', searchParams)
-    
+
     // Remove null/undefined values to clean up the request
-    Object.keys(searchParams).forEach(key => {
-      if (searchParams[key] === null || searchParams[key] === undefined || searchParams[key] === '') {
+    Object.keys(searchParams).forEach((key) => {
+      if (
+        searchParams[key] === null ||
+        searchParams[key] === undefined ||
+        searchParams[key] === ''
+      ) {
         delete searchParams[key]
       }
     })
-    
+
     console.log('🌐 Final API call params:', searchParams)
     console.log('🌐 API URL:', `${API_BASE_URL}/search/advanced-filter/page`)
-    
+
     return axios.get(`${API_BASE_URL}/search/advanced-filter/page`, {
-      params: searchParams
+      params: searchParams,
     })
   },
 
   // Lấy gợi ý tìm kiếm (autocomplete)
   getSearchSuggestions(keyword) {
     return axios.get(`${API_BASE_URL}/search/keyword`, {
-      params: { keyword }
+      params: { keyword },
     })
   },
 
@@ -67,8 +71,16 @@ export const sanPhamService = {
   },
 
   // Lấy chi tiết sản phẩm kèm thông tin giảm giá
-  getProductDetailsWithDiscount(sanPhamId) {
-    return axios.get(`${CTSP_API_BASE_URL}/san-pham/${sanPhamId}/with-discount`)
+  async getProductDetailsWithDiscount(sanPhamId) {
+    try {
+      return await axios.get(`${CTSP_API_BASE_URL}/san-pham/${sanPhamId}/with-discount`)
+    } catch (error) {
+      console.warn(
+        '[san_pham_service] /with-discount failed, fallback to basic product detail',
+        error?.response?.status,
+      )
+      return axios.get(`${CTSP_API_BASE_URL}/san-pham/${sanPhamId}`)
+    }
   },
 
   // Lấy chi tiết sản phẩm theo ID chi tiết
@@ -80,7 +92,6 @@ export const sanPhamService = {
   getImagesByProductDetailId(ctspId) {
     return axios.get(`${HINH_ANH_API_BASE_URL}/ctsp/${ctspId}`)
   },
-
 }
 
 export default sanPhamService
