@@ -35,8 +35,27 @@
                 </div>
                 <div class="header-right">
                     <span :class="['status-badge-large', getStatusClass(order.trangThai)]">
+                        <span class="status-icon-large">{{ getStatusIcon(order.trangThai) }}</span>
                         {{ getStatusText(order.trangThai) }}
                     </span>
+                </div>
+            </div>
+
+            <!-- Status Timeline Section (Prominent) -->
+            <div class="status-timeline-section">
+                <div class="section-header">
+                    <h2 class="section-title-large">
+                        <svg class="section-icon-large" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Trạng thái đơn hàng
+                    </h2>
+                </div>
+                <div class="timeline-wrapper">
+                    <OrderStatusTimeline :current-status="order.trangThai" :order-date="order.ngayTao"
+                        :payment-date="order.ngayThanhToan" :shipping-date="order.ngayGiaoHang"
+                        :completed-date="order.ngayHoanThanh" />
                 </div>
             </div>
 
@@ -152,13 +171,9 @@
                             </svg>
                             Trạng thái đơn hàng
                         </h2>
-                        <OrderStatusTimeline
-                            :current-status="order.trangThai"
-                            :order-date="order.ngayTao"
-                            :payment-date="order.ngayThanhToan"
-                            :shipping-date="order.ngayGiaoHang"
-                            :completed-date="order.ngayHoanThanh"
-                        />
+                        <OrderStatusTimeline :current-status="order.trangThai" :order-date="order.ngayTao"
+                            :payment-date="order.ngayThanhToan" :shipping-date="order.ngayGiaoHang"
+                            :completed-date="order.ngayHoanThanh" />
                     </div>
 
                     <!-- Payment Info -->
@@ -190,12 +205,8 @@
 
                     <!-- Action Buttons -->
                     <div class="section actions-section">
-                        <button
-                            v-if="canCancelOrder || order.canCancel"
-                            class="action-button cancel-button"
-                            @click="handleCancelOrder"
-                            :disabled="isCancelling"
-                        >
+                        <button v-if="canCancelOrder || order.canCancel" class="action-button cancel-button"
+                            @click="handleCancelOrder" :disabled="isCancelling">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -388,6 +399,17 @@ const getStatusClass = (status) => {
     return classMap[status] || 'status-unknown'
 }
 
+const getStatusIcon = (status) => {
+    const iconMap = {
+        'CHO_THANH_TOAN': '⏳',
+        'DA_THANH_TOAN': '✅',
+        'DA_HUY': '❌',
+        'DANG_GIAO': '🚚',
+        'HOAN_THANH': '🎉'
+    }
+    return iconMap[status] || '❓'
+}
+
 const handleImageError = (event) => {
     event.target.src = '/placeholder-product.png'
 }
@@ -519,12 +541,90 @@ onMounted(() => {
 }
 
 .status-badge-large {
-    padding: 10px 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
     border-radius: 24px;
     font-size: 16px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-icon-large {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.status-badge-large.status-pending {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.status-badge-large.status-paid {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+}
+
+.status-badge-large.status-shipping {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    color: #9a3412;
+}
+
+.status-badge-large.status-completed {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+}
+
+.status-badge-large.status-cancelled {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+}
+
+.status-badge-large.status-unknown {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #6b7280;
+}
+
+/* Status Timeline Section (Prominent) */
+.status-timeline-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 2px solid #e5e7eb;
+}
+
+.section-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.section-title-large {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.section-icon-large {
+    width: 28px;
+    height: 28px;
+    color: #3b82f6;
+}
+
+.timeline-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* 2 Column Layout */
@@ -561,7 +661,9 @@ onMounted(() => {
 
 /* Products Table */
 .products-table {
-    /* Container cho danh sách sản phẩm */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .product-row {
@@ -679,7 +781,9 @@ onMounted(() => {
 
 /* Shipping Info */
 .info-box {
-    /* Container cho thông tin */
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .info-row {

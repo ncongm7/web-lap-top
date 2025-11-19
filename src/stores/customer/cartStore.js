@@ -79,20 +79,51 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
       }
 
+      if (!ctspId) {
+        throw new Error('ID sản phẩm không hợp lệ')
+      }
+
+      if (soLuong < 1) {
+        throw new Error('Số lượng phải lớn hơn 0')
+      }
+
       const response = await cartService.addToCart(khachHangId, { ctspId: ctspId, quantity: soLuong })
 
       // Assuming the service returns the updated cart directly
       // And assuming the response structure from service is just the data
-      cart.value = response.data; // Or handle as per actual API response
-      
-      // Let's throw error if response indicates failure
-      if (response.success === false) {
-         throw new Error(response.message || 'Không thể thêm sản phẩm');
+      if (response.success !== false && response.data) {
+        cart.value = response.data
+      } else if (response.success === false) {
+        throw new Error(response.message || 'Không thể thêm sản phẩm')
       }
-      
+
     } catch (err) {
       console.error('❌ Error adding to cart:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Không thể thêm sản phẩm'
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      })
+
+      // Parse error message từ nhiều nguồn
+      let errorMessage = 'Không thể thêm sản phẩm vào giỏ hàng'
+
+      if (err.response?.data) {
+        const errorData = err.response.data
+        // Nếu là ResponseObject với message
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.data?.message) {
+          errorMessage = errorData.data.message
+        }
+        // Nếu là validation error từ Spring
+        else if (Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.map(e => e.defaultMessage || e.message).join(', ')
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
       error.value = errorMessage
       // Re-throw the error so the calling component knows about it
       throw new Error(errorMessage)
@@ -214,22 +245,94 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập')
       }
 
-      const response = await voucherService.applyVoucher(khachHangId, voucherCode)
+      if (!voucherCode || !voucherCode.trim()) {
+        throw new Error('Vui lòng nhập mã giảm giá')
+      }
 
-      if (response.success && response.data.success) {
-        cart.value = response.data.updatedCart
+      const response = await voucherService.applyVoucher(khachHangId, voucherCode.trim())
+      console.log('🔍 [cartStore] applyVoucher response:', response)
+
+      // Parse response structure: ResponseObject<VoucherApplyResponse>
+      // Structure: { success: true, data: VoucherApplyResponse, message: "..." }
+      // VoucherApplyResponse: { success: true/false, message: "...", discountAmount: ..., updatedCart: ... }
+
+      let voucherData = null
+      if (response?.data) {
+        // response.data là VoucherApplyResponse
+        voucherData = response.data
+      } else if (response) {
+        // Nếu response là VoucherApplyResponse trực tiếp
+        voucherData = response
+      }
+
+      if (voucherData && voucherData.success) {
+        // Cập nhật cart từ updatedCart trong response
+        if (voucherData.updatedCart) {
+          cart.value = voucherData.updatedCart
+        }
         return {
           success: true,
-          message: response.data.message,
-          discountAmount: response.data.discountAmount,
+          message: voucherData.message || 'Áp dụng mã giảm giá thành công',
+          discountAmount: voucherData.discountAmount || 0,
         }
       } else {
-        throw new Error(response.data?.message || response.message || 'Không thể áp dụng voucher')
+        // Voucher không hợp lệ hoặc có lỗi
+        const errorMessage = voucherData?.message || response?.message || 'Không thể áp dụng voucher'
+        throw new Error(errorMessage)
       }
     } catch (err) {
       console.error('❌ Error applying voucher:', err)
-      error.value = err.message || 'Không thể áp dụng voucher'
-      return { success: false, message: error.value }
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        fullResponse: err.response,
+      })
+
+      // Parse error message từ nhiều nguồn
+      let errorMessage = 'Không thể áp dụng voucher'
+
+      if (err.response?.data) {
+        const errorData = err.response.data
+        console.log('🔍 Error data structure:', JSON.stringify(errorData, null, 2))
+
+        // 1. Nếu là ResponseObject với success = false (từ controller line 52)
+        // Structure: { success: false, data: VoucherApplyResponse, message: "..." }
+        if (errorData.data && typeof errorData.data === 'object') {
+          // errorData.data là VoucherApplyResponse
+          if (errorData.data.message) {
+            errorMessage = errorData.data.message
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          }
+        }
+        // 2. Nếu là ApiException từ GlobalExceptionHandler
+        // Structure: { status: "FAILED", code: "...", message: "..." }
+        else if (errorData.status === 'FAILED' && errorData.message) {
+          errorMessage = errorData.message
+        }
+        // 3. Nếu là validation error từ Spring (@Valid) - GlobalExceptionHandler
+        // Structure: { status: "FAILED", code: "VALIDATION_ERROR", errors: {...} }
+        else if (errorData.status === 'FAILED' && errorData.errors) {
+          const errorMessages = Object.values(errorData.errors)
+          errorMessage = errorMessages.length > 0
+            ? errorMessages.join(', ')
+            : 'Dữ liệu không hợp lệ'
+        }
+        // 4. Nếu là ResponseObject trực tiếp
+        else if (errorData.message) {
+          errorMessage = errorData.message
+        }
+        // 5. Fallback: lấy từ code hoặc error
+        else if (errorData.code || errorData.error) {
+          errorMessage = errorData.message || errorData.error || 'Lỗi từ server'
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
+      error.value = errorMessage
+      return { success: false, message: errorMessage }
     } finally {
       loading.value = false
     }
@@ -238,11 +341,20 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * Xóa voucher
    */
-  const removeVoucher = () => {
-    if (cart.value) {
-      cart.value.appliedVoucher = null
-      cart.value.discount = 0
-      cart.value.total = cart.value.subtotal + cart.value.shippingFee
+  const removeVoucher = async () => {
+    if (!cart.value) return
+
+    // Cập nhật local state trước
+    cart.value.appliedVoucher = null
+    cart.value.discount = 0
+    cart.value.total = cart.value.subtotal + cart.value.shippingFee
+
+    // Refresh cart từ backend để đồng bộ
+    try {
+      await fetchCart()
+    } catch (err) {
+      console.error('❌ Error refreshing cart after removing voucher:', err)
+      // Nếu refresh fail, vẫn giữ state local đã cập nhật
     }
   }
 

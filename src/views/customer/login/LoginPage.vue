@@ -2,167 +2,28 @@
     <div class="login-page">
         <div class="login-container">
             <div class="login-card">
-                <!-- Logo và Tiêu đề -->
-                <div class="login-header">
-                    <router-link to="/" class="logo-link">
-                        <div class="logo">
-                            <span class="logo-icon">💻</span>
-                        </div>
-                        <h1 class="brand-name">VietLapTop</h1>
-                    </router-link>
-                    <p class="brand-tagline">Đăng nhập để trải nghiệm mua sắm tốt nhất</p>
+                <div class="loading-message">
+                    <div class="spinner"></div>
+                    <p>Đang chuyển hướng...</p>
                 </div>
-
-                <!-- Form đăng nhập -->
-                <form @submit.prevent="handleLogin" class="login-form">
-                    <!-- Thông báo lỗi -->
-                    <div v-if="errorMessage" class="alert alert-danger">
-                        <i class="icon">⚠️</i>
-                        <span>{{ errorMessage }}</span>
-                    </div>
-
-                    <!-- Input Tên đăng nhập -->
-                    <div class="form-group">
-                        <label for="tenDangNhap" class="form-label">
-                            Tên đăng nhập hoặc Email
-                        </label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">👤</span>
-                            <input type="text" id="tenDangNhap" class="form-control"
-                                placeholder="Nhập tên đăng nhập hoặc email" v-model="tenDangNhap" :disabled="isLoading"
-                                required autofocus />
-                        </div>
-                    </div>
-
-                    <!-- Input Mật khẩu -->
-                    <div class="form-group">
-                        <label for="matKhau" class="form-label">
-                            Mật khẩu
-                        </label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">🔒</span>
-                            <input :type="showPassword ? 'text' : 'password'" id="matKhau" class="form-control"
-                                placeholder="Nhập mật khẩu" v-model="matKhau" :disabled="isLoading" required />
-                            <button type="button" class="password-toggle" @click="showPassword = !showPassword"
-                                :disabled="isLoading">
-                                <span v-if="showPassword">👁️</span>
-                                <span v-else>👁️‍🗨️</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Remember me & Forgot password -->
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox" v-model="rememberMe" :disabled="isLoading" />
-                            <span>Ghi nhớ đăng nhập</span>
-                        </label>
-                        <router-link to="/forgot-password" class="forgot-password">
-                            Quên mật khẩu?
-                        </router-link>
-                    </div>
-
-                    <!-- Nút Đăng nhập -->
-                    <button type="submit" class="btn btn-login" :disabled="isLoading || !tenDangNhap || !matKhau">
-                        <span v-if="isLoading" class="spinner"></span>
-                        <span v-if="isLoading">Đang đăng nhập...</span>
-                        <span v-else>Đăng nhập</span>
-                    </button>
-
-                    <!-- Đăng ký -->
-                    <div class="register-link">
-                        <span>Chưa có tài khoản?</span>
-                        <router-link to="/register">Đăng ký ngay</router-link>
-                    </div>
-                </form>
-
-                <!-- Divider -->
-                <div class="divider">
-                    <span>Hoặc đăng nhập với</span>
-                </div>
-
-                <!-- Social Login -->
-                <div class="social-login">
-                    <button type="button" class="btn-social btn-google" disabled>
-                        <span>G</span>
-                        <span>Google</span>
-                    </button>
-                    <button type="button" class="btn-social btn-facebook" disabled>
-                        <span>f</span>
-                        <span>Facebook</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="login-footer">
-                <p>© 2024 VietLapTop. Laptop chính hãng, giá tốt nhất.</p>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/customer/authStore'
-import { useToast } from 'vue-toastification'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useLayoutStore } from '@/stores/customer/layoutStore'
 
 const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-const toast = useToast()
+const layoutStore = useLayoutStore()
 
-// State
-const tenDangNhap = ref('')
-const matKhau = ref('')
-const showPassword = ref(false)
-const rememberMe = ref(false)
-const isLoading = ref(false)
-const errorMessage = ref('')
-
-/**
- * Xử lý đăng nhập
- */
-const handleLogin = async () => {
-    // Xóa thông báo lỗi cũ
-    errorMessage.value = ''
-
-    // Validate
-    if (!tenDangNhap.value || !matKhau.value) {
-        errorMessage.value = 'Vui lòng nhập đầy đủ thông tin'
-        return
-    }
-
-    isLoading.value = true
-
-    try {
-        // Gọi action login từ authStore
-        await authStore.login({
-            tenDangNhap: tenDangNhap.value.trim(),
-            matKhau: matKhau.value
-        })
-
-        // Đăng nhập thành công
-        toast.success(`Chào mừng ${authStore.getUserName}!`)
-
-        // Redirect về trang trước đó hoặc trang chủ
-        const redirect = route.query.redirect || '/'
-        router.push(redirect)
-    } catch (error) {
-        console.error('Lỗi đăng nhập:', error)
-
-        // Hiển thị thông báo lỗi
-        errorMessage.value = error.response?.data?.message ||
-            error.response?.data?.error ||
-            authStore.error ||
-            'Tên đăng nhập hoặc mật khẩu không chính xác'
-
-        toast.error(errorMessage.value)
-    } finally {
-        isLoading.value = false
-    }
-}
+// Redirect về trang chủ và mở modal đăng nhập
+onMounted(() => {
+  layoutStore.openLoginModal()
+  router.replace({ name: 'home' })
+})
 </script>
 
 <style scoped>
@@ -187,6 +48,36 @@ const handleLogin = async () => {
     box-shadow: 0 20px 60px rgba(5, 150, 105, 0.15);
     padding: clamp(32px, 5vw, 48px);
     animation: slideIn 0.5s ease-out;
+    text-align: center;
+}
+
+.loading-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+}
+
+.loading-message p {
+    color: #64748b;
+    font-size: 16px;
+    margin: 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(16, 185, 129, 0.2);
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes slideIn {

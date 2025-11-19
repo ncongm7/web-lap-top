@@ -40,6 +40,12 @@ const router = createRouter({
           meta: { title: 'Thanh toán - LaptopStore', requiresAuth: true },
         },
         {
+          path: 'order-success',
+          name: 'order-success',
+          component: () => import('@/views/customer/OrderSuccessPage.vue'),
+          meta: { title: 'Đặt hàng thành công - LaptopStore', requiresAuth: true },
+        },
+        {
           path: 'about',
           name: 'about',
           component: () => import('@/views/customer/AboutPage.vue'),
@@ -77,6 +83,7 @@ const router = createRouter({
           component: () => import('@/views/customer/promotions/PromotionDetailPage.vue'),
           meta: { title: 'Chi tiết khuyến mãi - LaptopStore' },
         },
+        // Login/Register routes - redirect về trang chủ và mở modal
         {
           path: 'login',
           name: 'login',

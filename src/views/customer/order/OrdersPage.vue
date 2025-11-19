@@ -104,11 +104,13 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/customer/authStore'
 import orderService from '@/service/customer/orderService'
 import OrderCard from '@/components/customer/order/OrderCard.vue'
 
-// Router
+// Router & Store
 const router = useRouter()
+const authStore = useAuthStore()
 
 // State
 const orders = ref([])
@@ -145,10 +147,10 @@ const fetchOrders = async () => {
             status: selectedStatus.value
         })
 
-        // Lấy khachHangId từ localStorage (lưu khi đăng nhập)
-        const khachHangId = localStorage.getItem('userId')
+        // Lấy khachHangId từ authStore (nhất quán với các component khác)
+        const khachHangId = authStore.getCustomerId()
 
-        console.log('🔍 DEBUG - khachHangId from localStorage:', khachHangId)
+        console.log('🔍 DEBUG - khachHangId from authStore:', khachHangId)
         console.log('🔍 DEBUG - typeof khachHangId:', typeof khachHangId)
 
         if (!khachHangId) {

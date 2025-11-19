@@ -13,14 +13,8 @@
 
     <!-- Voucher Input Form -->
     <div v-else class="voucher-input-form">
-      <input
-        v-model="voucherCode"
-        type="text"
-        placeholder="Nhập mã giảm giá"
-        class="voucher-input"
-        :disabled="loading"
-        @keyup.enter="applyVoucher"
-      />
+      <input v-model="voucherCode" type="text" placeholder="Nhập mã giảm giá" class="voucher-input" :disabled="loading"
+        @keyup.enter="applyVoucher" />
       <button @click="applyVoucher" class="apply-btn" :disabled="!voucherCode.trim() || loading">
         {{ loading ? 'Đang xử lý...' : 'Áp dụng' }}
       </button>
@@ -39,12 +33,8 @@
 
       <transition name="slide-down">
         <div v-if="showVouchers" class="vouchers-list">
-          <div
-            v-for="voucher in availableVouchers"
-            :key="voucher.id"
-            class="voucher-card"
-            @click="selectVoucher(voucher.ma)"
-          >
+          <div v-for="voucher in availableVouchers" :key="voucher.id" class="voucher-card"
+            @click="selectVoucher(voucher.ma)">
             <div class="voucher-card-header">
               <span class="voucher-card-code">{{ voucher.ma }}</span>
               <span class="voucher-card-discount">
@@ -64,33 +54,31 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useCart } from '@/composables/cart/useCart'
+import { useVoucher } from '@/composables/cart/useVoucher'
 
-defineProps({
-  appliedVoucher: {
-    type: Object,
-    default: null,
-  },
-  discountAmount: {
-    type: Number,
-    default: 0,
-  },
-  availableVouchers: {
-    type: Array,
-    default: () => [],
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-})
+// Dùng composables thay vì props/emits
+const { loading } = useCart()
+const {
+  availableVouchers,
+  appliedVoucher,
+  discountAmount,
+  applyVoucher: applyVoucherFromComposable,
+  removeVoucher: removeVoucherFromComposable,
+  init: initVoucher,
+} = useVoucher()
 
-const emit = defineEmits(['apply', 'remove'])
-
+// Local state
 const voucherCode = ref('')
 const message = ref('')
 const messageType = ref('') // 'success' or 'error'
 const showVouchers = ref(false)
+
+// Initialize voucher on mount
+onMounted(() => {
+  initVoucher()
+})
 
 const applyVoucher = async () => {
   if (!voucherCode.value.trim()) return
@@ -98,7 +86,7 @@ const applyVoucher = async () => {
   message.value = ''
   messageType.value = ''
 
-  const result = await emit('apply', voucherCode.value.trim())
+  const result = await applyVoucherFromComposable(voucherCode.value.trim())
 
   if (result && result.success) {
     messageType.value = 'success'
@@ -115,8 +103,8 @@ const applyVoucher = async () => {
   }, 3000)
 }
 
-const removeVoucher = () => {
-  emit('remove')
+const removeVoucher = async () => {
+  await removeVoucherFromComposable()
   message.value = ''
   voucherCode.value = ''
 }

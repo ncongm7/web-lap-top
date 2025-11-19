@@ -18,18 +18,31 @@ export const orderService = {
    * @param {number} page - Trang hiện tại (bắt đầu từ 0)
    * @param {number} size - Số lượng đơn mỗi trang
    * @param {string} status - Trạng thái đơn hàng (CHO_THANH_TOAN, DA_THANH_TOAN, DA_HUY, DANG_GIAO, HOAN_THANH)
-   * @param {string} khachHangId - UUID của khách hàng
+   * @param {string} khachHangId - UUID của khách hàng (BẮT BUỘC)
    * @returns {Promise} Response chứa danh sách đơn hàng
    */
   getOrders(page = 0, size = 10, status = null, khachHangId = null) {
-    const params = { page, size }
+    // Validate khachHangId là bắt buộc
+    if (!khachHangId) {
+      return Promise.reject(new Error('khachHangId là bắt buộc để lấy danh sách đơn hàng'))
+    }
+
+    // Validate page và size là số
+    if (typeof page !== 'number' || page < 0) {
+      page = 0
+    }
+    if (typeof size !== 'number' || size < 1) {
+      size = 10
+    }
+
+    const params = {
+      khachHangId, // Đặt khachHangId lên đầu để đảm bảo luôn có
+      page,
+      size
+    }
 
     if (status) {
       params.trangThai = status
-    }
-
-    if (khachHangId) {
-      params.khachHangId = khachHangId
     }
 
     return axiosInstance.get('/api/v1/customer/orders', { params })

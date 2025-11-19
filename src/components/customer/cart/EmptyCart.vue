@@ -5,12 +5,18 @@
     <p class="empty-text">
       Hãy khám phá những sản phẩm tuyệt vời của chúng tôi và thêm chúng vào giỏ hàng!
     </p>
-    <button @click="$emit('shop-now')" class="shop-now-btn">Mua sắm ngay</button>
+    <button @click="goToProducts" class="shop-now-btn">Mua sắm ngay</button>
   </div>
 </template>
 
 <script setup>
-defineEmits(['shop-now'])
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToProducts = () => {
+  router.push('/products')
+}
 </script>
 
 <style scoped>
@@ -32,10 +38,12 @@ defineEmits(['shop-now'])
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }

@@ -12,6 +12,7 @@ export const useLayoutStore = defineStore('customer-layout', {
     isSearchOpen: false,
     showLoginModal: false,
     pendingNavigation: null, // Lưu route đang chờ sau khi đăng nhập
+    showRegisterTab: false, // Nếu true, modal sẽ tự động chuyển sang tab đăng ký
   }),
 
   getters: {
@@ -114,10 +115,13 @@ export const useLayoutStore = defineStore('customer-layout', {
 
     /**
      * Hiển thị modal đăng nhập
+     * @param {string|null} pendingRoute - Route đang chờ sau khi đăng nhập
+     * @param {boolean} showRegisterTab - Nếu true, tự động chuyển sang tab đăng ký
      */
-    openLoginModal(pendingRoute = null) {
+    openLoginModal(pendingRoute = null, showRegisterTab = false) {
       this.showLoginModal = true
       this.pendingNavigation = pendingRoute
+      this.showRegisterTab = showRegisterTab
     },
 
     /**
@@ -126,6 +130,7 @@ export const useLayoutStore = defineStore('customer-layout', {
     closeLoginModal() {
       this.showLoginModal = false
       this.pendingNavigation = null
+      this.showRegisterTab = false
     },
 
     /**

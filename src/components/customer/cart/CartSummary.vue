@@ -37,7 +37,7 @@
     <div v-if="selectedCount > 0" class="selected-info">Đã chọn {{ selectedCount }} sản phẩm</div>
 
     <!-- Checkout Button -->
-    <button @click="$emit('checkout')" class="checkout-btn" :disabled="!canCheckout || loading">
+    <button @click="checkout" class="checkout-btn" :disabled="!canCheckout || loading">
       <span v-if="!loading">Tiến hành thanh toán</span>
       <span v-else>Đang xử lý...</span>
     </button>
@@ -53,42 +53,24 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useCart } from '@/composables/cart/useCart'
 
-const props = defineProps({
-  subtotal: {
-    type: Number,
-    default: 0,
-  },
-  discount: {
-    type: Number,
-    default: 0,
-  },
-  shippingFee: {
-    type: Number,
-    default: 0,
-  },
-  total: {
-    type: Number,
-    default: 0,
-  },
-  appliedVoucher: {
-    type: Object,
-    default: null,
-  },
-  selectedCount: {
-    type: Number,
-    default: 0,
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-})
+// Dùng composable thay vì props/emits
+const {
+  subtotal,
+  discount,
+  shippingFee,
+  total,
+  appliedVoucher,
+  selectedItems,
+  loading,
+  checkout,
+} = useCart()
 
-defineEmits(['checkout'])
+const selectedCount = computed(() => selectedItems.value.length)
 
 const canCheckout = computed(() => {
-  return props.selectedCount > 0 && props.total > 0
+  return selectedCount.value > 0 && total.value > 0
 })
 
 const formatPrice = (price) => {

@@ -24,27 +24,15 @@
       <form v-if="isLogin" @submit.prevent="handleLogin" class="form">
         <div class="form-group">
           <label>Số điện thoại</label>
-          <input
-            v-model="loginForm.soDienThoai"
-            type="text"
-            placeholder="Nhập số điện thoại"
-            required
-            :disabled="loading"
-            @input="error = ''"
-          />
+          <input v-model="loginForm.soDienThoai" type="text" placeholder="Nhập số điện thoại" required
+            :disabled="loading" @input="error = ''" />
         </div>
 
         <div class="form-group">
           <label>Mật khẩu</label>
           <div class="password-input">
-            <input
-              v-model="loginForm.matKhau"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Nhập mật khẩu"
-              required
-              :disabled="loading"
-              @input="error = ''"
-            />
+            <input v-model="loginForm.matKhau" :type="showPassword ? 'text' : 'password'" placeholder="Nhập mật khẩu"
+              required :disabled="loading" @input="error = ''" />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -66,64 +54,30 @@
       <form v-else @submit.prevent="handleRegister" class="form">
         <div class="form-group">
           <label>Họ và tên <span class="required">*</span></label>
-          <input
-            v-model="registerForm.hoTen"
-            type="text"
-            placeholder="Nhập họ và tên"
-            required
-            :disabled="loading"
-          />
+          <input v-model="registerForm.hoTen" type="text" placeholder="Nhập họ và tên" required :disabled="loading" />
         </div>
 
         <div class="form-group">
           <label>Số điện thoại <span class="required">*</span></label>
-          <input
-            v-model="registerForm.soDienThoai"
-            type="text"
-            placeholder="Nhập số điện thoại (VD: 0987654321)"
-            required
-            pattern="^0\d{9}$"
-            :disabled="loading"
-          />
+          <input v-model="registerForm.soDienThoai" type="text" placeholder="Nhập số điện thoại (VD: 0987654321)"
+            required pattern="^0\d{9}$" :disabled="loading" />
           <small class="help-text">Số điện thoại sẽ dùng làm tên đăng nhập</small>
         </div>
 
         <div class="form-group">
-          <label>Email</label>
-          <input
-            v-model="registerForm.email"
-            type="email"
-            placeholder="Nhập email (không bắt buộc)"
-            :disabled="loading"
-          />
+          <label>Email <span class="optional">(không bắt buộc)</span></label>
+          <input v-model="registerForm.email" type="email" placeholder="Nhập email (không bắt buộc)"
+            :disabled="loading" />
+          <small class="help-text">Có thể cập nhật sau trong hồ sơ</small>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Giới tính</label>
-            <select v-model="registerForm.gioiTinh" :disabled="loading">
-              <option :value="1">Nam</option>
-              <option :value="0">Nữ</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Ngày sinh</label>
-            <input v-model="registerForm.ngaySinh" type="date" :disabled="loading" />
-          </div>
-        </div>
+        <!-- Các trường gioiTinh và ngaySinh đã được bỏ - sẽ cấu hình sau trong hồ sơ -->
 
         <div class="form-group">
           <label>Mật khẩu <span class="required">*</span></label>
           <div class="password-input">
-            <input
-              v-model="registerForm.matKhau"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Nhập mật khẩu"
-              required
-              minlength="6"
-              :disabled="loading"
-            />
+            <input v-model="registerForm.matKhau" :type="showPassword ? 'text' : 'password'" placeholder="Nhập mật khẩu"
+              required minlength="6" :disabled="loading" />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -133,19 +87,9 @@
         <div class="form-group">
           <label>Xác nhận mật khẩu <span class="required">*</span></label>
           <div class="password-input">
-            <input
-              v-model="registerForm.xacNhanMatKhau"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Nhập lại mật khẩu"
-              required
-              minlength="6"
-              :disabled="loading"
-            />
-            <button
-              type="button"
-              class="toggle-password"
-              @click="showConfirmPassword = !showConfirmPassword"
-            >
+            <input v-model="registerForm.xacNhanMatKhau" :type="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Nhập lại mật khẩu" required minlength="6" :disabled="loading" />
+            <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
               <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -167,7 +111,10 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import authService from '@/service/customer/authService'
+
+const route = useRoute()
 
 const props = defineProps({
   show: {
@@ -194,12 +141,15 @@ const loginForm = ref({
 const registerForm = ref({
   hoTen: '',
   soDienThoai: '',
-  email: '',
-  gioiTinh: 1,
-  ngaySinh: '',
+  email: '', // Optional - có thể để trống
   matKhau: '',
   xacNhanMatKhau: '',
+  // Các trường gioiTinh và ngaySinh đã được bỏ - sẽ cấu hình sau trong hồ sơ
 })
+
+// Import layoutStore để lấy showRegisterTab
+import { useLayoutStore } from '@/stores/customer/layoutStore'
+const layoutStore = useLayoutStore()
 
 // Watch for show prop to reset form
 watch(
@@ -207,9 +157,17 @@ watch(
   (newVal) => {
     if (newVal) {
       resetForms()
+      // Tự động chuyển sang tab đăng ký nếu layoutStore.showRegisterTab = true
+      if (layoutStore.showRegisterTab) {
+        isLogin.value = false
+        layoutStore.showRegisterTab = false // Reset sau khi dùng
+      } else {
+        isLogin.value = true
+      }
     }
   },
 )
+
 
 // Methods
 const resetForms = () => {
@@ -221,11 +179,10 @@ const resetForms = () => {
   registerForm.value = {
     hoTen: '',
     soDienThoai: '',
-    email: '',
-    gioiTinh: 1,
-    ngaySinh: '',
+    email: '', // Optional
     matKhau: '',
     xacNhanMatKhau: '',
+    // Các trường gioiTinh và ngaySinh đã được bỏ
   }
   showPassword.value = false
   showConfirmPassword.value = false
@@ -292,7 +249,19 @@ const handleRegister = async () => {
   loading.value = true
 
   try {
-    const response = await authService.register(registerForm.value)
+    // Chỉ gửi các trường cần thiết, bỏ email nếu empty
+    const registerData = {
+      hoTen: registerForm.value.hoTen,
+      soDienThoai: registerForm.value.soDienThoai,
+      matKhau: registerForm.value.matKhau,
+      xacNhanMatKhau: registerForm.value.xacNhanMatKhau,
+    }
+    // Chỉ thêm email nếu có giá trị
+    if (registerForm.value.email && registerForm.value.email.trim()) {
+      registerData.email = registerForm.value.email.trim()
+    }
+
+    const response = await authService.register(registerData)
 
     // Lưu vào localStorage
     if (response.data) {
@@ -341,6 +310,7 @@ const handleRegister = async () => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -363,6 +333,7 @@ const handleRegister = async () => {
     transform: translateY(30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

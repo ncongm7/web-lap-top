@@ -1,12 +1,8 @@
 <template>
-  <div class="cart-item">
+  <div v-if="item" class="cart-item">
     <!-- Item Checkbox -->
     <div class="item-checkbox">
-      <input
-        type="checkbox"
-        :checked="item.selected"
-        @change="$emit('toggle-selection', item.id)"
-      />
+      <input type="checkbox" :checked="item.selected" @change="toggleSelection(itemId)" />
     </div>
 
     <!-- Item Content -->
@@ -25,27 +21,13 @@
 
           <!-- Quantity Controls -->
           <div class="quantity-controls">
-            <button
-              @click="$emit('decrease', item.id)"
-              class="quantity-btn"
-              :disabled="item.quantity <= 1 || loading"
-            >
+            <button @click="decreaseQuantity(itemId)" class="quantity-btn" :disabled="item.quantity <= 1 || loading">
               -
             </button>
-            <input
-              type="number"
-              :value="item.quantity"
-              @change="handleQuantityChange"
-              class="quantity-input"
-              min="1"
-              :max="item.maxQuantity"
-              :disabled="loading"
-            />
-            <button
-              @click="$emit('increase', item.id)"
-              class="quantity-btn"
-              :disabled="item.quantity >= item.maxQuantity || loading"
-            >
+            <input type="number" :value="item.quantity" @change="handleQuantityChange" class="quantity-input" min="1"
+              :max="item.maxQuantity" :disabled="loading" />
+            <button @click="increaseQuantity(itemId)" class="quantity-btn"
+              :disabled="item.quantity >= item.maxQuantity || loading">
               +
             </button>
           </div>
@@ -54,7 +36,7 @@
         </div>
 
         <!-- Delete Button -->
-        <button @click="$emit('remove', item.id)" class="delete-button" :disabled="loading">
+        <button @click="removeItem(itemId)" class="delete-button" :disabled="loading">
           🗑
         </button>
       </div>
@@ -69,20 +51,30 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { computed } from 'vue'
+import { useCart } from '@/composables/cart/useCart'
 
+// Nhận itemId thay vì item object
 const props = defineProps({
-  item: {
-    type: Object,
+  itemId: {
+    type: String,
     required: true,
-  },
-  loading: {
-    type: Boolean,
-    default: false,
   },
 })
 
-const emit = defineEmits(['toggle-selection', 'increase', 'decrease', 'update', 'remove'])
+// Dùng composable thay vì props/emits
+const {
+  getItemById,
+  increaseQuantity,
+  decreaseQuantity,
+  updateQuantity,
+  removeItem,
+  toggleSelection,
+  loading,
+} = useCart()
+
+// Lấy item từ store bằng itemId
+const item = computed(() => getItemById(props.itemId))
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -93,8 +85,8 @@ const formatPrice = (price) => {
 
 const handleQuantityChange = (event) => {
   const newQuantity = parseInt(event.target.value)
-  if (newQuantity > 0 && newQuantity <= props.item.maxQuantity) {
-    emit('update', props.item.id, newQuantity)
+  if (newQuantity > 0 && newQuantity <= item.value?.maxQuantity) {
+    updateQuantity(props.itemId, newQuantity)
   }
 }
 </script>

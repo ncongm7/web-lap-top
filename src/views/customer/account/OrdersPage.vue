@@ -17,7 +17,7 @@
 
       <!-- Orders List -->
       <div v-else class="orders-list">
-        <div v-for="order in orders" :key="order.id" class="order-card">
+        <div v-for="order in orders" :key="order.id" class="order-card" @click="goToOrderDetail(order.id)" style="cursor: pointer;">
           <div class="order-header">
             <div>
               <h5 class="mb-1">Mã đơn: {{ order.ma }}</h5>
@@ -81,8 +81,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/customer/authStore'
 import orderService from '@/service/customer/orderService'
+
+const router = useRouter()
 
 const authStore = useAuthStore()
 
@@ -104,7 +107,13 @@ const fetchOrders = async () => {
       return
     }
 
-    const response = await orderService.getOrders(customerId, currentPage.value, pageSize.value)
+    // Sửa thứ tự parameters: page, size, status, khachHangId
+    const response = await orderService.getOrders(
+      currentPage.value,
+      pageSize.value,
+      null, // status - không filter theo status ở đây
+      customerId // khachHangId - bắt buộc
+    )
 
     // Parse response structure
     let pageData = {}
@@ -206,6 +215,12 @@ const prevPage = () => {
   }
 }
 
+const goToOrderDetail = (orderId) => {
+  if (orderId) {
+    router.push(`/orders/${orderId}`)
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   fetchOrders()
@@ -244,6 +259,13 @@ onMounted(() => {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  border-color: #047857;
 }
 
 .order-header {
