@@ -64,13 +64,15 @@ const router = createRouter({
           meta: { title: 'Chính sách đổi trả - LaptopStore' },
         },
         {
-          path: 'promotions',
+          path: 'khuyen-mai',
+          alias: '/promotions',
           name: 'promotions',
           component: () => import('@/views/customer/promotions/PromotionsPage.vue'),
           meta: { title: 'Chương trình khuyến mãi - LaptopStore' },
         },
         {
-          path: 'promotions/:id',
+          path: 'khuyen-mai/:id',
+          alias: '/promotions/:id',
           name: 'promotion-detail',
           component: () => import('@/views/customer/promotions/PromotionDetailPage.vue'),
           meta: { title: 'Chi tiết khuyến mãi - LaptopStore' },
