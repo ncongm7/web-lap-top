@@ -1,20 +1,20 @@
 <template>
-  <div class="warranty-page">
-    <CreateWarrantyRequest />
+  <div class="return-request-page">
+    <CreateReturnRequest />
   </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
-import CreateWarrantyRequest from '@/components/baohanh/CreateWarrantyRequest.vue'
+import CreateReturnRequest from '@/components/trahang/CreateReturnRequest.vue'
 
 onMounted(() => {
-  console.log('WarrantyPage mounted')
+  console.log('ReturnRequestPage mounted')
 })
 </script>
 
 <style scoped>
-.warranty-page {
+.return-request-page {
   width: 100%;
   min-height: 100vh;
   background-color: #f8f9fa;

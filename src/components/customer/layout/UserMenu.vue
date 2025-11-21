@@ -10,8 +10,13 @@
 
       <!-- Dropdown khi chưa đăng nhập -->
       <transition name="dropdown">
-        <div ref="loggedOutDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu"
-          @click.stop>
+        <div
+          ref="loggedOutDropdownRef"
+          v-if="showDropdown"
+          v-click-outside="closeDropdown"
+          class="dropdown-menu"
+          @click.stop
+        >
           <button @click="handleLoginClick" class="dropdown-item">
             <i class="icon">🔐</i>
             <span>Đăng nhập</span>
@@ -26,8 +31,14 @@
 
     <!-- Nếu đã đăng nhập -->
     <div v-else class="user-actions">
-      <button ref="userButtonRef" @click.stop="toggleDropdown" @mousedown.stop class="user-btn" type="button"
-        style="position: relative; z-index: 1">
+      <button
+        ref="userButtonRef"
+        @click.stop="toggleDropdown"
+        @mousedown.stop
+        class="user-btn"
+        type="button"
+        style="position: relative; z-index: 1"
+      >
         <div class="user-avatar">{{ displayName.charAt(0).toUpperCase() }}</div>
         <span class="user-name">{{ displayName }}</span>
         <span class="dropdown-icon">▼</span>
@@ -35,8 +46,13 @@
 
       <!-- Dropdown Menu khi đã đăng nhập -->
       <transition name="dropdown">
-        <div ref="loggedInDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu"
-          @click.stop>
+        <div
+          ref="loggedInDropdownRef"
+          v-if="showDropdown"
+          v-click-outside="closeDropdown"
+          class="dropdown-menu"
+          @click.stop
+        >
           <div class="dropdown-header">
             <div class="user-info">
               <div class="user-avatar-large">{{ displayName.charAt(0).toUpperCase() }}</div>
@@ -61,10 +77,14 @@
             <i class="icon">📍</i>
             <span>Địa chỉ</span>
           </router-link>
-          <!-- <router-link to="/account/warranty" class="dropdown-item" @click="closeDropdown">
+          <router-link to="/account/warranty" class="dropdown-item" @click="closeDropdown">
             <i class="icon">🛡️</i>
             <span>Bảo hành</span>
-          </router-link> -->
+          </router-link>
+          <router-link to="/account/return-request" class="dropdown-item" @click="closeDropdown">
+            <i class="icon">↩️</i>
+            <span>Trả hàng</span>
+          </router-link>
           <router-link to="/account/points" class="dropdown-item" @click="closeDropdown">
             <i class="icon">⭐</i>
             <span>Điểm tích lũy</span>
@@ -298,7 +318,7 @@ const vClickOutside = {
 }
 
 /* Đảm bảo tất cả children hiển thị */
-.dropdown-menu>* {
+.dropdown-menu > * {
   visibility: visible !important;
   opacity: 1 !important;
 }

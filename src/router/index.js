@@ -109,6 +109,19 @@ const router = createRouter({
           component: () => import('@/views/customer/order/OrderDetailPage.vue'),
           meta: { title: 'Chi tiết đơn hàng - LaptopStore', requiresAuth: true },
         },
+        // Direct warranty route (không cần vào account)
+        {
+          path: 'warranty',
+          name: 'warranty',
+          component: () => import('@/views/customer/account/WarrantyPage.vue'),
+          meta: { title: 'Yêu cầu bảo hành - LaptopStore', requiresAuth: true },
+        },
+        {
+          path: 'warranty-request',
+          name: 'warranty-request',
+          component: () => import('@/views/customer/account/WarrantyPage.vue'),
+          meta: { title: 'Yêu cầu bảo hành - LaptopStore', requiresAuth: true },
+        },
         // Account routes
         {
           path: 'account',
@@ -148,6 +161,12 @@ const router = createRouter({
               name: 'account-warranty',
               component: () => import('@/views/customer/account/WarrantyPage.vue'),
               meta: { title: 'Bảo hành của tôi - LaptopStore' },
+            },
+            {
+              path: 'return-request',
+              name: 'account-return-request',
+              component: () => import('@/views/customer/account/ReturnRequestPage.vue'),
+              meta: { title: 'Yêu cầu trả hàng - LaptopStore' },
             },
             {
               path: 'points',
