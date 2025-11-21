@@ -28,6 +28,12 @@ const router = createRouter({
           meta: { title: 'Chi tiết sản phẩm - LaptopStore' },
         },
         {
+          path: 'compare',
+          name: 'product-compare',
+          component: () => import('@/views/customer/product-detail/ProductComparePage.vue'),
+          meta: { title: 'So sánh sản phẩm - LaptopStore' },
+        },
+        {
           path: 'cart',
           name: 'cart',
           component: () => import('@/views/customer/CartPage.vue'),

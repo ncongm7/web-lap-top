@@ -92,6 +92,28 @@ export const sanPhamService = {
   getImagesByProductDetailId(ctspId) {
     return axios.get(`${HINH_ANH_API_BASE_URL}/ctsp/${ctspId}`)
   },
+
+  // Lấy chi tiết sản phẩm tổng hợp (product + variants + images + promotions + reviews + related)
+  getProductDetail(productId) {
+    return axios.get(`/api/products/${productId}`)
+  },
+
+  // Lấy sản phẩm liên quan
+  getRelatedProducts(productId, limit = 8) {
+    return axios.get(`/api/products/${productId}/related`, {
+      params: { limit },
+    })
+  },
+
+  // Lấy đánh giá sản phẩm
+  getProductReviews(productId, params = {}) {
+    return axios.get(`/api/products/${productId}/reviews`, { params })
+  },
+
+  // Gửi đánh giá sản phẩm
+  submitReview(productId, reviewData) {
+    return axios.post(`/api/products/${productId}/reviews`, reviewData)
+  },
 }
 
 export default sanPhamService

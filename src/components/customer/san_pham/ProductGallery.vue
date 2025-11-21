@@ -2,7 +2,15 @@
     <div class="product-gallery">
         <!-- Main Image với Zoom on Hover -->
         <div class="main-image-wrapper" @mousemove="handleMouseMove" @mouseleave="hideZoom">
-            <img :src="currentImage" :alt="productName" class="main-image" @click="openLightbox" ref="mainImageRef" />
+            <img 
+                :src="currentImage" 
+                :alt="productName" 
+                class="main-image" 
+                @click="openLightbox" 
+                ref="mainImageRef"
+                loading="eager"
+                :data-src="currentImage"
+            />
 
             <!-- Zoom Overlay (hiển thị khi hover) -->
             <div v-if="showZoom" class="zoom-overlay" :style="zoomStyle">
@@ -23,7 +31,12 @@
         <div class="thumbnails-wrapper">
             <button v-for="(img, index) in images" :key="index"
                 :class="['thumbnail', { active: currentIndex === index }]" @click="selectImage(index)">
-                <img :src="img.url" :alt="`Ảnh ${index + 1}`" />
+                <img 
+                    :src="img.url" 
+                    :alt="`Ảnh ${index + 1}`" 
+                    loading="lazy"
+                    :data-src="img.url"
+                />
             </button>
         </div>
 

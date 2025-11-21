@@ -103,7 +103,125 @@ export async function getTopReviews(limit = 5) {
     })
     return response.data.data || response.data
   } catch (error) {
-    console.error(' [HomeService] Lỗi khi lấy đánh giá:', error)
+    console.error('❌ [HomeService] Lỗi khi lấy đánh giá:', error)
     throw error
+  }
+}
+
+/**
+ * Lấy banners cho slider
+ * @param {string} type - Loại banner (main-slider, etc.)
+ * @returns {Promise<Array>}
+ */
+export async function getBanners(type = 'main-slider') {
+  try {
+    console.log('🔄 [HomeService] Fetching banners:', type)
+    
+    // Try dedicated banners API
+    try {
+      const response = await axios.get('/api/banners', {
+        params: { type },
+      })
+      const data = response.data?.data || response.data?.content || response.data
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('✅ [HomeService] Banners loaded:', data.length)
+        return data
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        throw error
+      }
+    }
+
+    // Fallback: Get from promotions
+    console.warn('⚠️ [HomeService] Banners API not found, using promotions as fallback')
+    const promotions = await getActivePromotions()
+    return promotions.slice(0, 5).map((promo, index) => ({
+      id: promo.id || index,
+      title: promo.tenKm || 'Khuyến mãi',
+      description: promo.moTa || '',
+      image: promo.bannerImageUrl || '',
+      link: `/khuyen-mai/${promo.id}`,
+      buttonText: 'Xem ngay',
+    }))
+  } catch (error) {
+    console.error('❌ [HomeService] Lỗi khi lấy banners:', error)
+    return []
+  }
+}
+
+/**
+ * Lấy sản phẩm bán chạy nhất
+ * @param {number} limit - Số lượng sản phẩm
+ * @returns {Promise<Array>}
+ */
+export async function getBestSellingProducts(limit = 10) {
+  try {
+    console.log('🔄 [HomeService] Fetching best-selling products...')
+    
+    // Try dedicated best-selling endpoint
+    try {
+      const response = await axios.get(`${API_BASE_URL}/best-selling`, {
+        params: {
+          limit: limit,
+        },
+      })
+      const data = response.data?.data || response.data
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('✅ [HomeService] Best-selling products loaded:', data.length)
+        return data
+      }
+    } catch (error) {
+      console.warn('⚠️ [HomeService] Best-selling endpoint error:', error.response?.status, error.message)
+    }
+
+    // Fallback: Get featured products (first N products)
+    console.log('⚠️ [HomeService] Using fallback for best-selling products')
+    const allProducts = await getFeaturedProducts()
+    return allProducts.slice(0, limit)
+  } catch (error) {
+    console.error('❌ [HomeService] Lỗi khi lấy best-selling products:', error)
+    return []
+  }
+}
+
+/**
+ * Lấy sản phẩm mới nhất
+ * @param {number} limit - Số lượng sản phẩm
+ * @returns {Promise<Array>}
+ */
+export async function getNewArrivalsProducts(limit = 10) {
+  try {
+    console.log('🔄 [HomeService] Fetching new arrivals products...')
+    
+    // Try dedicated newest endpoint
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newest`, {
+        params: {
+          limit: limit,
+        },
+      })
+      const data = response.data?.data || response.data
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('✅ [HomeService] New arrivals products loaded:', data.length)
+        return data
+      }
+    } catch (error) {
+      console.warn('⚠️ [HomeService] Newest endpoint error:', error.response?.status, error.message)
+    }
+
+    // Fallback: Get featured products sorted by date
+    console.log('⚠️ [HomeService] Using fallback for new arrivals products')
+    const allProducts = await getFeaturedProducts()
+    return allProducts
+      .sort((a, b) => {
+        const dateA = new Date(a.ngayTao || a.createdAt || 0)
+        const dateB = new Date(b.ngayTao || b.createdAt || 0)
+        return dateB - dateA
+      })
+      .slice(0, limit)
+  } catch (error) {
+    console.error('❌ [HomeService] Lỗi khi lấy new arrivals products:', error)
+    return []
   }
 }

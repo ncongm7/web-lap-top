@@ -11,20 +11,25 @@
                     'variant-button',
                     {
                         active: modelValue === variant.id,
-                        'out-of-stock': variant.stock <= 0,
+                        'out-of-stock': (variant.soLuongTon || 0) <= 0,
                     },
                 ]"
-                :disabled="variant.stock <= 0"
+                :disabled="(variant.soLuongTon || 0) <= 0"
                 @click="selectVariant(variant)"
             >
                 <!-- Thông tin phiên bản (CPU | GPU | RAM | Ổ cứng) -->
-                <span class="variant-text">{{ variant.summary }}</span>
+                <span class="variant-text">{{ getVariantSummary(variant) }}</span>
 
                 <!-- Giá -->
-                <span v-if="variant.price" class="variant-price">{{ formatPrice(variant.price) }}</span>
+                <span v-if="variant.giaGiam || variant.giaBan" class="variant-price">
+                    {{ formatPrice(variant.giaGiam || variant.giaBan) }}
+                    <del v-if="variant.giaGoc && variant.giaGoc > (variant.giaGiam || variant.giaBan)" class="variant-price-old">
+                        {{ formatPrice(variant.giaGoc) }}
+                    </del>
+                </span>
 
                 <!-- Badge hết hàng -->
-                <span v-if="variant.stock <= 0" class="stock-badge">Hết hàng</span>
+                <span v-if="(variant.soLuongTon || 0) <= 0" class="stock-badge">Hết hàng</span>
             </button>
         </div>
 
@@ -76,9 +81,20 @@ const emit = defineEmits(['update:modelValue', 'change'])
 //     return props.variants.find((v) => v.id === props.modelValue) || null
 // })
 
+// Get variant summary
+const getVariantSummary = (variant) => {
+    const parts = []
+    if (variant.cpu) parts.push(variant.cpu)
+    if (variant.gpu) parts.push(variant.gpu)
+    if (variant.ram) parts.push(variant.ram)
+    if (variant.oCung) parts.push(variant.oCung)
+    if (variant.mauSac) parts.push(variant.mauSac)
+    return parts.length > 0 ? parts.join(' | ') : variant.maCtsp || 'Variant'
+}
+
 // Select variant
 const selectVariant = (variant) => {
-    if (variant.stock <= 0) return
+    if ((variant.soLuongTon || 0) <= 0) return
 
     emit('update:modelValue', variant.id)
     emit('change', variant)
@@ -212,6 +228,17 @@ watch(
     color: var(--vqs-accent);
     white-space: nowrap;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.variant-price-old {
+    font-size: 0.875rem;
+    color: var(--vqs-secondary);
+    font-weight: 400;
+    text-decoration: line-through;
 }
 
 .variant-button.active .variant-price {

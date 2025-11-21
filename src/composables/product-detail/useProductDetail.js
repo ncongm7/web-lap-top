@@ -5,100 +5,95 @@ import { sanPhamService } from '@/service/customer/san_pham_service'
  * ========================================
  * COMPOSABLE: useProductDetail
  * ========================================
- * Quản lý logic load và xử lý thông tin sản phẩm
+ * Quản lý logic load và xử lý thông tin sản phẩm từ API mới
  */
 export function useProductDetail(productId) {
   // State
   const loading = ref(false)
   const error = ref(null)
-  const product = ref(null)
-  const variants = ref([])
+  const productDetail = ref(null)
+  const relatedProducts = ref([])
   const selectedVariantId = ref(null)
 
   /**
    * Current selected variant
    */
   const selectedVariant = computed(() => {
-    return formattedVariants.value.find((v) => v.id === selectedVariantId.value) || null
+    if (!productDetail.value?.variants) return null
+    return productDetail.value.variants.find((v) => v.id === selectedVariantId.value) || 
+           productDetail.value.variants[0] || null
   })
 
   /**
-   * Format variants cho component selector
-   */
-  const formattedVariants = computed(() => {
-    return variants.value.map((v) => {
-      return {
-        id: v.idctsp,
-        attributes: {
-          cpu: v.tenCpu,
-          gpu: v.tenGpu,
-          ram: v.tenRam,
-          storage: v.dungLuongOCung,
-          color: v.tenMauSac,
-          screen: v.kichThuocManHinh,
-        },
-        price: v.giaBan,
-        originalPrice: v.giaBan,
-        stock: (v.soLuongTon || 0) - (v.soLuongTamGiu || 0),
-        summary: [v.tenCpu, v.tenGpu, v.tenRam, v.dungLuongOCung].filter(Boolean).join(' | '),
-        ...v, // Keep all original data
-      }
-    })
-  })
-
-  /**
-   * Product images for selected variant
+   * Product images for selected variant or all images
    */
   const productImages = computed(() => {
-    const variant = selectedVariant.value
-    if (!variant || !variant.hinhAnhs || variant.hinhAnhs.length === 0) {
-      return [
-        {
-          url: 'https://via.placeholder.com/600x600.png?text=No+Image',
-          alt: product.value?.name || 'Sản phẩm',
-        },
-      ]
+    if (!productDetail.value) return []
+    
+    // Nếu có variant được chọn, ưu tiên hình ảnh của variant đó
+    if (selectedVariant.value?.images?.length > 0) {
+      return selectedVariant.value.images.map((url, index) => ({
+        url: typeof url === 'string' ? url : url.url || url,
+        alt: `${productDetail.value.tenSanPham} - Ảnh ${index + 1}`,
+      }))
     }
-
-    return variant.hinhAnhs.map((url, index) => ({
-      url: url,
-      alt: `${product.value?.name || 'Sản phẩm'} - Ảnh ${index + 1}`,
-    }))
+    
+    // Fallback: dùng imageUrls nếu có
+    if (selectedVariant.value?.imageUrls?.length > 0) {
+      return selectedVariant.value.imageUrls.map((url, index) => ({
+        url: url,
+        alt: `${productDetail.value.tenSanPham} - Ảnh ${index + 1}`,
+      }))
+    }
+    
+    // Fallback: dùng tất cả hình ảnh của sản phẩm
+    if (productDetail.value.images?.length > 0) {
+      return productDetail.value.images.map((img) => ({
+        url: typeof img === 'string' ? img : img.url || img,
+        alt: `${productDetail.value.tenSanPham} - ${img.isMain ? 'Ảnh chính' : 'Ảnh phụ'}`,
+      }))
+    }
+    
+    return [{
+      url: 'https://via.placeholder.com/600x600.png?text=No+Image',
+      alt: productDetail.value.tenSanPham || 'Sản phẩm',
+    }]
   })
 
   /**
-   * Product specifications
+   * Product specifications từ variant được chọn
    */
   const productSpecs = computed(() => {
     if (!selectedVariant.value) return []
-
+    
     const v = selectedVariant.value
     return [
-      { key: 'name', label: 'Tên sản phẩm', value: v.tenSp },
-      { key: 'cpu', label: 'CPU', value: v.tenCpu },
-      { key: 'gpu', label: 'GPU', value: v.tenGpu },
-      { key: 'ram', label: 'RAM', value: v.tenRam },
-      { key: 'storage', label: 'Ổ cứng', value: v.dungLuongOCung },
-      { key: 'screen', label: 'Màn hình', value: v.kichThuocManHinh },
-      { key: 'color', label: 'Màu sắc', value: v.tenMauSac },
+      { key: 'cpu', label: 'CPU', value: v.cpu, category: 'Hiệu năng' },
+      { key: 'gpu', label: 'GPU', value: v.gpu, category: 'Hiệu năng' },
+      { key: 'ram', label: 'RAM', value: v.ram, category: 'Hiệu năng' },
+      { key: 'storage', label: 'Ổ cứng', value: v.oCung, category: 'Lưu trữ' },
+      { key: 'screen', label: 'Màn hình', value: v.kichThuocManHinh, category: 'Màn hình' },
+      { key: 'color', label: 'Màu sắc', value: v.mauSac, category: 'Thiết kế' },
+      { key: 'battery', label: 'Pin', value: v.dungLuongPin, category: 'Pin' },
     ].filter((s) => s.value)
   })
 
   /**
-   * Product metadata (code, rating, views)
+   * Product metadata
    */
   const productMetadata = computed(() => {
-    const variant = selectedVariant.value
+    if (!productDetail.value) return {}
+    
     return {
-      code: variant?.maSanPham || product.value?.id || 'Đang cập nhật',
-      rating: '5.0',
-      reviewCount: '128',
-      views: '1.2K',
+      code: productDetail.value.maSanPham || productDetail.value.id || 'Đang cập nhật',
+      rating: productDetail.value.reviewSummary?.averageRating?.toFixed(1) || '0.0',
+      reviewCount: productDetail.value.reviewSummary?.totalReviews || 0,
+      views: '1.2K', // TODO: Thêm từ backend nếu có
     }
   })
 
   /**
-   * Load product data
+   * Load product detail từ API mới
    */
   const loadProduct = async () => {
     if (!productId) {
@@ -110,27 +105,22 @@ export function useProductDetail(productId) {
     error.value = null
 
     try {
-      // The service is expected to return a list of variants (CTSPResponseCustomer)
-      const response = await sanPhamService.getProductDetails(productId)
-      variants.value = response.data || []
-
-      if (variants.value.length === 0) {
-        throw new Error('Sản phẩm không có phiên bản nào hoặc đã hết hàng.')
-      }
-
-      console.log('✅ Loaded variants:', variants.value)
-
-      // Set product info from first variant
-      const firstVariant = variants.value[0]
-      product.value = {
-        id: productId,
-        name: firstVariant.tenSp,
-        description: '', // Description is not in the DTO
+      const response = await sanPhamService.getProductDetail(productId)
+      productDetail.value = response.data?.data || response.data
+      
+      if (!productDetail.value) {
+        throw new Error('Không tìm thấy sản phẩm')
       }
 
       // Auto select first available variant
-      const availableVariant = variants.value.find(v => v.soLuongTon > 0) || firstVariant;
-      selectedVariantId.value = availableVariant.idctsp
+      if (productDetail.value.variants?.length > 0) {
+        const availableVariant = productDetail.value.variants.find(v => v.soLuongTon > 0) || 
+                                 productDetail.value.variants[0]
+        selectedVariantId.value = availableVariant.id
+      }
+
+      // Load related products
+      await loadRelatedProducts()
 
     } catch (err) {
       console.error('Error loading product:', err)
@@ -141,31 +131,46 @@ export function useProductDetail(productId) {
   }
 
   /**
+   * Load related products
+   */
+  const loadRelatedProducts = async () => {
+    if (!productId) return
+    
+    try {
+      const response = await sanPhamService.getRelatedProducts(productId, 8)
+      relatedProducts.value = response.data?.data || response.data || []
+    } catch (err) {
+      console.error('Error loading related products:', err)
+      // Không throw error, chỉ log
+    }
+  }
+
+  /**
    * Handle variant change
    */
   const handleVariantChange = (variant) => {
-    console.log('✅ Variant changed:', variant)
-    // selectedVariantId is already updated by v-model
+    if (variant?.id) {
+      selectedVariantId.value = variant.id
+    }
   }
 
   return {
     // State
     loading,
     error,
-    product,
-    variants,
+    productDetail,
+    relatedProducts,
     selectedVariantId,
 
     // Computed
     selectedVariant,
-    formattedVariants,
     productImages,
     productSpecs,
     productMetadata,
 
     // Methods
     loadProduct,
+    loadRelatedProducts,
     handleVariantChange,
   }
 }
-

@@ -1,20 +1,21 @@
 <template>
   <div class="hero-slider">
     <swiper
-      v-if="banners.length > 0"
+      v-if="displayBanners.length > 0"
       :modules="modules"
       :slides-per-view="1"
       :space-between="0"
-      :loop="banners.length > 1"
+      :loop="displayBanners.length > 1"
       :autoplay="{
         delay: 5000,
         disableOnInteraction: false,
+        pauseOnMouseEnter: true,
       }"
       :pagination="{ clickable: true }"
-      :navigation="banners.length > 1"
+      :navigation="displayBanners.length > 1"
       class="hero-swiper"
     >
-      <swiper-slide v-for="(banner, index) in banners" :key="banner.id || index">
+      <swiper-slide v-for="(banner, index) in displayBanners" :key="banner.id || index">
         <div class="slide-content" :style="{ backgroundColor: banner.bgColor || '#047857' }">
           <div class="container">
             <div class="slide-inner" :class="{ 'no-image': !banner.bannerImageUrl }">
@@ -48,20 +49,69 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Autoplay, Pagination, Navigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
+import { getBanners } from '@/service/customer/homeService'
 
-defineProps({
+const props = defineProps({
   banners: {
     type: Array,
     default: () => [],
   },
+  autoFetch: {
+    type: Boolean,
+    default: true,
+  },
 })
 
+const emit = defineEmits(['banners-loaded'])
+
+const localBanners = ref([])
+const isLoading = ref(false)
+
 const modules = [Autoplay, Pagination, Navigation]
+
+// Get banners to display
+const displayBanners = computed(() => {
+  return props.banners.length > 0 ? props.banners : localBanners.value
+})
+
+// Fetch banners from API
+const fetchBanners = async () => {
+  if (!props.autoFetch) return
+
+  try {
+    isLoading.value = true
+    const data = await getBanners('main-slider')
+    
+    if (data.length > 0) {
+      localBanners.value = data
+      emit('banners-loaded', data)
+      console.log('✅ [HeroSlider] Banners loaded:', data.length)
+    }
+  } catch (error) {
+    console.error('❌ [HeroSlider] Error loading banners:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Watch for prop changes
+watch(() => props.banners, (newBanners) => {
+  if (newBanners.length > 0) {
+    localBanners.value = []
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  if (props.autoFetch && props.banners.length === 0) {
+    fetchBanners()
+  }
+})
 </script>
 
 <style scoped>

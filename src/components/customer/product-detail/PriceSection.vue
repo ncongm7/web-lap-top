@@ -19,6 +19,11 @@
             <span class="save-icon">⬇</span>
             Tiết kiệm: {{ formatPrice(originalPrice - currentPrice) }}
         </div>
+
+        <div v-if="isFlashSale" class="flash-sale-badge">
+            <span class="badge-icon">⚡</span>
+            <span>FLASH SALE</span>
+        </div>
     </div>
 </template>
 
@@ -38,6 +43,10 @@ const props = defineProps({
     stock: {
         type: Number,
         default: 0,
+    },
+    isFlashSale: {
+        type: Boolean,
+        default: false,
     },
 })
 
@@ -113,5 +122,33 @@ const stockText = computed(() => {
 
 .save-icon {
     font-size: 1rem;
+}
+
+.flash-sale-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 8px;
+    animation: pulse 2s infinite;
+}
+
+.badge-icon {
+    font-size: 16px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
 }
 </style>

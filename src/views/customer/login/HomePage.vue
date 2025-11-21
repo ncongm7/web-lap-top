@@ -1,9 +1,24 @@
 <template>
   <div class="home-page">
     <!-- Hero Banner Slider -->
-    <HeroSlider :banners="banners" />
+    <HeroSlider :banners="banners" :auto-fetch="true" />
 
-    <!-- Featured Products Section -->
+    <!-- Featured Categories -->
+    <FeaturedCategories />
+
+    <!-- Flash Sale -->
+    <FlashSale @add-to-cart="handleAddToCart" />
+
+    <!-- Best-Selling Products Carousel -->
+    <BestSellingCarousel @add-to-cart="handleAddToCart" />
+
+    <!-- New Arrivals Carousel -->
+    <NewArrivalsCarousel @add-to-cart="handleAddToCart" />
+
+    <!-- News & Reviews Section -->
+    <NewsReviewsSection />
+
+    <!-- Featured Products Section (Keep existing for backward compatibility) -->
     <FeaturedProducts
       :products="featuredProducts"
       :loading="loadingProducts"
@@ -12,13 +27,13 @@
       @retry="fetchFeaturedProducts"
     />
 
-    <!-- Category List -->
+    <!-- Category List (Keep existing) -->
     <CategoryList />
 
-    <!-- Promotion Banner -->
+    <!-- Promotion Banner (Keep existing) -->
     <PromotionBanner :promotions="activePromotions" :loading="loadingPromotions" />
 
-    <!-- Customer Reviews -->
+    <!-- Customer Reviews (Keep existing) -->
     <TestimonialSlider :reviews="topReviews" :loading="loadingReviews" />
 
     <!-- Login/Register Modal -->
@@ -35,6 +50,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import HeroSlider from '@/components/customer/home/HeroSlider.vue'
+import FeaturedCategories from '@/components/customer/home/FeaturedCategories.vue'
+import FlashSale from '@/components/customer/home/FlashSale.vue'
+import BestSellingCarousel from '@/components/customer/home/BestSellingCarousel.vue'
+import NewArrivalsCarousel from '@/components/customer/home/NewArrivalsCarousel.vue'
+import NewsReviewsSection from '@/components/customer/home/NewsReviewsSection.vue'
 import FeaturedProducts from '@/components/customer/home/FeaturedProducts.vue'
 import CategoryList from '@/components/customer/home/CategoryList.vue'
 import PromotionBanner from '@/components/customer/home/PromotionBanner.vue'

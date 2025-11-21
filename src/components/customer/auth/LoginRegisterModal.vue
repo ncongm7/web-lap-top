@@ -204,12 +204,15 @@ const handleLogin = async () => {
       matKhau: loginForm.value.matKhau,
     })
 
-    // Lưu vào localStorage
+    // Lưu vào localStorage và cập nhật store
     if (response.data) {
       const { token, user } = response.data
       localStorage.setItem('customer_token', token)
       localStorage.setItem('customer_user', JSON.stringify(user))
       localStorage.setItem('customer_id', user.userId)
+
+      // Cập nhật layoutStore để UI reactive
+      layoutStore.setUser(user, token)
     }
 
     emit('success', response.data)
@@ -263,12 +266,15 @@ const handleRegister = async () => {
 
     const response = await authService.register(registerData)
 
-    // Lưu vào localStorage
+    // Lưu vào localStorage và cập nhật store
     if (response.data) {
       const { token, user } = response.data
       localStorage.setItem('customer_token', token)
       localStorage.setItem('customer_user', JSON.stringify(user))
       localStorage.setItem('customer_id', user.userId)
+
+      // Cập nhật layoutStore để UI reactive
+      layoutStore.setUser(user, token)
     }
 
     emit('success', response.data)

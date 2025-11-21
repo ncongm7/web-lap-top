@@ -62,7 +62,13 @@
       <div class="container">
         <ul class="nav-list">
           <li><router-link to="/" class="nav-link">Trang chủ</router-link></li>
-          <li><router-link to="/products" class="nav-link">Sản phẩm</router-link></li>
+          <li 
+            class="nav-item-with-menu"
+            @mouseenter="showMegaMenu = true"
+            @mouseleave="handleNavMouseLeave"
+          >
+            <router-link to="/products" class="nav-link">Sản phẩm</router-link>
+          </li>
           <li><router-link to="/khuyen-mai" class="nav-link">Khuyến mãi</router-link></li>
           <li><router-link to="/warranty" class="nav-link">Bảo hành</router-link></li>
           <li><router-link to="/about" class="nav-link">Giới thiệu</router-link></li>
@@ -70,6 +76,12 @@
         </ul>
       </div>
     </nav>
+
+    <!-- Mega Menu -->
+    <MegaMenu 
+      :is-visible="showMegaMenu" 
+      @close="showMegaMenu = false"
+    />
 
     <!-- Mobile Menu Overlay -->
     <transition name="slide">
@@ -94,18 +106,21 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLayoutStore } from '@/stores/customer/layoutStore'
 import authService from '@/service/customer/authService'
 import SearchBar from './SearchBar.vue'
 import UserMenu from './UserMenu.vue'
+import MegaMenu from './MegaMenu.vue'
 
 const router = useRouter()
 const layoutStore = useLayoutStore()
 
 const cartCount = computed(() => layoutStore.cartItemCount)
 const isMobileMenuOpen = computed(() => layoutStore.isMobileMenuOpen)
+const showMegaMenu = ref(false)
+let navMouseLeaveTimer = null
 
 const toggleMobileMenu = () => {
   layoutStore.toggleMobileMenu()
@@ -113,6 +128,13 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   layoutStore.closeMobileMenu()
+}
+
+// Handle mouse leave from nav item
+const handleNavMouseLeave = () => {
+  navMouseLeaveTimer = setTimeout(() => {
+    showMegaMenu.value = false
+  }, 200)
 }
 
 // Handle click vào giỏ hàng
@@ -289,6 +311,10 @@ const handleCartClick = () => {
 .nav-link:hover,
 .nav-link.router-link-active {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item-with-menu {
+  position: relative;
 }
 
 /* Mobile Menu */
