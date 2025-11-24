@@ -11,10 +11,6 @@
                 <span class="rating-text">| Bình luận: {{ metadata.reviewCount }}</span>
             </div>
         </div>
-        <div class="meta-row">
-            <span class="meta-label">Lượt xem:</span>
-            <span class="meta-value">{{ metadata.views }}</span>
-        </div>
     </div>
 </template>
 

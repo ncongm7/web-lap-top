@@ -14,6 +14,7 @@ export function useProductDetail(productId) {
   const productDetail = ref(null)
   const relatedProducts = ref([])
   const selectedVariantId = ref(null)
+  const currentProductId = ref(productId)
 
   /**
    * Current selected variant
@@ -95,17 +96,20 @@ export function useProductDetail(productId) {
   /**
    * Load product detail từ API mới
    */
-  const loadProduct = async () => {
-    if (!productId) {
+  const loadProduct = async (id) => {
+    const idToLoad = id || currentProductId.value
+
+    if (!idToLoad) {
       error.value = 'Không tìm thấy ID sản phẩm'
       return
     }
 
     loading.value = true
     error.value = null
+    currentProductId.value = idToLoad
 
     try {
-      const response = await sanPhamService.getProductDetail(productId)
+      const response = await sanPhamService.getProductDetail(idToLoad)
       productDetail.value = response.data?.data || response.data
       
       if (!productDetail.value) {
@@ -117,10 +121,12 @@ export function useProductDetail(productId) {
         const availableVariant = productDetail.value.variants.find(v => v.soLuongTon > 0) || 
                                  productDetail.value.variants[0]
         selectedVariantId.value = availableVariant.id
+      } else {
+        selectedVariantId.value = null
       }
 
       // Load related products
-      await loadRelatedProducts()
+      await loadRelatedProducts(idToLoad)
 
     } catch (err) {
       console.error('Error loading product:', err)
@@ -133,11 +139,12 @@ export function useProductDetail(productId) {
   /**
    * Load related products
    */
-  const loadRelatedProducts = async () => {
-    if (!productId) return
+  const loadRelatedProducts = async (id) => {
+    const idToLoad = id || currentProductId.value
+    if (!idToLoad) return
     
     try {
-      const response = await sanPhamService.getRelatedProducts(productId, 8)
+      const response = await sanPhamService.getRelatedProducts(idToLoad, 8)
       relatedProducts.value = response.data?.data || response.data || []
     } catch (err) {
       console.error('Error loading related products:', err)

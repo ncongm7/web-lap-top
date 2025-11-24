@@ -225,8 +225,6 @@ import ReviewSummary from '@/components/customer/product-detail/ReviewSummary.vu
 import ReviewList from '@/components/customer/product-detail/ReviewList.vue'
 import ReviewForm from '@/components/customer/product-detail/ReviewForm.vue'
 import RelatedProducts from '@/components/customer/product-detail/RelatedProducts.vue'
-import FrequentlyBoughtTogether from '@/components/customer/product-detail/FrequentlyBoughtTogether.vue'
-import ProductComparisonButton from '@/components/customer/product-detail/ProductComparisonButton.vue'
 
 // Composables
 import { useProductDetail } from '@/composables/product-detail/useProductDetail'
@@ -418,15 +416,16 @@ watch(
   () => route.params.id,
   (newId) => {
     if (newId) {
-      loadProduct()
+      loadProduct(newId)
     }
   }
 )
 
 // Initial load
 onMounted(() => {
-  loadProduct()
-  loadRelatedProducts()
+  if (productId.value) {
+    loadProduct(productId.value)
+  }
 })
 </script>
 

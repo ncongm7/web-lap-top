@@ -1,27 +1,25 @@
 <template>
   <div class="specs-table-wrapper">
-    <div v-for="(group, groupKey) in groupedSpecs" :key="groupKey" class="specs-group">
-      <h4 class="group-title">
-        <span class="group-icon">{{ getGroupIcon(groupKey) }}</span>
-        {{ getGroupLabel(groupKey) }}
-      </h4>
+    <div class="specs-group">
       <table class="specs-table">
         <tbody>
-          <tr v-for="spec in group" :key="spec.key">
-            <td class="spec-label-cell">
-              <span class="spec-icon">{{ getSpecIcon(spec.key) }}</span>
-              {{ spec.label }}
-            </td>
-            <td class="spec-value-cell">
-              {{ spec.value }}
-              <span
-                v-if="spec.hex"
-                class="color-dot"
-                :style="{ backgroundColor: spec.hex }"
-                :title="`Màu: ${spec.value}`"
-              ></span>
-            </td>
-          </tr>
+          <template v-for="(group, groupKey) in groupedSpecs" :key="groupKey">
+            <tr v-for="spec in group" :key="`${groupKey}-${spec.key}`">
+              <td class="spec-label-cell">
+                <span class="spec-icon">{{ getSpecIcon(spec.key) }}</span>
+                {{ spec.label }}
+              </td>
+              <td class="spec-value-cell">
+                {{ spec.value }}
+                <span
+                  v-if="spec.hex"
+                  class="color-dot"
+                  :style="{ backgroundColor: spec.hex }"
+                  :title="`Màu: ${spec.value}`"
+                ></span>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -92,7 +90,8 @@ const getSpecIcon = (key) => {
 
 <style scoped>
 .specs-table-wrapper {
-  width: 100%;
+  width: 75%;
+  margin: 0 auto;
 }
 
 .specs-group {
@@ -132,7 +131,7 @@ const getSpecIcon = (key) => {
 }
 
 .spec-label-cell {
-  padding: 0.75rem 1rem;
+  padding: 0.05rem 1rem;
   font-weight: 600;
   color: #86868b;
   width: 35%;
@@ -152,6 +151,8 @@ const getSpecIcon = (key) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .color-dot {

@@ -10,11 +10,6 @@
             </div>
         </div>
 
-        <div class="stock-row">
-            <div class="price-label">Tồn kho:</div>
-            <div class="stock-value">{{ stockText }}</div>
-        </div>
-
         <div v-if="originalPrice && originalPrice > currentPrice" class="price-save">
             <span class="save-icon">⬇</span>
             Tiết kiệm: {{ formatPrice(originalPrice - currentPrice) }}

@@ -255,6 +255,8 @@
 .tab-nav-btn.active {
     color: var(--pdp-accent);
     background: var(--pdp-bg);
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(0, 113, 227, 0.15);
 }
 
 .tab-nav-btn.active::after {
