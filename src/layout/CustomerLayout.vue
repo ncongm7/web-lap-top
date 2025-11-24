@@ -8,6 +8,9 @@
 
     <CustomerFooter />
 
+    <!-- Chat Widget -->
+    <ChatWidget />
+
     <!-- Global Login/Register Modal -->
     <LoginRegisterModal
       :show="layoutStore.showLoginModal"
@@ -24,6 +27,7 @@ import { useToast } from 'vue-toastification'
 import CustomerHeader from '@/components/customer/layout/CustomerHeader.vue'
 import CustomerFooter from '@/components/customer/layout/CustomerFooter.vue'
 import LoginRegisterModal from '@/components/customer/auth/LoginRegisterModal.vue'
+import ChatWidget from '@/components/customer/chat/ChatWidget.vue'
 import { useLayoutStore } from '@/stores/customer/layoutStore'
 import { useCartStore } from '@/stores/customer/cartStore'
 import authService from '@/service/customer/authService'
