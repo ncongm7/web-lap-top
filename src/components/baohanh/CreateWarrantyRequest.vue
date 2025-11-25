@@ -18,11 +18,11 @@
 
       <!-- Main Content -->
       <div v-else>
-        <!-- Step 1: Chọn hóa đơn -->
-        <div v-if="step === 1" class="step-1">
+        <div v-if="step !== 3">
+          <!-- Order selection -->
           <div class="card">
             <div class="card-header">
-              <h5 class="mb-0">Bước 1: Chọn hóa đơn</h5>
+              <h5 class="mb-0">Chọn hóa đơn cần trả/bảo hành</h5>
             </div>
             <div class="card-body">
               <div v-if="orders.length === 0" class="alert alert-info">
@@ -37,70 +37,115 @@
                 </p>
               </div>
               <div v-else>
-                <div class="mb-3">
-                  <label class="form-label"
-                    >Chọn hóa đơn cần bảo hành <span class="text-danger">*</span></label
-                  >
-                  <select
-                    v-model="selectedHoaDonId"
-                    class="form-select"
-                    @change="handleHoaDonChange"
-                  >
-                    <option value="">-- Chọn hóa đơn --</option>
-                    <option v-for="order in orders" :key="order.id" :value="order.id">
-                      {{ order.ma }} - {{ formatDate(order.ngayTao) }} -
-                      {{ formatPrice(order.tongTienSauGiam || order.tongTien) }} -
-                      {{ getStatusLabel(order.trangThai) }}
-                    </option>
-                  </select>
+                <p class="text-muted mb-3">
+                  Chọn hóa đơn cần trả/bảo hành bằng cách tick vào ô bên trái. Hệ thống sẽ tự động
+                  tính số ngày sau khi mua, kiểm tra tình trạng sản phẩm và đưa ra gợi ý sau khi bạn
+                  chọn.
+                </p>
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle warranty-order-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 50px"></th>
+                        <th>Mã đơn</th>
+                        <th>Ngày mua</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Tổng tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="order in orders"
+                        :key="order.id"
+                        :class="{ 'table-active': isOrderSelected(order.id) }"
+                        class="selectable-row"
+                        @click="toggleOrderSelection(order.id)"
+                      >
+                        <td>
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            :checked="isOrderSelected(order.id)"
+                            @click.stop="toggleOrderSelection(order.id)"
+                          />
+                        </td>
+                        <td class="fw-semibold">{{ order.ma }}</td>
+                        <td>{{ formatDate(order.ngayTao) }}</td>
+                        <td>
+                          <span class="badge bg-light text-dark">{{
+                            getStatusLabel(order.trangThai)
+                          }}</span>
+                        </td>
+                        <td class="text-end">
+                          {{ formatPrice(order.tongTienSauGiam || order.tongTien) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+                <p v-if="selectedHoaDonId" class="text-success small mt-3 mb-0">
+                  ✔ Hệ thống đang phân tích đơn hàng
+                  <strong>{{ selectedOrderCode }}</strong> để đưa ra gợi ý phù hợp.
+                </p>
+                <div
+                  v-if="loadingCondition"
+                  class="alert alert-secondary mt-3 d-flex align-items-center gap-2"
+                >
+                  <span class="spinner-border spinner-border-sm" role="status"></span>
+                  <span>Đang phân tích đơn hàng và kiểm tra điều kiện bảo hành...</span>
+                </div>
+                <div v-else-if="conditionError" class="alert alert-warning mt-3 mb-0">
+                  {{ conditionError }}
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <div v-if="selectedHoaDonId" class="mt-3">
-                  <button
-                    class="btn btn-primary"
-                    @click="loadConditionInfo"
-                    :disabled="loadingCondition"
-                  >
-                    <span
-                      v-if="loadingCondition"
-                      class="spinner-border spinner-border-sm me-2"
-                    ></span>
-                    Kiểm tra điều kiện
-                  </button>
+          <!-- Form -->
+          <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Điền form trả/bảo hành</h5>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                @click="backToStep1"
+                v-if="selectedHoaDonId"
+              >
+                Làm mới lựa chọn
+              </button>
+            </div>
+            <div class="card-body">
+              <div v-if="!selectedHoaDonId" class="alert alert-light mb-0">
+                Vui lòng chọn một hóa đơn ở bảng phía trên để hệ thống kiểm tra điều kiện trước khi
+                nhập form.
+              </div>
+              <div v-else-if="selectedHoaDonId && !conditionInfo">
+                <div class="d-flex flex-column align-items-center py-4 text-muted">
+                  <span class="spinner-border text-primary mb-3" role="status"></span>
+                  <p class="mb-0 text-center">
+                    Hệ thống đang phân tích hóa đơn và chuẩn bị form. Vui lòng đợi trong giây lát.
+                  </p>
                 </div>
+              </div>
+              <div v-else>
+                <WarrantyRequestForm
+                  :condition-info="conditionInfo"
+                  :form-data="formData"
+                  :loading="submitting"
+                  @submit="handleSubmit"
+                  @cancel="backToStep1"
+                  @update:form-data="updateFormData"
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Step 2: Điền form -->
-        <div v-if="step === 2" class="step-2">
-          <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">Bước 2: Điền thông tin yêu cầu bảo hành</h5>
-              <button class="btn btn-sm btn-outline-secondary" @click="backToStep1">
-                ← Quay lại
-              </button>
-            </div>
-            <div class="card-body">
-              <WarrantyRequestForm
-                :condition-info="conditionInfo"
-                :form-data="formData"
-                :loading="submitting"
-                @submit="handleSubmit"
-                @cancel="backToStep1"
-                @update:form-data="updateFormData"
-              />
-            </div>
-          </div>
-        </div>
-
         <!-- Success State -->
-        <div v-if="step === 3" class="step-3">
+        <div v-else class="step-3">
           <div class="alert alert-success text-center">
             <h4>✅ Yêu cầu bảo hành đã được gửi thành công!</h4>
             <p class="mb-2">
-              Mã yêu cầu: <strong>{{ createdRequest?.maYeuCau }}</strong>
+              Mã phiếu: <strong>{{ createdRequest?.id }}</strong>
             </p>
             <p class="mb-3">
               Chúng tôi sẽ xử lý yêu cầu bảo hành của bạn trong thời gian sớm nhất.
@@ -119,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/customer/authStore'
 import orderService from '@/service/customer/orderService'
 import baohanhService from '@/service/baohanh/baohanhService'
@@ -133,12 +178,13 @@ const loading = ref(false)
 const loadingCondition = ref(false)
 const submitting = ref(false)
 const error = ref(null)
+const conditionError = ref(null)
 const orders = ref([])
 const selectedHoaDonId = ref('')
 const conditionInfo = ref(null)
 const createdRequest = ref(null)
 
-const formData = ref({
+const buildEmptyForm = () => ({
   idHoaDon: '',
   idKhachHang: '',
   idHoaDonChiTiet: '',
@@ -149,6 +195,13 @@ const formData = ref({
   soLuong: 1,
   hinhAnh: [],
 })
+
+const formData = ref(buildEmptyForm())
+
+const selectedOrder = computed(
+  () => orders.value.find((order) => order.id === selectedHoaDonId.value) || null,
+)
+const selectedOrderCode = computed(() => selectedOrder.value?.ma || '')
 
 // Methods
 const formatDate = (dateString) => {
@@ -179,6 +232,17 @@ const getStatusLabel = (trangThai) => {
     DA_HUY: 'Đã hủy',
   }
   return labels[trangThai] || trangThai
+}
+
+const isOrderSelected = (orderId) => selectedHoaDonId.value === orderId
+
+const toggleOrderSelection = (orderId) => {
+  if (selectedHoaDonId.value === orderId) {
+    selectedHoaDonId.value = ''
+  } else {
+    selectedHoaDonId.value = orderId
+  }
+  handleHoaDonChange()
 }
 
 const loadOrders = async () => {
@@ -240,7 +304,15 @@ const loadOrders = async () => {
 
 const handleHoaDonChange = () => {
   conditionInfo.value = null
+  conditionError.value = null
+  formData.value = buildEmptyForm()
   step.value = 1
+
+  if (!selectedHoaDonId.value) {
+    return
+  }
+
+  loadConditionInfo()
 }
 
 const loadConditionInfo = async () => {
@@ -251,40 +323,47 @@ const loadConditionInfo = async () => {
 
   loadingCondition.value = true
   error.value = null
+  conditionError.value = null
   try {
     const response = await baohanhService.kiemTraDieuKien(selectedHoaDonId.value)
 
     if (response && response.data) {
       conditionInfo.value = response.data.data || response.data
 
-      // Kiểm tra điều kiện bảo hành
-      if (!conditionInfo.value.coTheBaoHanh) {
-        alert('Sản phẩm này không đủ điều kiện để bảo hành. ' + (conditionInfo.value.goiY || ''))
+      const daysAfterPurchase = conditionInfo.value.soNgaySauMua
+      if (typeof daysAfterPurchase === 'number' && daysAfterPurchase > 365) {
+        conditionError.value = 'Hóa đơn này đã quá 12 tháng kể từ ngày mua nên không thể bảo hành.'
         loadingCondition.value = false
         return
+      }
+
+      // Kiểm tra điều kiện bảo hành
+      if (!conditionInfo.value.coTheBaoHanh) {
+        conditionError.value =
+          conditionInfo.value.goiY ||
+          'Hệ thống gợi ý đổi trả đối với sản phẩm này. Vui lòng kiểm tra thông tin trước khi gửi.'
+      } else {
+        conditionError.value = null
       }
 
       // Set form data
       const customerId = authStore.getCustomerId()
       const firstProduct = conditionInfo.value.danhSachSanPham?.[0]
       formData.value = {
+        ...buildEmptyForm(),
         idHoaDon: selectedHoaDonId.value,
         idKhachHang: customerId,
         idHoaDonChiTiet: firstProduct?.idHoaDonChiTiet || '',
-        idSerialDaBan: null,
-        lyDoTraHang: '',
-        tinhTrangLucTra: '',
-        moTaTinhTrang: '',
-        soLuong: 1,
-        hinhAnh: [],
       }
 
       step.value = 2
     }
   } catch (err) {
     console.error('Error loading condition info:', err)
-    error.value = err.response?.data?.message || err.message || 'Không thể kiểm tra điều kiện'
-    alert(error.value)
+    const message = err.response?.data?.message || err.message || 'Không thể kiểm tra điều kiện'
+    error.value = message
+    conditionError.value = message
+    alert(message)
   } finally {
     loadingCondition.value = false
   }
@@ -324,17 +403,8 @@ const resetForm = () => {
   selectedHoaDonId.value = ''
   conditionInfo.value = null
   createdRequest.value = null
-  formData.value = {
-    idHoaDon: '',
-    idKhachHang: '',
-    idHoaDonChiTiet: '',
-    idSerialDaBan: null,
-    lyDoTraHang: '',
-    tinhTrangLucTra: '',
-    moTaTinhTrang: '',
-    soLuong: 1,
-    hinhAnh: [],
-  }
+  conditionError.value = null
+  formData.value = buildEmptyForm()
 }
 
 const resetError = () => {
@@ -393,5 +463,18 @@ onMounted(() => {
 .step-3 .alert {
   border-radius: 8px;
   padding: 30px;
+}
+
+.warranty-order-table thead th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.selectable-row {
+  cursor: pointer;
+}
+
+.selectable-row input[type='checkbox'] {
+  cursor: pointer;
 }
 </style>
