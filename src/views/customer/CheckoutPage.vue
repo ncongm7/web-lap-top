@@ -21,29 +21,56 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                    <input v-model="formData.tenKhachHang" type="text" class="form-control" required
-                      placeholder="Nhập họ và tên" />
+                    <input
+                      v-model="formData.tenKhachHang"
+                      type="text"
+                      class="form-control"
+                      required
+                      placeholder="Nhập họ và tên"
+                    />
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                    <input v-model="formData.soDienThoai" type="tel" class="form-control" required
-                      placeholder="Nhập số điện thoại" />
+                    <label class="form-label"
+                      >Số điện thoại <span class="text-danger">*</span></label
+                    >
+                    <input
+                      v-model="formData.soDienThoai"
+                      type="tel"
+                      class="form-control"
+                      required
+                      placeholder="Nhập số điện thoại"
+                    />
                   </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Email</label>
-                  <input v-model="formData.email" type="email" class="form-control"
-                    placeholder="Nhập email (để nhận xác nhận đơn hàng)" />
+                  <input
+                    v-model="formData.email"
+                    type="email"
+                    class="form-control"
+                    placeholder="Nhập email (để nhận xác nhận đơn hàng)"
+                  />
                 </div>
                 <div class="mb-3">
-                  <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                  <textarea v-model="formData.diaChi" class="form-control" rows="3" required
-                    placeholder="Nhập địa chỉ giao hàng"></textarea>
+                  <label class="form-label"
+                    >Địa chỉ giao hàng <span class="text-danger">*</span></label
+                  >
+                  <textarea
+                    v-model="formData.diaChi"
+                    class="form-control"
+                    rows="3"
+                    required
+                    placeholder="Nhập địa chỉ giao hàng"
+                  ></textarea>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Ghi chú</label>
-                  <textarea v-model="formData.ghiChu" class="form-control" rows="2"
-                    placeholder="Ghi chú cho đơn hàng (nếu có)"></textarea>
+                  <textarea
+                    v-model="formData.ghiChu"
+                    class="form-control"
+                    rows="2"
+                    placeholder="Ghi chú cho đơn hàng (nếu có)"
+                  ></textarea>
                 </div>
               </form>
             </div>
@@ -56,19 +83,33 @@
             </div>
             <div class="card-body">
               <div class="form-check mb-3">
-                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
-                  :value="0" id="cod" />
+                <input
+                  v-model="formData.phuongThucThanhToan"
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  :value="0"
+                  id="cod"
+                />
                 <label class="form-check-label" for="cod">
                   <strong>Thanh toán khi nhận hàng (COD)</strong>
                   <small class="d-block text-muted">Thanh toán bằng tiền mặt khi nhận hàng</small>
                 </label>
               </div>
               <div class="form-check">
-                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
-                  :value="1" id="online" />
+                <input
+                  v-model="formData.phuongThucThanhToan"
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  :value="1"
+                  id="online"
+                />
                 <label class="form-check-label" for="online">
                   <strong>Thanh toán online</strong>
-                  <small class="d-block text-muted">Chuyển khoản qua ngân hàng hoặc ví điện tử</small>
+                  <small class="d-block text-muted"
+                    >Chuyển khoản qua ngân hàng hoặc ví điện tử</small
+                  >
                 </label>
               </div>
             </div>
@@ -114,9 +155,17 @@
             <div class="card-body">
               <!-- Products List -->
               <div class="order-items mb-3">
-                <div v-for="(item, index) in orderItems" :key="index" class="d-flex mb-3 pb-3 border-bottom">
-                  <img :src="item.imageUrl || '/placeholder.jpg'" :alt="item.tenSp" class="product-image me-2"
-                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px" />
+                <div
+                  v-for="(item, index) in orderItems"
+                  :key="index"
+                  class="d-flex mb-3 pb-3 border-bottom"
+                >
+                  <img
+                    :src="item.imageUrl || '/placeholder.jpg'"
+                    :alt="item.tenSp"
+                    class="product-image me-2"
+                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px"
+                  />
                   <div class="flex-grow-1">
                     <h6 class="mb-1 small">{{ item.tenSp }}</h6>
                     <div class="d-flex justify-content-between">
@@ -149,7 +198,11 @@
               </div>
 
               <!-- Submit Button -->
-              <button @click="handleSubmit" class="btn checkout-btn w-100 btn-lg" :disabled="loading || !canSubmit">
+              <button
+                @click="handleSubmit"
+                class="btn checkout-btn w-100 btn-lg"
+                :disabled="loading || !canSubmit"
+              >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ loading ? 'Đang xử lý...' : 'Đặt hàng' }}
               </button>
@@ -167,7 +220,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/customer/authStore'
 import { useCartStore } from '@/stores/customer/cartStore'
 import orderService from '@/service/customer/orderService'
-import customerService from '@/service/customer/customerService'
+import addressService from '@/service/customer/addressService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -194,41 +247,128 @@ onMounted(async () => {
   const user = authStore.getCurrentUser()
   const customerId = authStore.getCustomerId()
 
-  // Tự động fill thông tin từ profile nếu đã đăng nhập
+  // Tự động fill thông tin từ profile và địa chỉ mặc định nếu đã đăng nhập
   if (customerId) {
     try {
-      const profileResponse = await customerService.getCustomerProfile(customerId)
-      if (profileResponse.success && profileResponse.data) {
-        const profile = profileResponse.data
-        // Fill thông tin từ profile
-        formData.value.tenKhachHang = profile.hoTen || ''
-        formData.value.soDienThoai = profile.soDienThoai || ''
-        formData.value.email = profile.email || ''
+      // Bước 1: Lấy thông tin khách hàng để có maKhachHang
+      let customerInfo = null
+      let maKhachHang = null
 
-        // Fill địa chỉ mặc định nếu có
-        if (profile.diaChiMacDinh) {
-          const address = profile.diaChiMacDinh
-          // Tạo chuỗi địa chỉ đầy đủ
-          let fullAddress = address.diaChi || ''
-          if (address.xa) {
-            fullAddress += (fullAddress ? ', ' : '') + address.xa
-          }
-          if (address.tinh) {
-            fullAddress += (fullAddress ? ', ' : '') + address.tinh
-          }
-          formData.value.diaChi = fullAddress
+      try {
+        // Sử dụng addressService.getCustomerById để lấy thông tin khách hàng
+        const customerResponse = await addressService.getCustomerById(customerId)
+        customerInfo = customerResponse.data || customerResponse
+        console.log('🔍 [CheckoutPage] Customer info:', customerInfo)
 
-          // Cập nhật tên và SĐT từ địa chỉ nếu có
+        // Lấy maKhachHang từ customerInfo (có thể là maKhachHang hoặc ma)
+        maKhachHang = customerInfo?.maKhachHang || customerInfo?.ma || user?.maKhachHang
+        console.log('🔍 [CheckoutPage] maKhachHang:', maKhachHang)
+
+        // Điền thông tin cơ bản từ customerInfo trước (fallback)
+        if (customerInfo?.hoTen) {
+          formData.value.tenKhachHang = customerInfo.hoTen
+        }
+        if (customerInfo?.soDienThoai) {
+          formData.value.soDienThoai = customerInfo.soDienThoai
+        }
+        if (customerInfo?.email) {
+          formData.value.email = customerInfo.email
+        }
+      } catch (customerError) {
+        console.warn('⚠️ [CheckoutPage] Không thể lấy thông tin khách hàng:', customerError)
+        // Thử lấy maKhachHang từ user nếu không lấy được từ API
+        maKhachHang = user?.maKhachHang
+      }
+
+      // Nếu không có maKhachHang từ customerInfo, thử lấy từ user
+      if (!maKhachHang && user?.maKhachHang) {
+        maKhachHang = user.maKhachHang
+        console.log('🔍 [CheckoutPage] Lấy maKhachHang từ user:', maKhachHang)
+      }
+
+      // Bước 2: Lấy địa chỉ mặc định nếu có maKhachHang
+      if (maKhachHang) {
+        try {
+          console.log('🔍 [CheckoutPage] Đang lấy địa chỉ cho maKhachHang:', maKhachHang)
+          const addressResponse = await addressService.getAddressesByMaKhachHang(maKhachHang)
+          console.log('🔍 [CheckoutPage] Address response:', addressResponse)
+
+          const addresses = addressResponse.data || addressResponse || []
+          console.log('🔍 [CheckoutPage] Addresses list:', addresses)
+
+          // Tìm địa chỉ mặc định (macDinh = true)
+          const defaultAddress = addresses.find((addr) => addr.macDinh === true)
+          console.log('🔍 [CheckoutPage] Default address:', defaultAddress)
+
+          if (defaultAddress) {
+            // Ưu tiên: Lấy thông tin từ địa chỉ mặc định
+            if (defaultAddress.hoTen) {
+              formData.value.tenKhachHang = defaultAddress.hoTen
+            }
+
+            // Lấy số điện thoại (có thể là sdt hoặc soDienThoai)
+            if (defaultAddress.sdt || defaultAddress.soDienThoai) {
+              formData.value.soDienThoai = defaultAddress.sdt || defaultAddress.soDienThoai
+            }
+
+            // Tạo chuỗi địa chỉ đầy đủ từ các thành phần
+            const addressParts = []
+            if (defaultAddress.diaChi) {
+              addressParts.push(defaultAddress.diaChi)
+            }
+            if (defaultAddress.xa) {
+              addressParts.push(defaultAddress.xa)
+            }
+            if (defaultAddress.tinh) {
+              addressParts.push(defaultAddress.tinh)
+            }
+
+            // Ghép địa chỉ với dấu phẩy và khoảng trắng
+            if (addressParts.length > 0) {
+              formData.value.diaChi = addressParts.join(', ')
+            }
+
+            console.log('✅ [CheckoutPage] Đã điền thông tin từ địa chỉ mặc định:', {
+              tenKhachHang: formData.value.tenKhachHang,
+              soDienThoai: formData.value.soDienThoai,
+              diaChi: formData.value.diaChi,
+            })
+          } else {
+            console.warn('⚠️ [CheckoutPage] Không tìm thấy địa chỉ mặc định trong danh sách')
+          }
+        } catch (addressError) {
+          console.error('❌ [CheckoutPage] Lỗi khi lấy địa chỉ mặc định:', addressError)
+          // Tiếp tục với thông tin từ profile nếu không lấy được địa chỉ
+        }
+      } else {
+        console.warn('⚠️ [CheckoutPage] Không có maKhachHang để lấy địa chỉ')
+      }
+
+      // Nếu vẫn chưa có thông tin, thử từ customerInfo (nếu có trong response)
+      if (customerInfo && !formData.value.diaChi) {
+        // Nếu có diaChiMacDinh trong customerInfo
+        if (customerInfo.diaChiMacDinh) {
+          const address = customerInfo.diaChiMacDinh
+          const addressParts = []
+          if (address.diaChi) addressParts.push(address.diaChi)
+          if (address.xa) addressParts.push(address.xa)
+          if (address.tinh) addressParts.push(address.tinh)
+          if (addressParts.length > 0) {
+            formData.value.diaChi = addressParts.join(', ')
+          }
           if (address.hoTen && !formData.value.tenKhachHang) {
             formData.value.tenKhachHang = address.hoTen
           }
-          if (address.soDienThoai && !formData.value.soDienThoai) {
-            formData.value.soDienThoai = address.soDienThoai
+          if ((address.sdt || address.soDienThoai) && !formData.value.soDienThoai) {
+            formData.value.soDienThoai = address.sdt || address.soDienThoai
           }
         }
       }
     } catch (error) {
-      console.warn('⚠️ [CheckoutPage] Không thể lấy thông tin profile, sử dụng thông tin từ authStore:', error)
+      console.warn(
+        '⚠️ [CheckoutPage] Không thể lấy thông tin profile, sử dụng thông tin từ authStore:',
+        error,
+      )
       // Fallback: sử dụng thông tin từ authStore
       if (user) {
         formData.value.tenKhachHang = user.hoTen || ''
@@ -243,17 +383,29 @@ onMounted(async () => {
     formData.value.email = user.email || ''
   }
 
+  // Fetch cart trước để đảm bảo có dữ liệu mới nhất
+  if (!cartStore.cart) {
+    await cartStore.fetchCart()
+  }
+
   // Ưu tiên lấy từ cartStore (có voucher) nếu có selectedItems
   if (cartStore.selectedItems && cartStore.selectedItems.length > 0) {
     // Load từ cartStore - đã có voucher được áp dụng
-    orderItems.value = cartStore.selectedItems.map((item) => ({
-      idCtsp: item.ctspId || item.idCtsp || item.id,
-      tenSp: item.tenSp || item.tenSanPham || 'Sản phẩm',
-      soLuong: item.quantity || item.soLuong || 1,
-      donGia: item.donGia || item.giaBan || 0,
-      thanhTien: (item.thanhTien || item.donGia * (item.quantity || 1)),
-      imageUrl: item.imageUrl || item.anhSanPham,
-    }))
+    orderItems.value = cartStore.selectedItems.map((item) => {
+      // Tính thanhTien: ưu tiên subtotal của item, nếu không có thì tính price * quantity
+      const itemPrice = Number(item.price) || 0
+      const itemQuantity = Number(item.quantity) || 1
+      const itemSubtotal = Number(item.subtotal) || itemPrice * itemQuantity
+
+      return {
+        idCtsp: item.ctspId || item.idCtsp || item.id,
+        tenSp: item.tenSp || item.tenSanPham || 'Sản phẩm',
+        soLuong: itemQuantity,
+        donGia: itemPrice,
+        thanhTien: itemSubtotal,
+        imageUrl: item.imageUrl || item.anhSanPham,
+      }
+    })
   } else {
     // Fallback: Load product from sessionStorage
     const checkoutDataStr = sessionStorage.getItem('checkout_data')
@@ -280,31 +432,53 @@ onMounted(async () => {
     }
   }
 
-  // Fetch cart nếu chưa có để đảm bảo có voucher info
-  if (!cartStore.cart) {
-    await cartStore.fetchCart()
-  }
-
   // Generate order code
   orderCode.value = 'DH' + Date.now()
 })
 
 // Computed
 const subtotal = computed(() => {
-  // Ưu tiên lấy từ cartStore nếu có (đã tính đúng với voucher)
-  if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.subtotal) {
+  // Tính từ orderItems local trước (dữ liệu chính xác nhất)
+  const calculatedSubtotal = orderItems.value.reduce((sum, item) => {
+    return sum + (Number(item.thanhTien) || 0)
+  }, 0)
+
+  // Nếu có orderItems và đã tính được subtotal, ưu tiên dùng giá trị này
+  if (calculatedSubtotal > 0) {
+    // Nếu có cartStore với voucher, ưu tiên dùng cartStore.subtotal (có voucher tính)
+    if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.subtotal > 0) {
+      return cartStore.subtotal
+    }
+    return calculatedSubtotal
+  }
+
+  // Nếu không có orderItems, thử lấy từ cartStore
+  if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.subtotal > 0) {
     return cartStore.subtotal
   }
-  // Fallback: tính từ orderItems local
-  return orderItems.value.reduce((sum, item) => sum + item.thanhTien, 0)
+
+  return 0
 })
 
 const shippingFee = computed(() => {
-  // Ưu tiên lấy từ cartStore
-  if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.shippingFee !== undefined) {
+  // Tính subtotal sau discount để kiểm tra miễn phí vận chuyển
+  const subtotalAfterDiscount = subtotal.value - discount.value
+
+  // Miễn phí vận chuyển nếu >= 1.000.000
+  if (subtotalAfterDiscount >= 1000000) {
+    return 0
+  }
+
+  // Ưu tiên lấy từ cartStore nếu có
+  if (
+    cartStore.selectedItems &&
+    cartStore.selectedItems.length > 0 &&
+    cartStore.shippingFee !== undefined
+  ) {
     return cartStore.shippingFee
   }
-  return 0 // Free shipping
+
+  return 0 // Free shipping mặc định
 })
 
 const discount = computed(() => {
@@ -313,12 +487,24 @@ const discount = computed(() => {
 })
 
 const total = computed(() => {
-  // Ưu tiên lấy từ cartStore nếu có (đã tính đúng với voucher)
-  if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.total) {
+  // Tính từ các giá trị đã có
+  const calculatedTotal = subtotal.value + shippingFee.value - discount.value
+
+  // Nếu có orderItems và đã tính được total, ưu tiên dùng giá trị này
+  if (calculatedTotal > 0) {
+    // Nếu có cartStore với voucher, ưu tiên dùng cartStore.total (có voucher tính)
+    if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.total > 0) {
+      return cartStore.total
+    }
+    return calculatedTotal
+  }
+
+  // Nếu không có orderItems, thử lấy từ cartStore
+  if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.total > 0) {
     return cartStore.total
   }
-  // Fallback: tính từ các giá trị local
-  return subtotal.value + shippingFee.value - discount.value
+
+  return 0
 })
 
 const canSubmit = computed(() => {
@@ -380,6 +566,52 @@ const handleSubmit = async () => {
       // Clear checkout data
       sessionStorage.removeItem('checkout_data')
 
+      // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
+      try {
+        // Lấy danh sách các sản phẩm đã đặt hàng (từ selectedItems trong cartStore)
+        const orderedItems = cartStore.selectedItems || []
+
+        if (orderedItems.length > 0) {
+          console.log('🗑️ [CheckoutPage] Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng:', orderedItems)
+
+          // Lưu danh sách item IDs cần xóa trước khi xóa
+          const itemIdsToRemove = orderedItems
+            .map((item) => item.id) // ID của cart item (GioHangChiTiet.id)
+            .filter((id) => id != null) // Lọc bỏ các item không có ID
+
+          console.log('🗑️ [CheckoutPage] Danh sách item IDs cần xóa:', itemIdsToRemove)
+
+          if (itemIdsToRemove.length > 0) {
+            // Xóa từng item đã đặt hàng khỏi giỏ hàng
+            // Sử dụng Promise.allSettled để đảm bảo tất cả đều được xử lý, kể cả có lỗi
+            const removePromises = itemIdsToRemove.map((itemId) => {
+              return cartStore.removeCartItem(itemId).catch((err) => {
+                console.error(`❌ [CheckoutPage] Lỗi khi xóa cart item ${itemId}:`, err)
+                // Không throw error để không chặn việc redirect
+                return { success: false, error: err }
+              })
+            })
+
+            // Đợi tất cả các item được xóa (hoặc bỏ qua lỗi)
+            await Promise.allSettled(removePromises)
+            console.log('✅ [CheckoutPage] Đã xóa các sản phẩm đã đặt hàng khỏi giỏ hàng')
+
+            // Refresh lại giỏ hàng để đảm bảo state được cập nhật
+            await cartStore.fetchCart()
+          } else {
+            console.warn('⚠️ [CheckoutPage] Không có item ID hợp lệ để xóa khỏi giỏ hàng')
+          }
+        } else {
+          console.log('ℹ️ [CheckoutPage] Không có sản phẩm nào trong selectedItems để xóa')
+        }
+      } catch (error) {
+        // Không block việc redirect nếu có lỗi khi xóa giỏ hàng
+        console.error(
+          '⚠️ [CheckoutPage] Lỗi khi xóa sản phẩm khỏi giỏ hàng (không ảnh hưởng đến đơn hàng):',
+          error,
+        )
+      }
+
       // Get order ID from response
       const orderId = response.data?.data?.id || response.data?.id
       const orderCode = response.data?.data?.ma || response.data?.ma || 'N/A'
@@ -389,8 +621,8 @@ const handleSubmit = async () => {
         name: 'order-success',
         query: {
           orderId: orderId || null,
-          orderCode: orderCode
-        }
+          orderCode: orderCode,
+        },
       })
     } else {
       throw new Error(response.message || 'Không thể tạo đơn hàng')

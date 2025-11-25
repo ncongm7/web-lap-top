@@ -21,13 +21,64 @@ export const useCartStore = defineStore('cart', () => {
     return cartItems.value.filter((item) => item.selected)
   })
 
-  const subtotal = computed(() => cart.value?.subtotal || 0)
+  // Tính subtotal dựa trên các sản phẩm đã chọn
+  const subtotal = computed(() => {
+    if (selectedItems.value.length === 0) {
+      return 0
+    }
+    return selectedItems.value.reduce((sum, item) => {
+      // Sử dụng subtotal của item nếu có, nếu không thì tính price * quantity
+      return sum + (Number(item.subtotal) || Number(item.price) * item.quantity || 0)
+    }, 0)
+  })
 
-  const discount = computed(() => cart.value?.discount || 0)
+  // Tính discount dựa trên tỷ lệ subtotal của selectedItems so với toàn bộ giỏ hàng
+  const discount = computed(() => {
+    const fullSubtotal = cart.value?.subtotal || 0
+    const fullDiscount = cart.value?.discount || 0
 
-  const shippingFee = computed(() => cart.value?.shippingFee || 0)
+    // Nếu không có discount hoặc không có sản phẩm được chọn, trả về 0
+    if (fullDiscount === 0 || subtotal.value === 0 || fullSubtotal === 0) {
+      return 0
+    }
 
-  const total = computed(() => cart.value?.total || 0)
+    // Tính discount theo tỷ lệ phần trăm
+    const discountRate = fullDiscount / fullSubtotal
+    return subtotal.value * discountRate
+  })
+
+  // Shipping fee - tính lại dựa trên subtotal của selectedItems
+  const shippingFee = computed(() => {
+    // Nếu không có sản phẩm được chọn, không có phí vận chuyển
+    if (selectedItems.value.length === 0) {
+      return 0
+    }
+
+    // Nếu subtotal sau discount >= 1.000.000, miễn phí vận chuyển
+    const subtotalAfterDiscount = subtotal.value - discount.value
+    if (subtotalAfterDiscount >= 1000000) {
+      return 0
+    }
+
+    // Nếu không miễn phí, lấy shipping fee từ backend (nếu có)
+    // Hoặc có thể tính lại dựa trên tỷ lệ subtotal selected / subtotal full
+    const fullSubtotal = cart.value?.subtotal || 0
+    const fullShippingFee = cart.value?.shippingFee || 0
+
+    // Nếu fullSubtotal = 0 hoặc không có shipping fee từ backend, trả về 0
+    if (fullSubtotal === 0 || fullShippingFee === 0) {
+      return 0
+    }
+
+    // Tính shipping fee theo tỷ lệ (tùy chọn) hoặc giữ nguyên fullShippingFee
+    // Để đơn giản, nếu đã chọn ít nhất 1 sản phẩm và < 1.000.000, áp dụng fullShippingFee
+    return fullShippingFee
+  })
+
+  // Tính total dựa trên subtotal, discount và shippingFee của selectedItems
+  const total = computed(() => {
+    return subtotal.value - discount.value + shippingFee.value
+  })
 
   const appliedVoucher = computed(() => cart.value?.appliedVoucher || null)
 
@@ -87,7 +138,10 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Số lượng phải lớn hơn 0')
       }
 
-      const response = await cartService.addToCart(khachHangId, { ctspId: ctspId, quantity: soLuong })
+      const response = await cartService.addToCart(khachHangId, {
+        ctspId: ctspId,
+        quantity: soLuong,
+      })
 
       // Assuming the service returns the updated cart directly
       // And assuming the response structure from service is just the data
@@ -96,7 +150,6 @@ export const useCartStore = defineStore('cart', () => {
       } else if (response.success === false) {
         throw new Error(response.message || 'Không thể thêm sản phẩm')
       }
-
     } catch (err) {
       console.error('❌ Error adding to cart:', err)
       console.error('❌ Error details:', {
@@ -118,7 +171,7 @@ export const useCartStore = defineStore('cart', () => {
         }
         // Nếu là validation error từ Spring
         else if (Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.map(e => e.defaultMessage || e.message).join(', ')
+          errorMessage = errorData.errors.map((e) => e.defaultMessage || e.message).join(', ')
         }
       } else if (err.message) {
         errorMessage = err.message
@@ -277,7 +330,8 @@ export const useCartStore = defineStore('cart', () => {
         }
       } else {
         // Voucher không hợp lệ hoặc có lỗi
-        const errorMessage = voucherData?.message || response?.message || 'Không thể áp dụng voucher'
+        const errorMessage =
+          voucherData?.message || response?.message || 'Không thể áp dụng voucher'
         throw new Error(errorMessage)
       }
     } catch (err) {
@@ -315,9 +369,8 @@ export const useCartStore = defineStore('cart', () => {
         // Structure: { status: "FAILED", code: "VALIDATION_ERROR", errors: {...} }
         else if (errorData.status === 'FAILED' && errorData.errors) {
           const errorMessages = Object.values(errorData.errors)
-          errorMessage = errorMessages.length > 0
-            ? errorMessages.join(', ')
-            : 'Dữ liệu không hợp lệ'
+          errorMessage =
+            errorMessages.length > 0 ? errorMessages.join(', ') : 'Dữ liệu không hợp lệ'
         }
         // 4. Nếu là ResponseObject trực tiếp
         else if (errorData.message) {
