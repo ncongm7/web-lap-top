@@ -1,118 +1,91 @@
 <template>
   <div class="warranty-request-form">
     <form @submit.prevent="handleSubmit">
-      <!-- Thông tin điều kiện -->
-      <div v-if="conditionInfo" class="condition-info mb-4">
-        <div class="alert alert-info">
-          <h5 class="mb-2">Thông tin điều kiện bảo hành</h5>
-          <p class="mb-1">
-            <strong>Số ngày sau khi mua:</strong> {{ conditionInfo.soNgaySauMua }} ngày
-          </p>
-          <p class="mb-1"><strong>Gợi ý:</strong> {{ conditionInfo.goiY }}</p>
-          <p class="mb-0">
-            <span v-if="conditionInfo.coTheBaoHanh" class="badge bg-primary">Có thể bảo hành</span>
-            <span v-else class="badge bg-warning">Không đủ điều kiện bảo hành</span>
-          </p>
+      <div v-if="productList.length" class="invoice-products mb-4">
+        <h6 class="section-title mb-3">1. Sản phẩm trong hóa đơn</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th class="text-center">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th>Serial/IMEI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="sp in productList" :key="sp.idHoaDonChiTiet">
+                <td>
+                  <div class="fw-semibold">{{ sp.tenSanPham }}</div>
+                  <div class="text-muted small">{{ sp.maCtsp }}</div>
+                </td>
+                <td class="text-center">{{ sp.soLuong }}</td>
+                <td class="text-end">
+                  {{ formatCurrency(getProductUnitPrice(sp)) }}
+                </td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    <span
+                      v-for="serial in getSerialsForProduct(sp.idHoaDonChiTiet)"
+                      :key="serial"
+                      class="serial-pill"
+                    >
+                      {{ serial }}
+                    </span>
+                    <span
+                      v-if="getSerialsForProduct(sp.idHoaDonChiTiet).length === 0"
+                      class="text-muted"
+                      >—</span
+                    >
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Chọn sản phẩm (nếu có nhiều sản phẩm) -->
-      <div
-        v-if="
-          conditionInfo && conditionInfo.danhSachSanPham && conditionInfo.danhSachSanPham.length > 1
-        "
-        class="mb-3"
-      >
+      <h6 class="section-title">2. Thông tin yêu cầu</h6>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label"
+            >Chọn sản phẩm cần trả/bảo hành <span class="text-danger">*</span></label
+          >
+          <select
+            :value="formData.idHoaDonChiTiet"
+            @change="updateFormDataField('idHoaDonChiTiet', $event.target.value)"
+            class="form-select"
+            required
+          >
+            <option value="">-- Chọn sản phẩm trong hóa đơn --</option>
+            <option v-for="sp in productList" :key="sp.idHoaDonChiTiet" :value="sp.idHoaDonChiTiet">
+              {{ sp.tenSanPham }} ({{ sp.maCtsp }})
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Số ngày từ khi mua</label>
+          <input
+            type="text"
+            class="form-control bg-light"
+            :value="daysAfterPurchaseDisplay"
+            disabled
+          />
+        </div>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label"
-          >Chọn sản phẩm cần bảo hành <span class="text-danger">*</span></label
+          >Lý do yêu cầu trả/bảo hành <span class="text-danger">*</span></label
         >
-        <select
-          :value="formData.idHoaDonChiTiet"
-          @change="updateFormDataField('idHoaDonChiTiet', $event.target.value)"
-          class="form-select"
-          required
-        >
-          <option value="">-- Chọn sản phẩm --</option>
-          <option
-            v-for="sp in conditionInfo.danhSachSanPham"
-            :key="sp.idHoaDonChiTiet"
-            :value="sp.idHoaDonChiTiet"
-          >
-            {{ sp.tenSanPham }} ({{ sp.maCtsp }}) - Số lượng: {{ sp.soLuong }}
-          </option>
-        </select>
-      </div>
-      <div
-        v-else-if="
-          conditionInfo &&
-          conditionInfo.danhSachSanPham &&
-          conditionInfo.danhSachSanPham.length === 1
-        "
-      >
-        <input type="hidden" :value="conditionInfo.danhSachSanPham[0].idHoaDonChiTiet" />
-      </div>
-
-      <!-- Chọn serial/IMEI (nếu có) -->
-      <div
-        v-if="
-          selectedProductHasSerial &&
-          conditionInfo.danhSachSerial &&
-          conditionInfo.danhSachSerial.length > 0
-        "
-        class="mb-3"
-      >
-        <label class="form-label">Chọn Serial/IMEI (nếu có)</label>
-        <select
-          :value="formData.idSerialDaBan"
-          @change="updateFormDataField('idSerialDaBan', $event.target.value)"
-          class="form-select"
-        >
-          <option value="">-- Không chọn --</option>
-          <option
-            v-for="serial in filteredSerials"
-            :key="serial.idSerialDaBan"
-            :value="serial.idSerialDaBan"
-          >
-            {{ serial.serialNo || serial.imei }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Số lượng -->
-      <div class="mb-3">
-        <label class="form-label">Số lượng bảo hành <span class="text-danger">*</span></label>
-        <input
-          type="number"
-          :value="formData.soLuong"
-          @input="updateFormDataField('soLuong', parseInt($event.target.value) || 1)"
+        <textarea
+          :value="formData.lyDoTraHang"
+          @input="updateFormDataField('lyDoTraHang', $event.target.value)"
           class="form-control"
-          min="1"
-          :max="selectedProductMaxQuantity"
+          rows="4"
+          placeholder="Mô tả lý do bạn muốn trả hàng/bảo hành..."
           required
-        />
-        <small class="form-text text-muted">
-          Số lượng tối đa: {{ selectedProductMaxQuantity }}
-        </small>
-      </div>
-
-      <!-- Tình trạng sản phẩm -->
-      <div class="mb-3">
-        <label class="form-label">Tình trạng sản phẩm <span class="text-danger">*</span></label>
-        <select
-          :value="formData.tinhTrangLucTra"
-          @change="updateFormDataField('tinhTrangLucTra', $event.target.value)"
-          class="form-select"
-          required
-        >
-          <option value="">-- Chọn tình trạng --</option>
-          <option value="Hỏng">Hỏng</option>
-          <option value="Trầy xước">Trầy xước</option>
-          <option value="Lỗi kỹ thuật">Lỗi kỹ thuật</option>
-          <option value="Khác">Khác</option>
-        </select>
-        <small class="form-text text-muted">
-          Vui lòng mô tả chi tiết tình trạng sản phẩm ở phần dưới
-        </small>
+        ></textarea>
       </div>
 
       <!-- Mô tả tình trạng -->
@@ -131,19 +104,8 @@
       </div>
 
       <!-- Lý do -->
-      <div class="mb-3">
-        <label class="form-label">Lý do yêu cầu bảo hành <span class="text-danger">*</span></label>
-        <textarea
-          :value="formData.lyDoTraHang"
-          @input="updateFormDataField('lyDoTraHang', $event.target.value)"
-          class="form-control"
-          rows="4"
-          placeholder="Nhập lý do yêu cầu bảo hành..."
-          required
-        ></textarea>
-      </div>
-
       <!-- Upload ảnh minh chứng -->
+      <h6 class="section-title mt-4">3. Ảnh minh chứng</h6>
       <div class="mb-3">
         <label class="form-label">Ảnh minh chứng (tối đa 5 ảnh)</label>
         <input
@@ -154,9 +116,7 @@
           @change="handleFileChange"
           ref="fileInput"
         />
-        <small class="form-text text-muted">
-          Chọn ảnh để minh chứng tình trạng sản phẩm cần bảo hành
-        </small>
+        <small class="form-text text-muted">{{ evidenceHelperText }}</small>
 
         <!-- Preview ảnh -->
         <div v-if="previewImages.length > 0" class="mt-3">
@@ -186,7 +146,7 @@
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" :disabled="loading">
           <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-          Gửi yêu cầu bảo hành
+          {{ submitButtonLabel }}
         </button>
         <button type="button" class="btn btn-secondary" @click="$emit('cancel')">Hủy</button>
       </div>
@@ -198,6 +158,11 @@
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
+  mode: {
+    type: String,
+    default: 'warranty',
+    validator: (value) => ['warranty', 'return'].includes(value),
+  },
   conditionInfo: {
     type: Object,
     default: null,
@@ -218,25 +183,69 @@ const fileInput = ref(null)
 const previewImages = ref([])
 
 // Computed
-const selectedProductHasSerial = computed(() => {
-  if (!props.conditionInfo?.danhSachSanPham || !props.formData.idHoaDonChiTiet) {
-    return false
-  }
-  const selectedProduct = props.conditionInfo.danhSachSanPham.find(
-    (sp) => sp.idHoaDonChiTiet === props.formData.idHoaDonChiTiet,
-  )
-  return selectedProduct?.coSerial || false
+const productList = computed(() => props.conditionInfo?.danhSachSanPham || [])
+
+const isReturnMode = computed(() => props.mode === 'return')
+const submitButtonLabel = computed(() =>
+  isReturnMode.value ? 'Gửi yêu cầu trả hàng' : 'Gửi yêu cầu bảo hành',
+)
+const evidenceHelperText = computed(() =>
+  isReturnMode.value
+    ? 'Chọn ảnh minh chứng tình trạng sản phẩm cần trả hàng'
+    : 'Chọn ảnh để minh chứng tình trạng sản phẩm cần bảo hành',
+)
+
+const serialMap = computed(() => {
+  const map = {}
+  props.conditionInfo?.danhSachSerial?.forEach((serial) => {
+    if (!serial.idHoaDonChiTiet) return
+    if (!map[serial.idHoaDonChiTiet]) {
+      map[serial.idHoaDonChiTiet] = []
+    }
+    map[serial.idHoaDonChiTiet].push(serial.serialNo || serial.imei)
+  })
+  return map
 })
 
-const selectedProductMaxQuantity = computed(() => {
-  if (!props.conditionInfo?.danhSachSanPham || !props.formData.idHoaDonChiTiet) {
-    return 1
+const getSerialsForProduct = (productId) => serialMap.value[productId] || []
+
+const formatCurrency = (value) => {
+  if (value === undefined || value === null) return '—'
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+}
+
+const normalizePrice = (value) => {
+  if (value === undefined || value === null) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const getProductUnitPrice = (product) => {
+  if (!product) return null
+  const candidates = [
+    normalizePrice(product.donGia),
+    normalizePrice(product.giaBan),
+    normalizePrice(product.donGiaSauGiam),
+    normalizePrice(product.giaSauGiam),
+    normalizePrice(product.giaBanSauGiam),
+  ]
+  const found = candidates.find((value) => value !== null)
+  if (found !== undefined && found !== null && found > 0) {
+    return found
   }
-  const selectedProduct = props.conditionInfo.danhSachSanPham.find(
-    (sp) => sp.idHoaDonChiTiet === props.formData.idHoaDonChiTiet,
-  )
-  return selectedProduct?.soLuong || 1
-})
+
+  if (
+    product.thanhTien !== undefined &&
+    product.thanhTien !== null &&
+    product.soLuong &&
+    Number(product.soLuong) !== 0
+  ) {
+    const unit = Number(product.thanhTien) / Number(product.soLuong)
+    return Number.isFinite(unit) && unit > 0 ? unit : normalizePrice(product.thanhTien)
+  }
+
+  return normalizePrice(product.thanhTien)
+}
 
 const filteredSerials = computed(() => {
   if (!props.conditionInfo?.danhSachSerial || !props.formData.idHoaDonChiTiet) {
@@ -247,6 +256,14 @@ const filteredSerials = computed(() => {
   )
 })
 
+const daysAfterPurchase = computed(() => props.conditionInfo?.soNgaySauMua ?? null)
+const daysAfterPurchaseDisplay = computed(() => {
+  if (daysAfterPurchase.value === null || daysAfterPurchase.value === undefined) return '—'
+  if (daysAfterPurchase.value === 0) return 'Hôm nay'
+  if (daysAfterPurchase.value === 1) return '1 ngày trước'
+  return `${daysAfterPurchase.value} ngày trước`
+})
+
 // Watch để tự động chọn sản phẩm nếu chỉ có 1
 watch(
   () => props.conditionInfo,
@@ -255,6 +272,28 @@ watch(
       emit('update:formData', {
         ...props.formData,
         idHoaDonChiTiet: newVal.danhSachSanPham[0].idHoaDonChiTiet,
+      })
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => filteredSerials.value,
+  (serials) => {
+    if (serials.length > 0) {
+      const current = props.formData.idSerialDaBan
+      const match = serials.find((serial) => serial.idSerialDaBan === current)
+      if (!match) {
+        emit('update:formData', {
+          ...props.formData,
+          idSerialDaBan: serials[0].idSerialDaBan,
+        })
+      }
+    } else if (props.formData.idSerialDaBan) {
+      emit('update:formData', {
+        ...props.formData,
+        idSerialDaBan: null,
       })
     }
   },
@@ -316,18 +355,6 @@ const handleSubmit = () => {
     alert('Vui lòng chọn sản phẩm')
     return
   }
-  if (!props.formData.soLuong || props.formData.soLuong < 1) {
-    alert('Vui lòng nhập số lượng hợp lệ')
-    return
-  }
-  if (props.formData.soLuong > selectedProductMaxQuantity.value) {
-    alert(`Số lượng không được vượt quá ${selectedProductMaxQuantity.value}`)
-    return
-  }
-  if (!props.formData.tinhTrangLucTra || props.formData.tinhTrangLucTra.trim() === '') {
-    alert('Vui lòng chọn tình trạng sản phẩm')
-    return
-  }
   if (!props.formData.moTaTinhTrang || props.formData.moTaTinhTrang.trim() === '') {
     alert('Vui lòng mô tả chi tiết tình trạng sản phẩm')
     return
@@ -337,13 +364,16 @@ const handleSubmit = () => {
     return
   }
 
-  // Kiểm tra điều kiện bảo hành
-  if (!props.conditionInfo?.coTheBaoHanh) {
-    alert('Sản phẩm này không đủ điều kiện để bảo hành')
-    return
+  const sanitizedData = {
+    ...props.formData,
+    soLuong: props.formData.soLuong && props.formData.soLuong > 0 ? props.formData.soLuong : 1,
+    tinhTrangLucTra:
+      props.formData.tinhTrangLucTra && props.formData.tinhTrangLucTra.trim() !== ''
+        ? props.formData.tinhTrangLucTra
+        : 'Không xác định',
   }
 
-  emit('submit', props.formData)
+  emit('submit', sanitizedData)
 }
 </script>
 
@@ -353,11 +383,27 @@ const handleSubmit = () => {
   margin: 0 auto;
 }
 
-.condition-info .alert {
-  border-left: 4px solid #0d6efd;
-}
-
 .img-thumbnail {
   cursor: pointer;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.invoice-products .table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.serial-pill {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
 }
 </style>

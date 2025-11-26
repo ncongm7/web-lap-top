@@ -13,7 +13,7 @@ export const baohanhService = {
     if (!idHoaDon) {
       return Promise.reject(new Error('ID hóa đơn là bắt buộc'))
     }
-    return axiosInstance.get(`/api/v1/tra-hang/kiem-tra-dieu-kien/${idHoaDon}`)
+    return axiosInstance.get(`/api/v1/bao-hanh/kiem-tra/${idHoaDon}`)
   },
 
   /**
@@ -52,8 +52,6 @@ export const baohanhService = {
       formData.append('moTaTinhTrang', requestData.moTaTinhTrang)
     }
 
-    // Luôn set loaiYeuCau = 1 (Bảo hành)
-    formData.append('loaiYeuCau', 1)
     formData.append('soLuong', requestData.soLuong)
 
     // Thêm ảnh nếu có
@@ -63,7 +61,7 @@ export const baohanhService = {
       })
     }
 
-    return axiosInstance.post('/api/v1/tra-hang/tao-yeu-cau', formData, {
+    return axiosInstance.post('/api/v1/bao-hanh/tao-yeu-cau', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
