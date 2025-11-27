@@ -28,7 +28,7 @@ export function useProductCart() {
       // Kiểm tra authentication bằng authStore hoặc authService
       // authStore.isAuthenticated là computed property
       const isAuthenticated = authStore.isAuthenticated || authService.isAuthenticated()
-      
+
       console.log('🔐 [useProductCart] Auth check:', {
         authStoreIsAuthenticated: authStore.isAuthenticated,
         authServiceIsAuthenticated: authService.isAuthenticated(),
@@ -37,7 +37,7 @@ export function useProductCart() {
         localStorageToken: localStorage.getItem('customer_token'),
         localStorageUser: localStorage.getItem('customer_user')
       })
-      
+
       if (!isAuthenticated) {
         // Thay vì alert, có thể mở modal đăng nhập
         alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
@@ -47,9 +47,9 @@ export function useProductCart() {
 
       // Lấy khachHangId từ authStore hoặc authService
       const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
-      
+
       console.log('👤 [useProductCart] Customer ID:', khachHangId)
-      
+
       if (!khachHangId) {
         alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
         router.push('/login')
@@ -83,22 +83,85 @@ export function useProductCart() {
    */
   const handleBuyNow = async ({ productId, productName, quantity }) => {
     try {
-      // Add to cart first
-      const success = await handleAddToCart({ productId, productName, quantity })
-
-      // If added successfully, navigate to checkout
-      if (success) {
-        router.push('/checkout')
+      // Đảm bảo authStore đã được initialize
+      if (!authStore.user && !authStore.token) {
+        authStore.initialize()
       }
+
+      // Kiểm tra authentication
+      const isAuthenticated = authStore.isAuthenticated || authService.isAuthenticated()
+
+      if (!isAuthenticated) {
+        alert('Vui lòng đăng nhập để mua hàng')
+        router.push('/login')
+        return false
+      }
+
+      // Lấy khachHangId
+      const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
+
+      if (!khachHangId) {
+        alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
+        router.push('/login')
+        return false
+      }
+
+      if (!productId || quantity <= 0) {
+        alert('Vui lòng chọn phiên bản và số lượng hợp lệ.')
+        return false
+      }
+
+      console.log('🛒 [Buy Now] Adding to cart:', { productId, quantity, khachHangId })
+
+      // Thêm vào giỏ hàng
+      await cartStore.addToCart({
+        ctspId: productId,
+        soLuong: quantity,
+      })
+
+      // Đảm bảo cart được fetch để có dữ liệu mới nhất
+      await cartStore.fetchCart()
+
+      // Tìm item vừa thêm và đánh dấu là selected để checkout
+      const cartItems = cartStore.cartItems
+      const addedItem = cartItems.find(item =>
+        (item.ctspId === productId || item.idCtsp === productId || item.id === productId)
+      )
+
+      if (addedItem) {
+        // Đánh dấu item này là selected để checkout
+        cartStore.toggleItemSelection(addedItem.id)
+      }
+
+      // Chuyển đến trang giỏ hàng
+      router.push('/cart')
+      return true
     } catch (err) {
-      // Error is already handled in handleAddToCart
       console.error('Error in buy now process:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Không thể thực hiện mua ngay. Vui lòng thử lại.'
+      alert(errorMessage)
+      return false
     }
+  }
+
+  /**
+   * Liên hệ về sản phẩm (khi hết hàng)
+   */
+  const handleContact = ({ productId, productName }) => {
+    // Chuyển đến trang liên hệ với thông tin sản phẩm
+    router.push({
+      path: '/contact',
+      query: {
+        productId: productId,
+        productName: productName,
+      },
+    })
   }
 
   return {
     handleAddToCart,
     handleBuyNow,
+    handleContact,
   }
 }
 

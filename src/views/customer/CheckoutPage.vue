@@ -21,25 +21,79 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                    <input v-model="formData.tenKhachHang" type="text" class="form-control" required
-                      placeholder="Nhập họ và tên" />
+                    <input
+                      v-model="formData.tenKhachHang"
+                      type="text"
+                      class="form-control"
+                      :class="{ 'is-invalid': formErrors.tenKhachHang }"
+                      placeholder="Nhập họ và tên"
+                      @blur="validateTenKhachHang"
+                      @input="clearError('tenKhachHang')"
+                    />
+                    <div v-if="formErrors.tenKhachHang" class="invalid-feedback">
+                      {{ formErrors.tenKhachHang }}
+                    </div>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                    <input v-model="formData.soDienThoai" type="tel" class="form-control" required
-                      placeholder="Nhập số điện thoại" />
+                    <input
+                      v-model="formData.soDienThoai"
+                      type="tel"
+                      class="form-control"
+                      :class="{ 'is-invalid': formErrors.soDienThoai }"
+                      placeholder="Nhập số điện thoại"
+                      @blur="validateSoDienThoai"
+                      @input="clearError('soDienThoai')"
+                    />
+                    <div v-if="formErrors.soDienThoai" class="invalid-feedback">
+                      {{ formErrors.soDienThoai }}
+                    </div>
                   </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Email</label>
-                  <input v-model="formData.email" type="email" class="form-control"
-                    placeholder="Nhập email (để nhận xác nhận đơn hàng)" />
+                  <input
+                    v-model="formData.email"
+                    type="email"
+                    class="form-control"
+                    :class="{ 'is-invalid': formErrors.email }"
+                    placeholder="Nhập email (để nhận xác nhận đơn hàng)"
+                    @blur="validateEmail"
+                    @input="clearError('email')"
+                  />
+                  <div v-if="formErrors.email" class="invalid-feedback">
+                    {{ formErrors.email }}
+                  </div>
                 </div>
+
+                <!-- Địa chỉ giao hàng -->
                 <div class="mb-3">
                   <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                  <textarea v-model="formData.diaChi" class="form-control" rows="3" required
-                    placeholder="Nhập địa chỉ giao hàng"></textarea>
+
+                  <!-- Dropdown chọn địa chỉ đã lưu -->
+                  <div v-if="savedAddresses.length > 0" class="mb-3">
+                    <select
+                      v-model="selectedSavedAddressId"
+                      @change="loadSavedAddress"
+                      class="form-select"
+                    >
+                      <option value="">-- Chọn địa chỉ đã lưu --</option>
+                      <option v-for="addr in savedAddresses" :key="addr.id" :value="addr.id">
+                        {{ formatAddressDisplay(addr) }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Form nhập địa chỉ mới -->
+                  <AddressForm
+                    v-model="addressFormData"
+                    :show-save-button="true"
+                    :check-duplicate-fn="checkDuplicateAddress"
+                    @success="handleAddressSaved"
+                    ref="addressFormRef"
+                  />
                 </div>
+
                 <div class="mb-3">
                   <label class="form-label">Ghi chú</label>
                   <textarea v-model="formData.ghiChu" class="form-control" rows="2"
@@ -168,6 +222,8 @@ import { useAuthStore } from '@/stores/customer/authStore'
 import { useCartStore } from '@/stores/customer/cartStore'
 import orderService from '@/service/customer/orderService'
 import customerService from '@/service/customer/customerService'
+import addressService from '@/service/customer/addressService'
+import AddressForm from '@/components/customer/checkout/AddressForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -182,6 +238,29 @@ const formData = ref({
   ghiChu: '',
   phuongThucThanhToan: 0, // 0: COD, 1: Online
 })
+
+// Form errors
+const formErrors = ref({
+  tenKhachHang: '',
+  soDienThoai: '',
+  email: '',
+  diaChi: '',
+})
+
+// Address form data
+const addressFormData = ref({
+  diaChi: '',
+  tinh: '',
+  xa: '',
+  tinhCode: '',
+  xaCode: '',
+})
+
+// Saved addresses
+const savedAddresses = ref([])
+const selectedSavedAddressId = ref('')
+const isLoadingAddresses = ref(false)
+const addressFormRef = ref(null)
 
 // Order items
 const orderItems = ref([])
@@ -208,24 +287,11 @@ onMounted(async () => {
         // Fill địa chỉ mặc định nếu có
         if (profile.diaChiMacDinh) {
           const address = profile.diaChiMacDinh
-          // Tạo chuỗi địa chỉ đầy đủ
-          let fullAddress = address.diaChi || ''
-          if (address.xa) {
-            fullAddress += (fullAddress ? ', ' : '') + address.xa
-          }
-          if (address.tinh) {
-            fullAddress += (fullAddress ? ', ' : '') + address.tinh
-          }
-          formData.value.diaChi = fullAddress
-
-          // Cập nhật tên và SĐT từ địa chỉ nếu có
-          if (address.hoTen && !formData.value.tenKhachHang) {
-            formData.value.tenKhachHang = address.hoTen
-          }
-          if (address.soDienThoai && !formData.value.soDienThoai) {
-            formData.value.soDienThoai = address.soDienThoai
-          }
+          loadAddressToForm(address)
         }
+
+        // Load saved addresses
+        await loadSavedAddresses()
       }
     } catch (error) {
       console.warn('⚠️ [CheckoutPage] Không thể lấy thông tin profile, sử dụng thông tin từ authStore:', error)
@@ -289,6 +355,136 @@ onMounted(async () => {
   orderCode.value = 'DH' + Date.now()
 })
 
+// Address methods
+const loadSavedAddresses = async () => {
+  const customerId = authStore.getCustomerId()
+  if (!customerId) return
+
+  try {
+    isLoadingAddresses.value = true
+    // Get customer info to get maKhachHang
+    const customerInfo = await customerService.getCustomerProfile(customerId)
+    const maKhachHang = customerInfo?.data?.maKhachHang || customerInfo?.maKhachHang
+
+    if (maKhachHang) {
+      const response = await addressService.getAddressesByMaKhachHang(maKhachHang)
+      savedAddresses.value = response?.data || response || []
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách địa chỉ:', error)
+    savedAddresses.value = []
+  } finally {
+    isLoadingAddresses.value = false
+  }
+}
+
+const loadSavedAddress = () => {
+  if (!selectedSavedAddressId.value) {
+    return
+  }
+
+  const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
+  if (!address) {
+    return
+  }
+
+  // Load address to form
+  loadAddressToForm(address)
+
+  // Load to AddressForm component
+  if (addressFormRef.value) {
+    addressFormRef.value.form.diaChi = address.diaChi || ''
+    addressFormRef.value.form.tinh = address.tinh || ''
+    addressFormRef.value.form.xa = address.xa || ''
+    addressFormRef.value.form.xaCode = address.xa || ''
+
+    // Load province if needed
+    if (address.tinh && addressFormRef.value.provinces) {
+      const province = addressFormRef.value.provinces.find(p => p.name === address.tinh)
+      if (province) {
+        addressFormRef.value.form.tinhCode = province.id
+        addressFormRef.value.selectProvince(province)
+      }
+    }
+  }
+
+  // Update customer info from address
+  if (address.hoTen && !formData.value.tenKhachHang) {
+    formData.value.tenKhachHang = address.hoTen
+  }
+  if (address.sdt && !formData.value.soDienThoai) {
+    formData.value.soDienThoai = address.sdt
+  }
+}
+
+const loadAddressToForm = (address) => {
+  // Update address form data
+  addressFormData.value.diaChi = address.diaChi || ''
+  addressFormData.value.tinh = address.tinh || ''
+  addressFormData.value.xa = address.xa || ''
+
+  // Build full address string
+  let fullAddress = address.diaChi || ''
+  if (address.xa) {
+    fullAddress += (fullAddress ? ', ' : '') + address.xa
+  }
+  if (address.tinh) {
+    fullAddress += (fullAddress ? ', ' : '') + address.tinh
+  }
+  formData.value.diaChi = fullAddress
+
+  // Update customer info from address
+  if (address.hoTen && !formData.value.tenKhachHang) {
+    formData.value.tenKhachHang = address.hoTen
+  }
+  if (address.sdt && !formData.value.soDienThoai) {
+    formData.value.soDienThoai = address.sdt
+  }
+}
+
+const formatAddressDisplay = (address) => {
+  const parts = []
+  if (address.diaChi) parts.push(address.diaChi)
+  if (address.xa) parts.push(address.xa)
+  if (address.tinh) parts.push(address.tinh)
+  return parts.join(', ')
+}
+
+const checkDuplicateAddress = async (formData) => {
+  if (!formData || !savedAddresses.value.length) return false
+
+  const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ')
+
+  const currentAddress = {
+    diaChi: normalize(formData.diaChi || ''),
+    tinh: normalize(formData.tinh || ''),
+    xa: normalize(formData.xa || ''),
+  }
+
+  const duplicate = savedAddresses.value.find(addr => {
+    const savedAddr = {
+      diaChi: normalize(addr.diaChi || ''),
+      tinh: normalize(addr.tinh || ''),
+      xa: normalize(addr.xa || ''),
+    }
+    return (
+      savedAddr.diaChi === currentAddress.diaChi &&
+      savedAddr.tinh === currentAddress.tinh &&
+      savedAddr.xa === currentAddress.xa
+    )
+  })
+
+  if (duplicate) {
+    selectedSavedAddressId.value = duplicate.id
+    return true
+  }
+  return false
+}
+
+const handleAddressSaved = () => {
+  loadSavedAddresses()
+}
+
 // Computed
 const subtotal = computed(() => {
   // Ưu tiên lấy từ cartStore nếu có (đã tính đúng với voucher)
@@ -321,12 +517,101 @@ const total = computed(() => {
   return subtotal.value + shippingFee.value - discount.value
 })
 
+// Validation methods
+const validateTenKhachHang = () => {
+  if (!formData.value.tenKhachHang || !formData.value.tenKhachHang.trim()) {
+    formErrors.value.tenKhachHang = 'Vui lòng nhập họ và tên'
+    return false
+  }
+  if (formData.value.tenKhachHang.trim().length < 2) {
+    formErrors.value.tenKhachHang = 'Họ và tên phải có ít nhất 2 ký tự'
+    return false
+  }
+  if (formData.value.tenKhachHang.trim().length > 100) {
+    formErrors.value.tenKhachHang = 'Họ và tên không được vượt quá 100 ký tự'
+    return false
+  }
+  formErrors.value.tenKhachHang = ''
+  return true
+}
+
+const validateSoDienThoai = () => {
+  if (!formData.value.soDienThoai || !formData.value.soDienThoai.trim()) {
+    formErrors.value.soDienThoai = 'Vui lòng nhập số điện thoại'
+    return false
+  }
+  // Validate phone number: 10-11 digits, can start with 0
+  const phoneRegex = /^(0|\+84)[0-9]{9,10}$/
+  const phoneNumber = formData.value.soDienThoai.trim().replace(/\s+/g, '')
+  if (!phoneRegex.test(phoneNumber)) {
+    formErrors.value.soDienThoai = 'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)'
+    return false
+  }
+  formErrors.value.soDienThoai = ''
+  return true
+}
+
+const validateEmail = () => {
+  if (!formData.value.email || !formData.value.email.trim()) {
+    // Email is optional, so clear error if empty
+    formErrors.value.email = ''
+    return true
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email.trim())) {
+    formErrors.value.email = 'Email không hợp lệ (ví dụ: example@email.com)'
+    return false
+  }
+  formErrors.value.email = ''
+  return true
+}
+
+const validateAddress = () => {
+  if (!addressFormData.value.diaChi || !addressFormData.value.diaChi.trim()) {
+    formErrors.value.diaChi = 'Vui lòng nhập địa chỉ chi tiết'
+    return false
+  }
+  if (!addressFormData.value.tinh || !addressFormData.value.tinh.trim()) {
+    formErrors.value.diaChi = 'Vui lòng chọn tỉnh/thành phố'
+    return false
+  }
+  // Validate address form through component
+  if (addressFormRef.value && !addressFormRef.value.validateForm()) {
+    formErrors.value.diaChi = 'Vui lòng điền đầy đủ thông tin địa chỉ'
+    return false
+  }
+  formErrors.value.diaChi = ''
+  return true
+}
+
+const clearError = (field) => {
+  if (formErrors.value[field]) {
+    formErrors.value[field] = ''
+  }
+}
+
+const validateAll = () => {
+  const isValidTenKhachHang = validateTenKhachHang()
+  const isValidSoDienThoai = validateSoDienThoai()
+  const isValidEmail = validateEmail()
+  const isValidAddress = validateAddress()
+
+  return isValidTenKhachHang && isValidSoDienThoai && isValidEmail && isValidAddress
+}
+
 const canSubmit = computed(() => {
+  // Basic check - full validation will be done on submit
+  const hasAddress = addressFormData.value.diaChi && addressFormData.value.tinh
+
   return (
     formData.value.tenKhachHang &&
     formData.value.soDienThoai &&
-    formData.value.diaChi &&
-    orderItems.value.length > 0
+    hasAddress &&
+    orderItems.value.length > 0 &&
+    !formErrors.value.tenKhachHang &&
+    !formErrors.value.soDienThoai &&
+    !formErrors.value.email &&
+    !formErrors.value.diaChi
   )
 })
 
@@ -339,6 +624,18 @@ const formatPrice = (price) => {
 }
 
 const handleSubmit = async () => {
+  // Validate all fields
+  if (!validateAll()) {
+    alert('Vui lòng kiểm tra và điền đầy đủ thông tin hợp lệ')
+    // Scroll to first error
+    const firstErrorField = document.querySelector('.is-invalid')
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      firstErrorField.focus()
+    }
+    return
+  }
+
   if (!canSubmit.value) {
     alert('Vui lòng điền đầy đủ thông tin')
     return
@@ -357,12 +654,19 @@ const handleSubmit = async () => {
     // Lấy voucher code từ cartStore nếu có voucher được áp dụng
     const voucherCode = cartStore.appliedVoucher?.ma || null
 
+    // Build full address from address form
+    const addressParts = []
+    if (addressFormData.value.diaChi) addressParts.push(addressFormData.value.diaChi)
+    if (addressFormData.value.xa) addressParts.push(addressFormData.value.xa)
+    if (addressFormData.value.tinh) addressParts.push(addressFormData.value.tinh)
+    const fullAddress = addressParts.join(', ')
+
     const orderData = {
       khachHangId: customerId,
       tenKhachHang: formData.value.tenKhachHang,
       soDienThoai: formData.value.soDienThoai,
       email: formData.value.email,
-      diaChi: formData.value.diaChi,
+      diaChi: fullAddress || formData.value.diaChi,
       ghiChu: formData.value.ghiChu,
       phuongThucThanhToan: formData.value.phuongThucThanhToan,
       maPhieuGiamGia: voucherCode, // Truyền voucher code vào order
@@ -379,6 +683,36 @@ const handleSubmit = async () => {
     if (response.success || response.data) {
       // Clear checkout data
       sessionStorage.removeItem('checkout_data')
+
+      // Xóa các sản phẩm đã mua khỏi giỏ hàng
+      try {
+        // Lấy danh sách item IDs đã được mua
+        const purchasedItemIds = orderItems.value.map(item => {
+          // Tìm item trong cart tương ứng với sản phẩm đã mua
+          const cartItem = cartStore.cartItems.find(ci =>
+            ci.ctspId === item.idCtsp ||
+            ci.idCtsp === item.idCtsp ||
+            ci.id === item.idCtsp
+          )
+          return cartItem?.id
+        }).filter(Boolean)
+
+        // Xóa từng item đã mua khỏi giỏ hàng
+        for (const itemId of purchasedItemIds) {
+          try {
+            await cartStore.removeCartItem(itemId)
+          } catch (err) {
+            console.warn('⚠️ Không thể xóa item khỏi giỏ hàng:', err)
+            // Tiếp tục xóa các item khác dù có lỗi
+          }
+        }
+
+        // Refresh cart để cập nhật
+        await cartStore.fetchCart()
+      } catch (err) {
+        console.warn('⚠️ Lỗi khi xóa sản phẩm khỏi giỏ hàng:', err)
+        // Không block việc redirect nếu xóa cart thất bại
+      }
 
       // Get order ID from response
       const orderId = response.data?.data?.id || response.data?.id

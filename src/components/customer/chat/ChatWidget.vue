@@ -193,13 +193,13 @@ const canSendMessage = computed(() => {
 
 const currentCustomerId = computed(() => {
   // Sử dụng customerId từ computed property hoặc từ user
-  const userId = authStore.customerId || 
-                 authStore.user?.userId || 
+  const userId = authStore.customerId ||
+                 authStore.user?.userId ||
                  authStore.user?.id ||
                  authStore.user?.user_id ||
                  localStorage.getItem('customer_id') ||
                  null
-  
+
   // Log để debug
   if (!userId) {
     console.warn('Không tìm thấy customer ID trong authStore:', {
@@ -208,7 +208,7 @@ const currentCustomerId = computed(() => {
       localStorage: localStorage.getItem('customer_id')
     })
   }
-  
+
   return userId
 })
 
@@ -222,31 +222,47 @@ const openChat = async () => {
 
   isOpen.value = true
 
+  // Kết nối WebSocket trước (quan trọng để tin nhắn hiển thị ngay)
+  if (!stompClient || !stompClient.connected) {
+    connectWebSocket()
+    // Đợi WebSocket kết nối (tối đa 5 giây)
+    let waitCount = 0
+    while ((!stompClient || !stompClient.connected) && waitCount < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      waitCount++
+    }
+  }
+
   // Tìm hoặc tạo conversation
   if (!conversationId.value) {
     try {
       const response = await chatService.findOrCreateConversation(currentCustomerId.value)
       // response.data có thể là null nếu chưa có conversation
       conversationId.value = response.data
-      
+
       // Nếu chưa có conversation, sẽ được tạo khi gửi tin nhắn đầu tiên
       if (conversationId.value) {
         await loadMessages(conversationId.value)
+        // Subscribe sau khi có conversationId
+        if (stompClient && stompClient.connected) {
+          subscribeToConversation(conversationId.value)
+        }
       } else {
         // Chưa có conversation, hiển thị empty state
         messages.value = []
       }
-      connectWebSocket()
     } catch (error) {
       console.error('Lỗi khi tìm conversation:', error)
       // Vẫn mở chat, conversation sẽ được tạo khi gửi tin nhắn đầu tiên
       messages.value = []
-      connectWebSocket()
     }
   } else {
     // Đã có conversationId, load messages
     await loadMessages(conversationId.value)
-    connectWebSocket()
+    // Subscribe nếu chưa subscribe
+    if (stompClient && stompClient.connected) {
+      subscribeToConversation(conversationId.value)
+    }
   }
 }
 
@@ -325,20 +341,34 @@ const sendMessage = async () => {
     // CHỈ gửi qua WebSocket nếu đã kết nối, nếu không thì dùng REST API
     // KHÔNG gửi cả 2 để tránh duplicate
     if (stompClient && stompClient.connected) {
+      // Thêm optimistic message để hiển thị ngay (sẽ bị thay thế bởi message thật từ WebSocket)
+      const tempId = 'temp-' + Date.now()
+      const optimisticMessage = {
+        id: tempId,
+        noiDung: messageText,
+        isFromCustomer: true,
+        ngayPhanHoi: new Date().toISOString(),
+        conversationId: conversationId.value,
+        messageType: 'text',
+        replyToId: replyingTo.value?.id || null,
+        replyTo: replyingTo.value || null
+      }
+      messages.value.push(optimisticMessage)
+      await nextTick()
+      scrollToBottom()
+
       // Gửi qua WebSocket (sẽ được xử lý bởi ChatWebSocketController)
       // WebSocket sẽ lưu vào DB và broadcast, không cần gọi REST API nữa
       stompClient.publish({
         destination: '/app/chat.send',
         body: JSON.stringify(messageData)
       })
-      
-      // KHÔNG thêm optimistic message nữa để tránh duplicate
-      // Chỉ clear input và đợi message từ WebSocket subscription
+
+      // Clear input ngay
       newMessage.value = ''
       replyingTo.value = null
-      
-      // Message thật sẽ được thêm từ WebSocket subscription
-      // Không cần làm gì thêm ở đây
+
+      // Message thật sẽ được thêm từ WebSocket subscription và thay thế optimistic message
     } else {
       // Fallback: Gửi qua REST API nếu WebSocket chưa kết nối
       let response
@@ -353,19 +383,39 @@ const sendMessage = async () => {
           errors: error.response?.data?.errors,
           code: error.response?.data?.code
         })
-        
+
         // Hiển thị lỗi cụ thể cho user
-        const errorMessage = error.response?.data?.message || 
+        const errorMessage = error.response?.data?.message ||
                             error.response?.data?.errors?.[Object.keys(error.response?.data?.errors || {})[0]] ||
                             'Không thể gửi tin nhắn. Vui lòng thử lại.'
         alert(errorMessage)
         throw error
       }
-      
+
       // Cập nhật conversationId từ response nếu chưa có
       if (!conversationId.value && response.data?.conversationId) {
         conversationId.value = response.data.conversationId
-        // Subscribe WebSocket sau khi có conversationId
+        // Kết nối và subscribe WebSocket sau khi có conversationId
+        if (!stompClient || !stompClient.connected) {
+          connectWebSocket()
+          // Đợi kết nối (tối đa 5 giây)
+          let waitCount = 0
+          while ((!stompClient || !stompClient.connected) && waitCount < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            waitCount++
+          }
+        }
+        if (stompClient && stompClient.connected) {
+          subscribeToConversation(conversationId.value)
+        }
+      } else if (conversationId.value && (!stompClient || !stompClient.connected)) {
+        // Nếu đã có conversationId nhưng WebSocket chưa kết nối, kết nối ngay
+        connectWebSocket()
+        let waitCount = 0
+        while ((!stompClient || !stompClient.connected) && waitCount < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          waitCount++
+        }
         if (stompClient && stompClient.connected) {
           subscribeToConversation(conversationId.value)
         }
@@ -374,14 +424,14 @@ const sendMessage = async () => {
       // Thêm tin nhắn vào danh sách
       if (response.data) {
         // Kiểm tra duplicate trước khi thêm
-        const existingIndex = messages.value.findIndex(m => 
-          m.id === response.data.id || 
-          (m.noiDung === response.data.noiDung && 
+        const existingIndex = messages.value.findIndex(m =>
+          m.id === response.data.id ||
+          (m.noiDung === response.data.noiDung &&
            m.isFromCustomer === response.data.isFromCustomer &&
            m.ngayPhanHoi && response.data.ngayPhanHoi &&
            Math.abs(new Date(m.ngayPhanHoi) - new Date(response.data.ngayPhanHoi)) < 1000)
         )
-        
+
         if (existingIndex === -1) {
           messages.value.push(response.data)
           await nextTick()
@@ -398,7 +448,7 @@ const sendMessage = async () => {
           await loadMessages(conversationId.value)
         }
       }
-      
+
       // Clear input sau khi gửi thành công
       newMessage.value = ''
       replyingTo.value = null
@@ -512,44 +562,45 @@ const subscribeToConversation = (convId) => {
   const subscription = stompClient.subscribe(`/topic/conversation/${convId}`, (message) => {
     try {
       const newMsg = JSON.parse(message.body)
-      
-      // Xóa optimistic message (temp message) nếu có
-      const tempIndex = messages.value.findIndex(m => 
-        m.id?.toString().startsWith('temp-') || 
-        (m.noiDung === newMsg.noiDung && 
-         m.isFromCustomer === newMsg.isFromCustomer && 
-         !m.id && 
+
+      // Xóa optimistic message (temp message) nếu có - ưu tiên xóa temp message trước
+      const tempIndex = messages.value.findIndex(m =>
+        (m.id && m.id.toString().startsWith('temp-')) ||
+        (m.noiDung === newMsg.noiDung &&
+         m.isFromCustomer === newMsg.isFromCustomer &&
+         !m.id &&
          m.ngayPhanHoi && newMsg.ngayPhanHoi &&
-         Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi)) < 2000)
+         Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi)) < 3000)
       )
       if (tempIndex > -1) {
-        console.log('🗑️ Xóa optimistic message:', tempIndex)
+        console.log('🗑️ Xóa optimistic message:', tempIndex, messages.value[tempIndex])
         messages.value.splice(tempIndex, 1)
       }
-      
+
       // KIỂM TRA DUPLICATE CHẶT CHẼ: cả ID và nội dung + thời gian
       const existingIndex = messages.value.findIndex(m => {
-        // Kiểm tra theo ID (chính xác nhất)
-        if (m.id && newMsg.id && m.id === newMsg.id) {
+        // Kiểm tra theo ID (chính xác nhất) - bỏ qua temp messages
+        if (m.id && newMsg.id && !m.id.toString().startsWith('temp-') && m.id === newMsg.id) {
           return true
         }
-        // Kiểm tra theo nội dung + người gửi + thời gian (trong vòng 2 giây)
-        if (m.noiDung === newMsg.noiDung && 
+        // Kiểm tra theo nội dung + người gửi + thời gian (trong vòng 3 giây)
+        if (m.noiDung === newMsg.noiDung &&
             m.isFromCustomer === newMsg.isFromCustomer &&
-            m.ngayPhanHoi && newMsg.ngayPhanHoi) {
+            m.ngayPhanHoi && newMsg.ngayPhanHoi &&
+            !m.id?.toString().startsWith('temp-')) {
           const timeDiff = Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi))
-          if (timeDiff < 2000) { // Cùng thời gian (2 giây)
+          if (timeDiff < 3000) { // Cùng thời gian (3 giây)
             return true
           }
         }
         return false
       })
-      
+
       if (existingIndex === -1) {
         // Chưa có, thêm mới
         messages.value.push(newMsg)
         nextTick(() => scrollToBottom())
-        console.log('✅ Thêm message mới:', newMsg.id)
+        console.log('✅ Thêm message mới từ WebSocket:', newMsg.id, newMsg.noiDung)
       } else {
         // Đã có, chỉ cập nhật (KHÔNG thêm mới)
         console.log('⚠️ Duplicate message detected, updating existing:', {
@@ -575,7 +626,7 @@ const subscribeToConversation = (convId) => {
       if (!newMsg.isFromCustomer) {
         markAsRead(convId, true)
       }
-      
+
       // Reset sending flag sau khi nhận message
       isSending.value = false
     } catch (error) {
@@ -583,7 +634,7 @@ const subscribeToConversation = (convId) => {
       isSending.value = false
     }
   })
-  
+
   console.log('✅ Subscribed to conversation:', convId, 'Subscription ID:', subscription.id)
 
   stompClient.subscribe(`/topic/conversation/${convId}/typing`, (message) => {

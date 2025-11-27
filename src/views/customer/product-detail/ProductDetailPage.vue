@@ -90,9 +90,9 @@
             </div>
 
             <!-- Comparison Button -->
-            <div class="comparison-section" v-if="productDetail">
+            <div class="comparison-section" v-if="productDetail && comparisonProductData">
               <ProductComparisonButton
-                :product="{ id: productDetail.id, name: productDetail.tenSanPham, imageUrl: productImages[0]?.url }"
+                :product="comparisonProductData"
                 @toggle="handleToggleComparison"
               />
             </div>
@@ -103,9 +103,10 @@
                 :product-id="selectedVariantId"
                 :product-name="productDetail?.tenSanPham || 'Sản phẩm'"
                 :max-quantity="(selectedVariant?.soLuongTon || 0) - (selectedVariant?.soLuongTamGiu || 0)"
-                :disabled="!selectedVariantId || ((selectedVariant?.soLuongTon || 0) - (selectedVariant?.soLuongTamGiu || 0)) <= 0"
+                :disabled="!selectedVariantId"
                 @add-to-cart="handleAddToCart"
                 @buy-now="handleBuyNow"
+                @contact="handleContact"
               />
             </div>
           </div>
@@ -225,6 +226,7 @@ import ReviewSummary from '@/components/customer/product-detail/ReviewSummary.vu
 import ReviewList from '@/components/customer/product-detail/ReviewList.vue'
 import ReviewForm from '@/components/customer/product-detail/ReviewForm.vue'
 import RelatedProducts from '@/components/customer/product-detail/RelatedProducts.vue'
+import ProductComparisonButton from '@/components/customer/product-detail/ProductComparisonButton.vue'
 
 // Composables
 import { useProductDetail } from '@/composables/product-detail/useProductDetail'
@@ -255,8 +257,26 @@ const {
   handleVariantChange,
 } = useProductDetail(productId.value)
 
-const { handleAddToCart, handleBuyNow } = useProductCart()
+const { handleAddToCart, handleBuyNow, handleContact } = useProductCart()
 const { toggleComparison } = useProductComparison()
+
+// Computed product data for comparison (reactive to variant changes)
+const comparisonProductData = computed(() => {
+  if (!productDetail.value) return null
+
+  return {
+    id: productDetail.value.id,
+    tenSanPham: productDetail.value.tenSanPham,
+    name: productDetail.value.tenSanPham,
+    imageUrl: productImages.value[0]?.url,
+    image: productImages.value[0]?.url,
+    price: selectedVariant.value?.giaBan || productDetail.value.giaBan,
+    giaBan: selectedVariant.value?.giaBan || productDetail.value.giaBan,
+    variant: selectedVariant.value,
+    variants: productDetail.value.variants,
+    specs: productSpecs.value
+  }
+})
 
 // SEO
 const seoTitle = computed(() => {
@@ -280,7 +300,7 @@ const canonicalUrl = computed(() => {
 
 const structuredData = computed(() => {
   if (!productDetail.value || !selectedVariant.value) return {}
-  
+
   return {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -295,8 +315,8 @@ const structuredData = computed(() => {
       '@type': 'Offer',
       price: selectedVariant.value.giaGiam || selectedVariant.value.giaBan,
       priceCurrency: 'VND',
-      availability: selectedVariant.value.soLuongTon > 0 
-        ? 'https://schema.org/InStock' 
+      availability: selectedVariant.value.soLuongTon > 0
+        ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
     },
     aggregateRating: productDetail.value.reviewSummary ? {

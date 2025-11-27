@@ -22,16 +22,16 @@ const router = createRouter({
           meta: { title: 'Danh sách sản phẩm - LaptopStore' },
         },
         {
+          path: 'products/compare',
+          name: 'product-compare',
+          component: () => import('@/views/customer/product-detail/ProductComparePage.vue'),
+          meta: { title: 'So sánh sản phẩm - LaptopStore' },
+        },
+        {
           path: 'products/:id',
           name: 'product-detail',
           component: () => import('@/views/customer/product-detail/ProductDetailPage.vue'),
           meta: { title: 'Chi tiết sản phẩm - LaptopStore' },
-        },
-        {
-          path: 'compare',
-          name: 'product-compare',
-          component: () => import('@/views/customer/product-detail/ProductComparePage.vue'),
-          meta: { title: 'So sánh sản phẩm - LaptopStore' },
         },
         {
           path: 'cart',
