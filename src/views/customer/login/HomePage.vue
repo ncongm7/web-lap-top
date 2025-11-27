@@ -3,8 +3,6 @@
     <!-- Hero Banner Slider -->
     <HeroSlider :banners="banners" :auto-fetch="true" />
 
-    <!-- Featured Categories -->
-    <FeaturedCategories />
 
     <!-- Flash Sale -->
     <FlashSale @add-to-cart="handleAddToCart" />
@@ -27,12 +25,6 @@
       @retry="fetchFeaturedProducts"
     />
 
-    <!-- Category List (Keep existing) -->
-    <CategoryList />
-
-    <!-- Promotion Banner (Keep existing) -->
-    <PromotionBanner :promotions="activePromotions" :loading="loadingPromotions" />
-
     <!-- Customer Reviews (Keep existing) -->
     <TestimonialSlider :reviews="topReviews" :loading="loadingReviews" />
 
@@ -50,14 +42,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import HeroSlider from '@/components/customer/home/HeroSlider.vue'
-import FeaturedCategories from '@/components/customer/home/FeaturedCategories.vue'
 import FlashSale from '@/components/customer/home/FlashSale.vue'
 import BestSellingCarousel from '@/components/customer/home/BestSellingCarousel.vue'
 import NewArrivalsCarousel from '@/components/customer/home/NewArrivalsCarousel.vue'
 import NewsReviewsSection from '@/components/customer/home/NewsReviewsSection.vue'
-import FeaturedProducts from '@/components/customer/home/FeaturedProducts.vue'
-import CategoryList from '@/components/customer/home/CategoryList.vue'
-import PromotionBanner from '@/components/customer/home/PromotionBanner.vue'
 import TestimonialSlider from '@/components/customer/home/TestimonialSlider.vue'
 import LoginRegisterModal from '@/components/customer/auth/LoginRegisterModal.vue'
 import { useLayoutStore } from '@/stores/customer/layoutStore'

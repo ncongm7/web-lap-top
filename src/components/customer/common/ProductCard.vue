@@ -93,42 +93,36 @@ const isAdding = ref(false)
 const productDetails = ref([])
 const isLoadingDetails = ref(false)
 
-// Load chi tiết sản phẩm
 const loadProductDetails = async () => {
-    if (!props.product.id) return
-    
-    try {
-        isLoadingDetails.value = true
-        console.log('🔄 Loading product details for ID:', props.product.id)
-        
-        const response = await sanPhamService.getProductDetailsWithDiscount(props.product.id)
-        productDetails.value = response.data || []
-        
-        console.log('✅ Product details loaded:', productDetails.value)
-        
-        // Nếu có chi tiết sản phẩm nhưng không có hình ảnh, thử lấy hình ảnh riêng
-        if (productDetails.value.length > 0) {
-            for (const detail of productDetails.value) {
-                if (!detail.hinhAnh && detail.id) {
-                    try {
-                        console.log('🔄 Loading images for detail ID:', detail.id)
-                        const imageResponse = await sanPhamService.getImagesByProductDetailId(detail.id)
-                        if (imageResponse.data && imageResponse.data.length > 0) {
-                            detail.hinhAnhs = imageResponse.data
-                            console.log('✅ Images loaded for detail:', detail.hinhAnhs)
-                        }
-                    } catch (imageError) {
-                        console.log('⚠️ Could not load images for detail:', imageError.message)
-                    }
-                }
+  if (!props.product.id) return
+
+  try {
+    isLoadingDetails.value = true
+
+    const response = await sanPhamService.getProductDetailsWithDiscount(props.product.id)
+    productDetails.value = response.data || []
+
+    // Nếu có chi tiết sản phẩm nhưng không có hình ảnh, thử lấy hình ảnh riêng
+    if (productDetails.value.length > 0) {
+      for (const detail of productDetails.value) {
+        if (!detail.hinhAnh && detail.id) {
+          try {
+            const imageResponse = await sanPhamService.getImagesByProductDetailId(detail.id)
+            if (imageResponse.data && imageResponse.data.length > 0) {
+              detail.hinhAnhs = imageResponse.data
             }
+          } catch (imageError) {
+
+          }
         }
-    } catch (error) {
-        console.error('❌ Error loading product details:', error)
-        productDetails.value = []
-    } finally {
-        isLoadingDetails.value = false
+      }
     }
+  } catch (error) {
+    console.error('❌ Error loading product details:', error)
+    productDetails.value = []
+  } finally {
+    isLoadingDetails.value = false
+  }
 }
 
 // Computed properties cho giảm giá
@@ -221,90 +215,66 @@ const originalMaxPrice = computed(() => {
 
 // Computed properties cho giá hiển thị
 const displayMinPrice = computed(() => {
-    console.log('💰 Computing displayMinPrice...')
-    console.log('💰 Product details:', productDetails.value)
-    
-    // Ưu tiên lấy từ chi tiết sản phẩm
-    if (productDetails.value && productDetails.value.length > 0) {
-        const prices = productDetails.value
-            .filter(detail => {
-                // Ưu tiên giá sau giảm giá nếu có
-                const price = detail.coGiamGia ? detail.giaGiam : detail.giaBan
-                return price && price > 0
-            })
-            .map(detail => detail.coGiamGia ? detail.giaGiam : detail.giaBan)
-        
-        if (prices.length > 0) {
-            const minPrice = Math.min(...prices)
-            console.log('💰 Min price from details (after discount):', minPrice)
-            return minPrice
-        }
+  // Ưu tiên lấy từ chi tiết sản phẩm
+  if (productDetails.value && productDetails.value.length > 0) {
+    const prices = productDetails.value
+      .filter(detail => {
+        // Ưu tiên giá sau giảm giá nếu có
+        const price = detail.coGiamGia ? detail.giaGiam : detail.giaBan
+        return price && price > 0
+      })
+      .map(detail => (detail.coGiamGia ? detail.giaGiam : detail.giaBan))
+
+    if (prices.length > 0) {
+      return Math.min(...prices)
     }
-    
-    // Fallback sang dữ liệu sản phẩm gốc
-    console.log('💰 Full product object:', props.product)
-    console.log('💰 Product keys:', Object.keys(props.product))
-    
-    // Try different possible price fields
-    const possiblePriceFields = [
-        'gia', 'giaThapNhat', 'price', 'giaBan', 'minPrice', 
-        'giaMin', 'priceMin', 'lowestPrice'
-    ]
-    
-    for (const field of possiblePriceFields) {
-        if (props.product[field] && props.product[field] > 0) {
-            console.log(`💰 Using ${field}:`, props.product[field])
-            return props.product[field]
-        }
+  }
+
+  // Fallback sang dữ liệu sản phẩm gốc
+  const possiblePriceFields = [
+    'gia', 'giaThapNhat', 'price', 'giaBan', 'minPrice',
+    'giaMin', 'priceMin', 'lowestPrice',
+  ]
+
+  for (const field of possiblePriceFields) {
+    if (props.product[field] && props.product[field] > 0) {
+      return props.product[field]
     }
-    
-    console.log('💰 No valid price found, returning 0')
-    return 0
+  }
+
+  return 0
 })
 
 const displayMaxPrice = computed(() => {
-    console.log('💰 Computing displayMaxPrice...')
-    
-    // Ưu tiên lấy từ chi tiết sản phẩm
-    if (productDetails.value && productDetails.value.length > 0) {
-        const prices = productDetails.value
-            .filter(detail => {
-                // Ưu tiên giá sau giảm giá nếu có
-                const price = detail.coGiamGia ? detail.giaGiam : detail.giaBan
-                return price && price > 0
-            })
-            .map(detail => detail.coGiamGia ? detail.giaGiam : detail.giaBan)
-        
-        if (prices.length > 0) {
-            const maxPrice = Math.max(...prices)
-            console.log('💰 Max price from details (after discount):', maxPrice)
-            return maxPrice
-        }
+  // Ưu tiên lấy từ chi tiết sản phẩm
+  if (productDetails.value && productDetails.value.length > 0) {
+    const prices = productDetails.value
+      .filter(detail => {
+        // Ưu tiên giá sau giảm giá nếu có
+        const price = detail.coGiamGia ? detail.giaGiam : detail.giaBan
+        return price && price > 0
+      })
+      .map(detail => (detail.coGiamGia ? detail.giaGiam : detail.giaBan))
+
+    if (prices.length > 0) {
+      return Math.max(...prices)
     }
-    
-    // Fallback sang dữ liệu sản phẩm gốc
-    console.log('💰 Product data:', {
-        giaGoc: props.product.giaGoc,
-        giaCaoNhat: props.product.giaCaoNhat,
-        gia: props.product.gia
-    })
-    
-    // Try different possible max price fields
-    const possibleMaxPriceFields = [
-        'giaGoc', 'giaCaoNhat', 'maxPrice', 'priceMax', 
-        'giaMax', 'highestPrice', 'originalPrice'
-    ]
-    
-    for (const field of possibleMaxPriceFields) {
-        if (props.product[field] && props.product[field] > 0) {
-            console.log(`💰 Using ${field}:`, props.product[field])
-            return props.product[field]
-        }
+  }
+
+  // Fallback sang dữ liệu sản phẩm gốc
+  const possibleMaxPriceFields = [
+    'giaGoc', 'giaCaoNhat', 'maxPrice', 'priceMax',
+    'giaMax', 'highestPrice', 'originalPrice',
+  ]
+
+  for (const field of possibleMaxPriceFields) {
+    if (props.product[field] && props.product[field] > 0) {
+      return props.product[field]
     }
-    
-    // If no max price found, return the same as min price (no range)
-    console.log('💰 No valid max price found, returning min price')
-    return displayMinPrice.value
+  }
+
+  // Nếu không có max price, dùng luôn min price
+  return displayMinPrice.value
 })
 
 // Lấy class CSS cho trạng thái sản phẩm
@@ -319,94 +289,67 @@ const getStatusText = (trangThai) => {
 
 // Lấy hình ảnh đại diện sản phẩm (tương tự ProductList.vue)
 const getProductThumbnail = () => {
-    console.log('🖼️ ProductCard - Full product object:', props.product)
-    console.log('🖼️ ProductCard - Product details:', productDetails.value)
-    
-    // Thử lấy hình ảnh từ chi tiết sản phẩm trước
-    if (productDetails.value && productDetails.value.length > 0) {
-        console.log('🔍 Checking product details for images...')
-        // Tìm chi tiết sản phẩm có hình ảnh
-        for (const detail of productDetails.value) {
-            console.log('🔍 Detail object:', detail)
-            const possibleImageFields = ['hinhAnh', 'image', 'imageUrl', 'thumbnail', 'avatar', 'anhDaiDien']
-            for (const field of possibleImageFields) {
-                if (detail[field] && typeof detail[field] === 'string' && detail[field].trim() !== '') {
-                    console.log(`✅ Using ${field} from detail:`, detail[field])
-                    return detail[field]
-                }
-            }
-            
-            // Thử lấy từ hình ảnh của chi tiết sản phẩm nếu có
-            if (detail.hinhAnhs && Array.isArray(detail.hinhAnhs) && detail.hinhAnhs.length > 0) {
-                const firstImage = detail.hinhAnhs[0]
-                if (firstImage && firstImage.url && firstImage.url.trim() !== '') {
-                    console.log('✅ Using hinhAnhs[0].url from detail:', firstImage.url)
-                    return firstImage.url
-                }
-            }
+  // Thử lấy hình ảnh từ chi tiết sản phẩm trước
+  if (productDetails.value && productDetails.value.length > 0) {
+    // Tìm chi tiết sản phẩm có hình ảnh
+    for (const detail of productDetails.value) {
+      const possibleImageFields = ['hinhAnh', 'image', 'imageUrl', 'thumbnail', 'avatar', 'anhDaiDien']
+      for (const field of possibleImageFields) {
+        if (detail[field] && typeof detail[field] === 'string' && detail[field].trim() !== '') {
+          return detail[field]
         }
-    }
-    
-    console.log('🖼️ ProductCard - Product keys:', Object.keys(props.product))
-    console.log('🖼️ ProductCard - Image fields:', {
-        anhDaiDien: props.product.anhDaiDien,
-        hinhAnh: props.product.hinhAnh,
-        image: props.product.image,
-        imageUrl: props.product.imageUrl,
-        thumbnail: props.product.thumbnail,
-        avatar: props.product.avatar
-    })
-    
-    // Return product thumbnail if exists and not empty
-    if (props.product.anhDaiDien && props.product.anhDaiDien.trim() !== '') {
-        console.log('✅ Using anhDaiDien:', props.product.anhDaiDien)
-        return props.product.anhDaiDien
-    }
-    
-    // Try hinhAnh property as fallback (check for non-empty string)
-    if (props.product.hinhAnh && props.product.hinhAnh.trim() !== '') {
-        console.log('✅ Using hinhAnh:', props.product.hinhAnh)
-        return props.product.hinhAnh
-    }
-    
-    // Try other possible image fields from the product data
-    const imageFields = ['image', 'imageUrl', 'thumbnail', 'avatar', 'photo', 'picture', 'img', 'src', 'url']
-    for (const field of imageFields) {
-        if (props.product[field] && typeof props.product[field] === 'string' && props.product[field].trim() !== '') {
-            console.log(`✅ Using ${field}:`, props.product[field])
-            return props.product[field]
+      }
+
+      // Thử lấy từ hình ảnh của chi tiết sản phẩm nếu có
+      if (detail.hinhAnhs && Array.isArray(detail.hinhAnhs) && detail.hinhAnhs.length > 0) {
+        const firstImage = detail.hinhAnhs[0]
+        if (firstImage && firstImage.url && firstImage.url.trim() !== '') {
+          return firstImage.url
         }
+      }
     }
-    
-    // Otherwise try to get from first variant with images
-    if (props.product.variants && props.product.variants.length > 0) {
-        console.log('🔍 Checking variants for images...')
-        for (const variant of props.product.variants) {
-            console.log('🔍 Variant:', variant)
-            if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
-                const firstImage = variant.images[0]
-                console.log('🔍 First image:', firstImage)
-                // Handle both object with url property and direct string url
-                if (typeof firstImage === 'string' && firstImage.trim() !== '') {
-                    console.log('✅ Using string image:', firstImage)
-                    return firstImage
-                }
-                if (firstImage && firstImage.url && firstImage.url.trim() !== '') {
-                    console.log('✅ Using image.url:', firstImage.url)
-                    return firstImage.url
-                }
-                // Try other possible properties
-                if (firstImage && firstImage.uri && firstImage.uri.trim() !== '') {
-                    console.log('✅ Using image.uri:', firstImage.uri)
-                    return firstImage.uri
-                }
-            }
+  }
+
+  // Return product thumbnail if exists and not empty
+  if (props.product.anhDaiDien && props.product.anhDaiDien.trim() !== '') {
+    return props.product.anhDaiDien
+  }
+
+  // Try hinhAnh property as fallback (check for non-empty string)
+  if (props.product.hinhAnh && props.product.hinhAnh.trim() !== '') {
+    return props.product.hinhAnh
+  }
+
+  // Try other possible image fields from the product data
+  const imageFields = ['image', 'imageUrl', 'thumbnail', 'avatar', 'photo', 'picture', 'img', 'src', 'url']
+  for (const field of imageFields) {
+    if (props.product[field] && typeof props.product[field] === 'string' && props.product[field].trim() !== '') {
+      return props.product[field]
+    }
+  }
+
+  // Otherwise try to get from first variant with images
+  if (props.product.variants && props.product.variants.length > 0) {
+    for (const variant of props.product.variants) {
+      if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
+        const firstImage = variant.images[0]
+        // Handle both object with url property and direct string url
+        if (typeof firstImage === 'string' && firstImage.trim() !== '') {
+          return firstImage
         }
+        if (firstImage && firstImage.url && firstImage.url.trim() !== '') {
+          return firstImage.url
+        }
+        // Try other possible properties
+        if (firstImage && firstImage.uri && firstImage.uri.trim() !== '') {
+          return firstImage.uri
+        }
+      }
     }
-    
-    console.log('❌ No valid image found, using placeholder')
-    // Fallback to a simple data URL placeholder
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='
+  }
+
+  // Fallback to a simple data URL placeholder
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='
 }
 
 // Handle thêm vào giỏ
@@ -423,9 +366,8 @@ const handleAddToCart = async () => {
 
 // Load chi tiết sản phẩm khi component mount
 onMounted(() => {
-    // Bật lại API chi tiết sản phẩm vì ID bây giờ đã là UUID đúng format
-    loadProductDetails()
-    console.log('🔄 ProductCard mounted, loading product details')
+  // Bật lại API chi tiết sản phẩm vì ID bây giờ đã là UUID đúng format
+  loadProductDetails()
 })
 </script>
 

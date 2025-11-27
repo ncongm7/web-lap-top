@@ -2,7 +2,7 @@
     <section class="featured-products">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Sản phẩm tương tự</h2>
+                <h2 class="section-title">{{ title }}</h2>
               
             </div>
 
@@ -68,8 +68,11 @@
                 </div>
             </div>
 
-            <div v-if="!loading && !error && products.length > 0" class="section-footer">
-                <router-link to="/products" class="view-all-btn">
+            <div 
+            v-if="!loading && !error && products.length > 0 && viewAllLink" 
+            class="section-footer"
+            >
+                <router-link :to="viewAllLink" class="view-all-btn">
                     Xem tất cả sản phẩm →
                 </router-link>
             </div>
@@ -94,6 +97,14 @@ const props = defineProps({
     error: {
         type: String,
         default: null
+    },
+    title: {
+        type: String,
+        default: 'Sản phẩm tương tự'
+    },
+    viewAllLink: {
+        type: String,
+        default: '/products'
     }
 })
 

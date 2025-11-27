@@ -150,78 +150,14 @@ export async function getBanners(type = 'main-slider') {
   }
 }
 
-/**
- * Lấy sản phẩm bán chạy nhất
- * @param {number} limit - Số lượng sản phẩm
- * @returns {Promise<Array>}
- */
 export async function getBestSellingProducts(limit = 10) {
-  try {
-    console.log('🔄 [HomeService] Fetching best-selling products...')
-    
-    // Try dedicated best-selling endpoint
-    try {
-      const response = await axios.get(`${API_BASE_URL}/best-selling`, {
-        params: {
-          limit: limit,
-        },
-      })
-      const data = response.data?.data || response.data
-      if (Array.isArray(data) && data.length > 0) {
-        console.log('✅ [HomeService] Best-selling products loaded:', data.length)
-        return data
-      }
-    } catch (error) {
-      console.warn('⚠️ [HomeService] Best-selling endpoint error:', error.response?.status, error.message)
-    }
-
-    // Fallback: Get featured products (first N products)
-    console.log('⚠️ [HomeService] Using fallback for best-selling products')
-    const allProducts = await getFeaturedProducts()
-    return allProducts.slice(0, limit)
-  } catch (error) {
-    console.error('❌ [HomeService] Lỗi khi lấy best-selling products:', error)
-    return []
-  }
+  const res = await axios.get(`${API_BASE_URL}/best-selling`, { params: { limit } })
+  const data = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.content || [])
+  return Array.isArray(data) ? data : []
 }
 
-/**
- * Lấy sản phẩm mới nhất
- * @param {number} limit - Số lượng sản phẩm
- * @returns {Promise<Array>}
- */
 export async function getNewArrivalsProducts(limit = 10) {
-  try {
-    console.log('🔄 [HomeService] Fetching new arrivals products...')
-    
-    // Try dedicated newest endpoint
-    try {
-      const response = await axios.get(`${API_BASE_URL}/newest`, {
-        params: {
-          limit: limit,
-        },
-      })
-      const data = response.data?.data || response.data
-      if (Array.isArray(data) && data.length > 0) {
-        console.log('✅ [HomeService] New arrivals products loaded:', data.length)
-        return data
-      }
-    } catch (error) {
-      console.warn('⚠️ [HomeService] Newest endpoint error:', error.response?.status, error.message)
-    }
-
-    // Fallback: Get featured products sorted by date
-    console.log('⚠️ [HomeService] Using fallback for new arrivals products')
-    const allProducts = await getFeaturedProducts()
-    return allProducts
-      .sort((a, b) => {
-        const dateA = new Date(a.ngayTao || a.createdAt || 0)
-        const dateB = new Date(b.ngayTao || b.createdAt || 0)
-        return dateB - dateA
-      })
-      .slice(0, limit)
-  } catch (error) {
-    console.error('❌ [HomeService] Lỗi khi lấy new arrivals products:', error)
-    return []
-  }
+  const res = await axios.get(`${API_BASE_URL}/newest`, { params: { limit } })
+  const data = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.content || [])
+  return Array.isArray(data) ? data : []
 }

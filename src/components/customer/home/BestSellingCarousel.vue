@@ -1,65 +1,55 @@
 <template>
-    <ProductCarousel
-        :products="products"
-        :title="title"
-        :view-all-link="viewAllLink"
-        :items-to-show="itemsToShow"
-        @add-to-cart="handleAddToCart"
-    />
+  <RelatedProducts
+    :products="products"
+    :loading="loading"
+    :error="error"
+    :title="title"
+    :view-all-link="viewAllLink"
+    @add-to-cart="handleAddToCart"
+  />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import ProductCarousel from '@/components/customer/common/ProductCarousel.vue'
+import RelatedProducts from '@/components/customer/product-detail/RelatedProducts.vue'
 import { getBestSellingProducts } from '@/service/customer/homeService'
 
 const props = defineProps({
-    title: {
-        type: String,
-        default: 'Sản phẩm bán chạy',
-    },
-    limit: {
-        type: Number,
-        default: 10,
-    },
-    viewAllLink: {
-        type: String,
-        default: '/products?sortBy=best-selling',
-    },
-    itemsToShow: {
-        type: Number,
-        default: 4,
-    },
+  title: { type: String, default: 'Sản phẩm bán chạy' },
+  limit: { type: Number, default: 10 },
+  viewAllLink: { type: String, default: '/products?sortBy=best-selling' }
 })
 
 const emit = defineEmits(['add-to-cart'])
 
 const products = ref([])
+const loading = ref(false)
+const error = ref(null)
 
-// Fetch best-selling products
 const fetchBestSelling = async () => {
-    try {
-        console.log('🔄 [BestSellingCarousel] Fetching best-selling products...')
-        const data = await getBestSellingProducts(props.limit)
-        products.value = data
-        console.log('✅ [BestSellingCarousel] Loaded:', products.value.length, 'products')
-    } catch (error) {
-        console.error('❌ [BestSellingCarousel] Error loading products:', error)
-        products.value = []
-    }
+  loading.value = true
+  error.value = null
+  try {
+    const data = await getBestSellingProducts(props.limit)
+    products.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('❌ [BestSellingCarousel] Error loading products:', e)
+    error.value = 'Không thể tải sản phẩm bán chạy. Vui lòng thử lại sau.'
+    products.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
-// Handle add to cart
 const handleAddToCart = (product) => {
-    emit('add-to-cart', product)
+  emit('add-to-cart', product)
 }
 
 onMounted(() => {
-    fetchBestSelling()
+  fetchBestSelling()
 })
 </script>
 
 <style scoped>
 /* Styles are handled by ProductCarousel component */
 </style>
-

@@ -231,14 +231,27 @@ const fetchFlashSale = async () => {
         error.value = null
 
         const [productsData, endDateData] = await Promise.all([
-            getFlashSaleProducts(),
-            getFlashSaleEndDate(),
+        getFlashSaleProducts(),
+        getFlashSaleEndDate(),
         ])
 
+        console.log('[FlashSale] raw productsData:', productsData, Array.isArray(productsData))
+
+        // Đảm bảo luôn là mảng
+        if (Array.isArray(productsData)) {
         products.value = productsData
+        } else if (productsData && Array.isArray(productsData.products)) {
+        products.value = productsData.products
+        } else if (productsData && Array.isArray(productsData.content)) {
+        products.value = productsData.content
+        } else {
+        products.value = []
+        }
+
         endDate.value = endDateData
 
         console.log('✅ [FlashSale] Loaded:', products.value.length, 'products')
+        console.log('🔍 [FlashSale] First product:', products.value[0])
     } catch (err) {
         console.error('❌ [FlashSale] Error loading flash sale:', err)
         error.value = 'Không thể tải sản phẩm flash sale'
