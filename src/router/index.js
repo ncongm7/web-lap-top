@@ -57,12 +57,12 @@ const router = createRouter({
           component: () => import('@/views/customer/AboutPage.vue'),
           meta: { title: 'Về chúng tôi - LaptopStore' },
         },
-        {
-          path: 'contact',
-          name: 'contact',
-          component: () => import('@/views/customer/ContactPage.vue'),
-          meta: { title: 'Liên hệ - LaptopStore' },
-        },
+        // {
+        //   path: 'contact',
+        //   name: 'contact',
+        //   component: () => import('@/views/customer/ContactPage.vue'),
+        //   meta: { title: 'Liên hệ - LaptopStore' },
+        // },
         {
           path: 'warranty-policy',
           name: 'warranty-policy',

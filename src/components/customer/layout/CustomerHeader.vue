@@ -72,7 +72,7 @@
           <li><router-link to="/khuyen-mai" class="nav-link">Khuyến mãi</router-link></li>
           <li><router-link to="/warranty" class="nav-link">Bảo hành</router-link></li>
           <li><router-link to="/about" class="nav-link">Giới thiệu</router-link></li>
-          <li><router-link to="/contact" class="nav-link">Liên hệ</router-link></li>
+          <!-- <li><router-link to="/contact" class="nav-link">Liên hệ</router-link></li> -->
         </ul>
       </div>
     </nav>
