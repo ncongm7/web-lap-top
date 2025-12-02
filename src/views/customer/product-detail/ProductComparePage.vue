@@ -23,26 +23,26 @@
         </router-link>
       </div>
 
-      <!-- Comparison Table -->
+      <!-- Comparison Table - Hiển thị khi có items trong comparisonList -->
       <div v-else class="compare-content">
         <div class="compare-table-wrapper">
           <table class="compare-table">
             <thead>
               <tr>
                 <th class="sticky-col">Thông số</th>
-                <th v-for="product in comparisonList" :key="product.id" class="product-col">
+                <th v-for="product in (productsWithDetails.length > 0 ? productsWithDetails : comparisonList)" :key="product.id" class="product-col">
                   <div class="product-header">
                     <button class="remove-btn" @click="handleRemove(product.id)" title="Xóa">
                       ×
                     </button>
                     <div class="product-image">
-                      <img :src="product.image || product.imageUrl || getPlaceholderImage()" :alt="product.name" />
+                      <img :src="product.image || product.imageUrl || getPlaceholderImage()" :alt="product.name || product.tenSanPham" />
                     </div>
                     <h3 class="product-name">{{ product.name || product.tenSanPham }}</h3>
                     <div class="product-price">
                       {{ formatPrice(product.price || product.giaBan) }}
                     </div>
-                    <router-link :to="`/products/${product.id}`" class="view-detail-btn">
+                    <router-link :to="`/products/${product.productId || product.id?.replace('variant-', '').replace('product-', '') || product.id}`" class="view-detail-btn">
                       Xem chi tiết
                     </router-link>
                   </div>
@@ -50,89 +50,73 @@
               </tr>
             </thead>
             <tbody>
-              <!-- Basic Info -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Thông tin cơ bản</td>
-              </tr>
-              <tr>
-                <td class="spec-label">Tên sản phẩm</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ product.name || product.tenSanPham }}
-                </td>
-              </tr>
-              <tr>
-                <td class="spec-label">Giá</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ formatPrice(product.price || product.giaBan) }}
-                </td>
-              </tr>
+              <template v-if="loading">
+                <tr>
+                  <td :colspan="(productsWithDetails.length > 0 ? productsWithDetails : comparisonList).length + 1" class="loading-cell">
+                    <div class="loading-spinner"></div>
+                    <p>Đang tải thông số kỹ thuật...</p>
+                  </td>
+                </tr>
+              </template>
+              <template v-else>
+                <!-- Sử dụng productsWithDetails nếu có, nếu không thì dùng comparisonList -->
+                <template v-if="productsWithDetails.length > 0">
+                  <!-- Basic Info -->
+                  <tr class="section-row">
+                    <td :colspan="productsWithDetails.length + 1" class="section-header">Thông tin cơ bản</td>
+                  </tr>
+                <tr>
+                  <td class="spec-label">Tên sản phẩm</td>
+                  <td v-for="product in productsWithDetails" :key="product.id" class="spec-value">
+                    {{ product.name || product.tenSanPham }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Giá</td>
+                  <td v-for="product in productsWithDetails" :key="product.id" class="spec-value">
+                    {{ formatPrice(product.price || product.giaBan) }}
+                  </td>
+                </tr>
 
-              <!-- Performance -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Hiệu năng</td>
-              </tr>
-              <tr>
-                <td class="spec-label">CPU</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'cpu') || '-' }}
-                </td>
-              </tr>
-              <tr>
-                <td class="spec-label">GPU</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'gpu') || '-' }}
-                </td>
-              </tr>
-              <tr>
-                <td class="spec-label">RAM</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'ram') || '-' }}
-                </td>
-              </tr>
-
-              <!-- Storage -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Lưu trữ</td>
-              </tr>
-              <tr>
-                <td class="spec-label">Ổ cứng</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'storage') || getSpec(product, 'oCung') || '-' }}
-                </td>
-              </tr>
-
-              <!-- Display -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Màn hình</td>
-              </tr>
-              <tr>
-                <td class="spec-label">Kích thước</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'screen') || getSpec(product, 'kichThuocManHinh') || '-' }}
-                </td>
-              </tr>
-
-              <!-- Design -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Thiết kế</td>
-              </tr>
-              <tr>
-                <td class="spec-label">Màu sắc</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'color') || getSpec(product, 'mauSac') || '-' }}
-                </td>
-              </tr>
-
-              <!-- Battery -->
-              <tr class="section-row">
-                <td colspan="100%" class="section-header">Pin</td>
-              </tr>
-              <tr>
-                <td class="spec-label">Dung lượng pin</td>
-                <td v-for="product in comparisonList" :key="product.id" class="spec-value">
-                  {{ getSpec(product, 'battery') || getSpec(product, 'dungLuongPin') || '-' }}
-                </td>
-              </tr>
+                <!-- Technical Specifications by Category -->
+                <template v-for="category in allCategories" :key="category">
+                  <tr class="section-row">
+                    <td :colspan="productsWithDetails.length + 1" class="section-header">
+                      {{ category }}
+                    </td>
+                  </tr>
+                  <template v-for="specKey in allSpecKeys" :key="specKey">
+                    <template v-if="productsWithDetails.some(p => {
+                      const spec = p.specs?.find(s => s.key === specKey)
+                      return spec && spec.category === category
+                    })">
+                      <tr>
+                        <td class="spec-label">
+                          {{ getSpecLabel(specKey) }}
+                        </td>
+                        <td v-for="product in productsWithDetails" :key="product.id" class="spec-value">
+                          <span v-if="specKey === 'color' && getSpecValue(product, specKey) !== '-'" class="color-value">
+                            <span class="color-dot" :style="{ backgroundColor: getSpecValue(product, specKey) }"></span>
+                            {{ getSpecValue(product, specKey) }}
+                          </span>
+                          <span v-else>
+                            {{ getSpecValue(product, specKey) }}
+                          </span>
+                        </td>
+                      </tr>
+                    </template>
+                  </template>
+                </template>
+                </template>
+                <!-- Fallback: hiển thị thông báo nếu không có productsWithDetails -->
+                <template v-else>
+                  <tr>
+                    <td :colspan="comparisonList.length + 1" class="loading-cell">
+                      <p>Đang tải thông tin sản phẩm... Vui lòng đợi trong giây lát.</p>
+                    </td>
+                  </tr>
+                </template>
+              </template>
             </tbody>
           </table>
         </div>
@@ -149,12 +133,200 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useProductComparison } from '@/composables/product-detail/useProductComparison'
 import { useRouter } from 'vue-router'
+import { sanPhamService } from '@/service/customer/san_pham_service'
 
 const router = useRouter()
 const { comparisonList, clearComparison, removeFromComparison } = useProductComparison()
+
+// Load full product details
+const productsWithDetails = ref([])
+const loading = ref(false)
+
+const loadProductDetails = async () => {
+  console.log('🔵 [ProductComparePage] loadProductDetails called, comparisonList.length:', comparisonList.value.length)
+
+  if (comparisonList.value.length === 0) {
+    productsWithDetails.value = []
+    return
+  }
+
+  console.log('🔵 [ProductComparePage] Starting to load', comparisonList.value.length, 'products')
+  loading.value = true
+
+  try {
+    const promises = comparisonList.value.map(async (product, index) => {
+      // Nếu đã có đầy đủ thông tin (specs, variant, variantId), không cần load lại
+      // Nhưng vẫn cần đảm bảo có productId
+      if (product.specs && product.variant && product.variantId && product.productId) {
+        console.log(`✅ [ProductComparePage] [${index}] Sử dụng data có sẵn cho:`, product.id, 'variant:', product.variantId)
+        return product
+      }
+
+      console.log(`🔵 [ProductComparePage] [${index}] Cần load data cho:`, product.id, {
+        hasSpecs: !!product.specs,
+        hasVariant: !!product.variant,
+        hasVariantId: !!product.variantId,
+        hasProductId: !!product.productId
+      })
+
+      try {
+        // Ưu tiên dùng productId (ID sản phẩm chính), không phải variant ID
+        // Nếu product.id bắt đầu bằng "variant-", thì cần dùng productId
+        let productIdToLoad = null
+
+        if (product.productId) {
+          // Có productId rõ ràng, dùng nó
+          productIdToLoad = product.productId
+        } else if (product.id && product.id.startsWith('variant-')) {
+          // Nếu id là "variant-{variantId}", cần lấy productId từ variant
+          // Nhưng không có productId, nên cần load từ variant
+          // Tạm thời dùng logic cũ: parse từ id
+          const variantIdFromId = product.id.replace('variant-', '')
+          // Không thể load product từ variantId, cần có productId
+          console.warn('⚠️ [ProductComparePage] Không có productId cho variant:', product.id)
+          // Nếu có variantId trong product, có thể dùng nó để tìm variant
+          if (product.variantId) {
+            // Cần productId để load, nhưng không có
+            // Fallback: dùng variant đã có sẵn
+            if (product.variant) {
+              return product
+            }
+          }
+          return product
+        } else if (product.id && product.id.startsWith('product-')) {
+          // Nếu id là "product-{productId}", parse ra productId
+          productIdToLoad = product.id.replace('product-', '')
+        } else {
+          // Có thể id chính là productId
+          productIdToLoad = product.id
+        }
+
+        if (!productIdToLoad) {
+          console.warn('⚠️ [ProductComparePage] Không tìm thấy productId để load:', product.id)
+          return product
+        }
+
+        console.log('🔵 [ProductComparePage] Loading product:', productIdToLoad, 'for comparison item:', product.id)
+
+        const response = await sanPhamService.getProductDetail(productIdToLoad)
+        const fullProduct = response.data?.data || response.data
+
+        if (fullProduct) {
+          // Tìm variant đã chọn - ưu tiên variantId từ product
+          let variant = null
+          if (product.variantId && fullProduct.variants) {
+            variant = fullProduct.variants.find(v => v.id === product.variantId)
+            console.log('✅ [ProductComparePage] Tìm thấy variant:', product.variantId, variant ? 'có' : 'không')
+          }
+
+          // Nếu không tìm thấy variant theo variantId, thử parse từ comparisonId
+          if (!variant && product.id && product.id.startsWith('variant-')) {
+            const variantIdFromComparisonId = product.id.replace('variant-', '')
+            // Tìm variant theo ID (có thể là string hoặc UUID)
+            variant = fullProduct.variants?.find(v => {
+              // So sánh cả string và UUID
+              return v.id === variantIdFromComparisonId ||
+                     String(v.id) === String(variantIdFromComparisonId) ||
+                     v.id?.toString() === variantIdFromComparisonId?.toString()
+            })
+            console.log('🔵 [ProductComparePage] Tìm variant từ comparisonId:', variantIdFromComparisonId, variant ? 'có' : 'không')
+          }
+
+          // Nếu vẫn không tìm thấy, thử tìm trong product.variant đã có sẵn
+          if (!variant && product.variant && product.variant.id) {
+            variant = fullProduct.variants?.find(v => {
+              return v.id === product.variant.id ||
+                     String(v.id) === String(product.variant.id) ||
+                     v.id?.toString() === product.variant.id?.toString()
+            })
+            console.log('🔵 [ProductComparePage] Tìm variant từ product.variant:', product.variant.id, variant ? 'có' : 'không')
+          }
+
+          // Fallback: lấy variant đầu tiên nếu không tìm thấy (NHƯNG chỉ khi không có variantId cụ thể)
+          // Nếu có variantId nhưng không tìm thấy, có thể là lỗi, nên không dùng fallback
+          if (!variant && !product.variantId && !product.id?.startsWith('variant-') && fullProduct.variants?.length > 0) {
+            variant = fullProduct.variants[0]
+            console.log('⚠️ [ProductComparePage] Dùng variant đầu tiên làm fallback (không có variantId cụ thể)')
+          }
+
+          // Nếu vẫn không có variant và có variantId, có thể là lỗi
+          if (!variant && (product.variantId || product.id?.startsWith('variant-'))) {
+            console.error('❌ [ProductComparePage] Không tìm thấy variant cho:', {
+              comparisonId: product.id,
+              variantId: product.variantId,
+              availableVariants: fullProduct.variants?.map(v => v.id)
+            })
+          }
+
+          // Tạo specs từ variant
+          const specs = variant ? [
+            { key: 'cpu', label: 'CPU', value: variant.cpu, category: 'Hiệu năng' },
+            { key: 'gpu', label: 'GPU', value: variant.gpu, category: 'Hiệu năng' },
+            { key: 'ram', label: 'RAM', value: variant.ram, category: 'Hiệu năng' },
+            { key: 'storage', label: 'Ổ cứng', value: variant.oCung, category: 'Lưu trữ' },
+            { key: 'screen', label: 'Màn hình', value: variant.kichThuocManHinh, category: 'Màn hình' },
+            { key: 'color', label: 'Màu sắc', value: variant.mauSac, category: 'Thiết kế' },
+            { key: 'battery', label: 'Pin', value: variant.dungLuongPin, category: 'Pin' },
+          ].filter(s => s.value) : []
+
+          const result = {
+            ...product,
+            ...fullProduct,
+            specs,
+            variant: variant || product.variant,
+            variantId: variant?.id || product.variantId,
+            variants: fullProduct.variants || [],
+            // Đảm bảo giữ nguyên comparisonId
+            id: product.id,
+            // Đảm bảo có productId
+            productId: productIdToLoad,
+          }
+
+          console.log('✅ [ProductComparePage] Loaded product details:', result.id, 'variant:', result.variantId)
+          return result
+        }
+        return product
+      } catch (error) {
+        console.error(`❌ [ProductComparePage] Error loading product ${product.id}:`, error)
+        return product
+      }
+    })
+
+    const results = await Promise.all(promises)
+
+    // Filter out any null/undefined results và đảm bảo có data
+    productsWithDetails.value = results.filter(p => p != null && p.id != null)
+
+    console.log('✅ [ProductComparePage] Loaded products:', productsWithDetails.value.length, 'items')
+    console.log('📊 [ProductComparePage] Products details:', productsWithDetails.value.map(p => ({
+      id: p.id,
+      name: p.name || p.tenSanPham,
+      variantId: p.variantId,
+      hasSpecs: !!p.specs,
+      hasVariant: !!p.variant
+    })))
+
+    // Nếu không có products sau khi load, dùng comparisonList làm fallback
+    if (productsWithDetails.value.length === 0 && comparisonList.value.length > 0) {
+      console.warn('⚠️ [ProductComparePage] Không load được products, dùng comparisonList làm fallback')
+      productsWithDetails.value = comparisonList.value
+    }
+  } catch (error) {
+    console.error('❌ [ProductComparePage] Error loading product details:', error)
+    // Fallback: dùng comparisonList nếu có lỗi
+    productsWithDetails.value = comparisonList.value.length > 0 ? comparisonList.value : []
+  } finally {
+    loading.value = false
+  }
+}
+
+// Watch comparisonList changes
+watch(comparisonList, () => {
+  loadProductDetails()
+}, { deep: true, immediate: true })
 
 const handleRemove = (productId) => {
   removeFromComparison(productId)
@@ -174,13 +346,96 @@ const handleAddAllToCart = () => {
   console.log('Add all to cart:', comparisonList.value)
 }
 
-const getSpec = (product, key) => {
-  // Try to get from product directly or from variants
-  if (product[key]) return product[key]
-  if (product.variants && product.variants.length > 0) {
-    return product.variants[0][key]
+// Get all unique spec keys from all products
+const allSpecKeys = computed(() => {
+  const keys = new Set()
+  productsWithDetails.value.forEach(product => {
+    if (product.specs && Array.isArray(product.specs)) {
+      product.specs.forEach(spec => {
+        if (spec.key) {
+          keys.add(spec.key)
+        }
+      })
+    }
+  })
+  return Array.from(keys)
+})
+
+// Get all unique categories
+const allCategories = computed(() => {
+  const categories = new Set()
+  productsWithDetails.value.forEach(product => {
+    if (product.specs && Array.isArray(product.specs)) {
+      product.specs.forEach(spec => {
+        if (spec.category) {
+          categories.add(spec.category)
+        }
+      })
+    }
+  })
+  return Array.from(categories).sort()
+})
+
+// Get specs grouped by category
+const specsByCategory = computed(() => {
+  const grouped = {}
+  allCategories.value.forEach(category => {
+    grouped[category] = []
+    productsWithDetails.value.forEach(product => {
+      if (product.specs && Array.isArray(product.specs)) {
+        const spec = product.specs.find(s => s.category === category)
+        if (spec) {
+          grouped[category].push({
+            key: spec.key,
+            label: spec.label,
+            values: productsWithDetails.value.map(p => {
+              const s = p.specs?.find(sp => sp.key === spec.key)
+              return s?.value || '-'
+            })
+          })
+        }
+      }
+    })
+  })
+  return grouped
+})
+
+// Get spec value for a product
+const getSpecValue = (product, specKey) => {
+  if (!product.specs || !Array.isArray(product.specs)) {
+    // Fallback: try to get from variant
+    const variant = product.variant || product.variants?.[0]
+    if (variant) {
+      const specMap = {
+        cpu: variant.cpu,
+        gpu: variant.gpu,
+        ram: variant.ram,
+        storage: variant.oCung,
+        screen: variant.kichThuocManHinh,
+        color: variant.mauSac,
+        battery: variant.dungLuongPin,
+      }
+      return specMap[specKey] || '-'
+    }
+    return '-'
   }
-  return null
+
+  const spec = product.specs.find(s => s.key === specKey)
+  return spec?.value || '-'
+}
+
+// Get spec label
+const getSpecLabel = (specKey) => {
+  const labels = {
+    cpu: 'CPU',
+    gpu: 'GPU',
+    ram: 'RAM',
+    storage: 'Ổ cứng',
+    screen: 'Màn hình',
+    color: 'Màu sắc',
+    battery: 'Pin',
+  }
+  return labels[specKey] || specKey
 }
 
 const formatPrice = (price) => {
@@ -195,9 +450,9 @@ const getPlaceholderImage = () => {
   return 'https://via.placeholder.com/200x200.png?text=No+Image'
 }
 
-// Load product details if needed
+// Load product details on mount
 onMounted(() => {
-  // Optionally load full product details for comparison
+  loadProductDetails()
 })
 </script>
 
@@ -449,6 +704,44 @@ onMounted(() => {
 
 .add-to-cart-all-btn:hover {
   background: #1d4ed8;
+}
+
+.loading-cell {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.color-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.color-dot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {

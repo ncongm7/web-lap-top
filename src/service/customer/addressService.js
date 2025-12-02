@@ -69,21 +69,113 @@ const addressService = {
 
   /**
    * Lấy danh sách tất cả tỉnh/thành phố
+   * Sử dụng API free từ provinces.open-api.vn
    * @returns {Promise<Array>} Danh sách tỉnh/thành phố
    */
   async getAllProvinces() {
-    const response = await axiosInstance.get('/api/dia-chi-tinh-xa/hien-thi-tinh-all')
-    return response.data
+    try {
+      // Thử dùng API free trước
+      const response = await fetch('https://provinces.open-api.vn/api/p/')
+      if (response.ok) {
+        const data = await response.json()
+        // Map về format giống backend: { id, name }
+        return data.map((p) => ({
+          id: p.code,
+          name: p.name,
+          code: p.code,
+        }))
+      }
+    } catch (error) {
+      console.warn('API free failed, trying backend API:', error)
+    }
+
+    // Fallback về backend API
+    try {
+      const response = await axiosInstance.get('/api/dia-chi-tinh-xa/hien-thi-tinh-all')
+      return response.data?.data || response.data || []
+    } catch (error) {
+      console.error('Backend API also failed:', error)
+      return []
+    }
   },
 
   /**
-   * Lấy danh sách xã/phường theo code tỉnh
+   * Lấy danh sách quận/huyện theo tỉnh
+   * @param {number} provinceCode - Code tỉnh/thành phố
+   * @returns {Promise<Array>} Danh sách quận/huyện
+   */
+  async getDistrictsByProvince(provinceCode) {
+    try {
+      // Thử dùng API free trước
+      const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.districts?.map((d) => ({
+          id: d.code,
+          name: d.name,
+          code: d.code,
+          provinceCode: provinceCode,
+        })) || []
+      }
+    } catch (error) {
+      console.warn('API free failed for districts:', error)
+    }
+    return []
+  },
+
+  /**
+   * Lấy danh sách xã/phường theo quận/huyện
+   * @param {number} districtCode - Code quận/huyện
+   * @returns {Promise<Array>} Danh sách xã/phường
+   */
+  async getWardsByDistrict(districtCode) {
+    try {
+      // Thử dùng API free trước
+      const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.wards?.map((w) => ({
+          id: w.code,
+          name: w.name,
+          code: w.code,
+          districtCode: districtCode,
+        })) || []
+      }
+    } catch (error) {
+      console.warn('API free failed for wards:', error)
+    }
+    return []
+  },
+
+  /**
+   * Lấy danh sách xã/phường theo code tỉnh (backward compatibility)
    * @param {number} provinceCode - Code tỉnh/thành phố
    * @returns {Promise<Array>} Danh sách xã/phường
    */
   async getWardsByProvince(provinceCode) {
-    const response = await axiosInstance.get(`/api/dia-chi-tinh-xa/xa-phuong/${provinceCode}`)
-    return response.data
+    try {
+      // Lấy tất cả quận/huyện của tỉnh
+      const districts = await this.getDistrictsByProvince(provinceCode)
+
+      // Lấy tất cả xã/phường từ tất cả quận/huyện
+      const allWards = []
+      for (const district of districts) {
+        const wards = await this.getWardsByDistrict(district.code)
+        allWards.push(...wards)
+      }
+
+      return allWards
+    } catch (error) {
+      console.warn('Error getting wards, trying backend API:', error)
+      // Fallback về backend API
+      try {
+        const response = await axiosInstance.get(`/api/dia-chi-tinh-xa/xa-phuong/${provinceCode}`)
+        return response.data?.data || response.data || []
+      } catch (backendError) {
+        console.error('Backend API also failed:', backendError)
+        return []
+      }
+    }
   },
 }
 

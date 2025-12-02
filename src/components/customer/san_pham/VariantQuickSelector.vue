@@ -11,10 +11,9 @@
                     'variant-button',
                     {
                         active: modelValue === variant.id,
-                        'out-of-stock': (variant.soLuongTon || 0) <= 0,
+                        'out-of-stock': isOutOfStock(variant),
                     },
                 ]"
-                :disabled="(variant.soLuongTon || 0) <= 0"
                 @click="selectVariant(variant)"
             >
                 <!-- Thông tin phiên bản (CPU | GPU | RAM | Ổ cứng) -->
@@ -29,7 +28,7 @@
                 </span>
 
                 <!-- Badge hết hàng -->
-                <span v-if="(variant.soLuongTon || 0) <= 0" class="stock-badge">Hết hàng</span>
+                <span v-if="isOutOfStock(variant)" class="stock-badge">Hết hàng</span>
             </button>
         </div>
 
@@ -81,6 +80,14 @@ const emit = defineEmits(['update:modelValue', 'change'])
 //     return props.variants.find((v) => v.id === props.modelValue) || null
 // })
 
+// Check if variant is out of stock
+const isOutOfStock = (variant) => {
+    const soLuongTon = variant.soLuongTon || 0
+    const soLuongTamGiu = variant.soLuongTamGiu || 0
+    const soLuongKhaDung = soLuongTon - soLuongTamGiu
+    return soLuongKhaDung <= 0
+}
+
 // Get variant summary
 const getVariantSummary = (variant) => {
     const parts = []
@@ -92,10 +99,9 @@ const getVariantSummary = (variant) => {
     return parts.length > 0 ? parts.join(' | ') : variant.maCtsp || 'Variant'
 }
 
-// Select variant
+// Select variant - Cho phép chọn ngay cả khi hết hàng (để liên hệ và so sánh)
 const selectVariant = (variant) => {
-    if ((variant.soLuongTon || 0) <= 0) return
-
+    // Không kiểm tra hết hàng nữa, cho phép chọn để liên hệ và so sánh
     emit('update:modelValue', variant.id)
     emit('change', variant)
 }
@@ -110,14 +116,16 @@ const formatPrice = (price) => {
     }).format(price)
 }
 
-// Auto select first variant if not selected
+// Auto select first variant if not selected (kể cả khi hết hàng)
 watch(
     () => props.variants,
     (newVariants) => {
         if (newVariants.length > 0 && !props.modelValue) {
             const firstVariant = newVariants[0]
             if (firstVariant) {
-                selectVariant(firstVariant)
+                // Cho phép chọn variant đầu tiên ngay cả khi hết hàng
+                emit('update:modelValue', firstVariant.id)
+                emit('change', firstVariant)
             }
         }
     },
@@ -196,22 +204,21 @@ watch(
 }
 
 .variant-button.out-of-stock {
-    opacity: 0.5;
+    opacity: 0.7;
     background: var(--vqs-bg-secondary);
-    cursor: not-allowed;
+    cursor: pointer; /* Vẫn cho phép click để chọn */
     position: relative;
 }
 
+.variant-button.out-of-stock:hover {
+    opacity: 0.9;
+    border-color: var(--vqs-accent);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
+}
+
+/* Bỏ dấu gạch chéo khi hết hàng vì vẫn cho phép chọn */
 .variant-button.out-of-stock::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 20px;
-    right: 20px;
-    height: 1.5px;
-    background: var(--vqs-error);
-    transform: translateY(-50%) rotate(-12deg);
-    opacity: 0.8;
+    display: none;
 }
 
 .variant-text {

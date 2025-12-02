@@ -133,6 +133,7 @@
           <div class="modal-body">
             <DiaChiForm
               :maKhachHang="customerInfo?.maKhachHang || ''"
+              :customerInfo="customerInfo"
               @close="closeAddressModal"
               @success="handleAddressSuccess"
             />

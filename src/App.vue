@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/customer/authStore'
+import ComparisonFloatingBar from '@/components/customer/product-detail/ComparisonFloatingBar.vue'
 
 const authStore = useAuthStore()
 
@@ -12,6 +13,7 @@ onMounted(() => {
 
 <template>
   <router-view />
+  <ComparisonFloatingBar />
 </template>
 
 <style>

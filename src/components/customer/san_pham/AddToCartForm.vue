@@ -45,14 +45,19 @@
                 </template>
             </button>
 
-            <!-- Buy Now Button (Optional) -->
-            <button v-if="showBuyNow" type="button" class="btn-buy-now" :disabled="!canAddToCart || loading"
-                @click="handleBuyNow">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <!-- Buy Now / Contact Button -->
+            <button v-if="showBuyNow" type="button" :class="['btn-buy-now', { 'btn-contact': isOutOfStock }]"
+                :disabled="loading || (isOutOfStock ? false : (!productId || disabled))"
+                @click.prevent.stop="handleBuyNowButtonClick">
+                <svg v-if="!isOutOfStock" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z" />
                 </svg>
-                <span>Mua ngay</span>
+                <svg v-else width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z" />
+                </svg>
+                <span>{{ isOutOfStock ? 'Liên hệ' : 'Mua ngay' }}</span>
             </button>
         </div>
 
@@ -93,13 +98,17 @@ const props = defineProps({
     },
 })
 
-const emit = defineEmits(['add-to-cart', 'buy-now'])
+const emit = defineEmits(['add-to-cart', 'buy-now', 'contact'])
 
 // State
 const quantity = ref(1)
 const loading = ref(false)
 
 // Computed
+const isOutOfStock = computed(() => {
+    return props.maxQuantity <= 0
+})
+
 const canAddToCart = computed(() => {
     return props.maxQuantity > 0 && !props.disabled && quantity.value > 0 && quantity.value <= props.maxQuantity
 })
@@ -163,19 +172,89 @@ const handleAddToCart = async () => {
 }
 
 const handleBuyNow = async () => {
-    if (!canAddToCart.value || loading.value) return
+    console.log('🛒 [AddToCartForm] handleBuyNow called', {
+        productId: props.productId,
+        quantity: quantity.value,
+        loading: loading.value,
+        disabled: props.disabled,
+        maxQuantity: props.maxQuantity
+    })
+
+    // Kiểm tra điều kiện cơ bản
+    if (loading.value) {
+        console.log('⏸️ [AddToCartForm] Already loading, skipping')
+        return
+    }
+
+    if (!props.productId) {
+        console.warn('⚠️ [AddToCartForm] Product ID is missing')
+        alert('Vui lòng chọn phiên bản sản phẩm')
+        return
+    }
+
+    if (quantity.value <= 0) {
+        console.warn('⚠️ [AddToCartForm] Quantity must be greater than 0')
+        alert('Số lượng phải lớn hơn 0')
+        return
+    }
 
     loading.value = true
     try {
+        console.log('✅ [AddToCartForm] Emitting buy-now event')
         await emit('buy-now', {
             productId: props.productId,
             productName: props.productName,
             quantity: quantity.value,
         })
+        console.log('✅ [AddToCartForm] buy-now event emitted successfully')
     } catch (error) {
-        console.error('Error buying now:', error)
+        console.error('❌ [AddToCartForm] Error buying now:', error)
+        alert('Có lỗi xảy ra khi mua ngay. Vui lòng thử lại.')
     } finally {
         loading.value = false
+    }
+}
+
+const handleContact = () => {
+    emit('contact', {
+        productId: props.productId,
+        productName: props.productName,
+    })
+}
+
+// Handler cho nút Buy Now
+const handleBuyNowButtonClick = (e) => {
+    console.log('🖱️ [AddToCartForm] Buy Now button clicked', {
+        productId: props.productId,
+        quantity: quantity.value,
+        loading: loading.value,
+        disabled: props.disabled,
+        isOutOfStock: isOutOfStock.value,
+        canAddToCart: canAddToCart.value,
+        buttonDisabled: loading.value || (isOutOfStock.value ? false : (!props.productId || props.disabled))
+    })
+
+    // Nếu nút bị disabled, không làm gì
+    if (loading.value) {
+        console.log('⏸️ [AddToCartForm] Button is loading, ignoring click')
+        return
+    }
+
+    if (!isOutOfStock.value && (!props.productId || props.disabled)) {
+        console.warn('⚠️ [AddToCartForm] Button is disabled, ignoring click')
+        if (!props.productId) {
+            alert('Vui lòng chọn phiên bản sản phẩm')
+        } else if (props.disabled) {
+            alert('Vui lòng chọn phiên bản sản phẩm trước khi mua')
+        }
+        return
+    }
+
+    // Gọi hàm xử lý tương ứng
+    if (isOutOfStock.value) {
+        handleContact()
+    } else {
+        handleBuyNow()
     }
 }
 
@@ -364,6 +443,17 @@ watch(() => props.maxQuantity, (newMax) => {
     color: #86868b;
     border-color: #d2d2d7;
     cursor: not-allowed;
+}
+
+.btn-contact {
+    background: #28a745;
+    color: white;
+}
+
+.btn-contact:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 4px 14px rgba(40, 167, 69, 0.3);
 }
 
 /* Spinner */

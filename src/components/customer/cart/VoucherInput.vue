@@ -25,27 +25,87 @@
       {{ message }}
     </div>
 
-    <!-- Available Vouchers -->
-    <div v-if="!appliedVoucher && availableVouchers.length > 0" class="available-vouchers">
+    <!-- All Vouchers Section -->
+    <div v-if="!appliedVoucher && (availableVouchers.length > 0 || unavailableVouchers.length > 0 || personalVouchers.length > 0)" class="available-vouchers">
       <button @click="showVouchers = !showVouchers" class="toggle-vouchers-btn">
-        {{ showVouchers ? 'Ẩn' : 'Xem' }} mã giảm giá khả dụng ({{ availableVouchers.length }})
+        {{ showVouchers ? 'Ẩn' : 'Xem' }} mã giảm giá
+        ({{ totalVouchersCount }})
       </button>
 
       <transition name="slide-down">
         <div v-if="showVouchers" class="vouchers-list">
-          <div v-for="voucher in availableVouchers" :key="voucher.id" class="voucher-card"
-            @click="selectVoucher(voucher.ma)">
-            <div class="voucher-card-header">
-              <span class="voucher-card-code">{{ voucher.ma }}</span>
-              <span class="voucher-card-discount">
-                {{ formatDiscount(voucher) }}
-              </span>
+          <!-- Phiếu giảm giá cá nhân -->
+          <div v-if="personalVouchers.length > 0" class="voucher-category">
+            <h4 class="voucher-category-title">
+              <span class="category-icon">👤</span> Phiếu giảm giá của bạn
+            </h4>
+            <div v-for="voucher in personalVouchers" :key="`personal-${voucher.id}`"
+              class="voucher-card voucher-card-personal"
+              :class="{ 'voucher-card-disabled': !isVoucherUsable(voucher) }"
+              @click="isVoucherUsable(voucher) && selectVoucher(voucher.ma)">
+              <div class="voucher-card-header">
+                <span class="voucher-card-code">{{ voucher.ma }}</span>
+                <span class="voucher-card-discount">
+                  {{ formatDiscount(voucher) }}
+                </span>
+              </div>
+              <p class="voucher-card-name">{{ voucher.tenPhieuGiamGia }}</p>
+              <p class="voucher-card-condition">
+                Đơn tối thiểu: {{ formatPrice(voucher.hoaDonToiThieu || 0) }}
+              </p>
+              <p class="voucher-card-expiry">HSD: {{ formatDate(voucher.ngayKetThuc) }}</p>
+              <p v-if="!isVoucherUsable(voucher)" class="voucher-card-reason">
+                <span class="reason-icon">⚠️</span>
+                {{ getVoucherReason(voucher) }}
+              </p>
             </div>
-            <p class="voucher-card-name">{{ voucher.tenPhieuGiamGia }}</p>
-            <p class="voucher-card-condition">
-              Đơn tối thiểu: {{ formatPrice(voucher.hoaDonToiThieu || 0) }}
-            </p>
-            <p class="voucher-card-expiry">HSD: {{ formatDate(voucher.ngayKetThuc) }}</p>
+          </div>
+
+          <!-- Phiếu giảm giá khả dụng -->
+          <div v-if="availableVouchers.length > 0" class="voucher-category">
+            <h4 class="voucher-category-title">
+              <span class="category-icon">✅</span> Có thể sử dụng
+            </h4>
+            <div v-for="voucher in availableVouchers" :key="`available-${voucher.id}`"
+              class="voucher-card voucher-card-available"
+              @click="selectVoucher(voucher.ma)">
+              <div class="voucher-card-header">
+                <span class="voucher-card-code">{{ voucher.ma }}</span>
+                <span class="voucher-card-discount">
+                  {{ formatDiscount(voucher) }}
+                </span>
+              </div>
+              <p class="voucher-card-name">{{ voucher.tenPhieuGiamGia }}</p>
+              <p class="voucher-card-condition">
+                Đơn tối thiểu: {{ formatPrice(voucher.hoaDonToiThieu || 0) }}
+              </p>
+              <p class="voucher-card-expiry">HSD: {{ formatDate(voucher.ngayKetThuc) }}</p>
+            </div>
+          </div>
+
+          <!-- Phiếu giảm giá không dùng được -->
+          <div v-if="unavailableVouchers.length > 0" class="voucher-category">
+            <h4 class="voucher-category-title">
+              <span class="category-icon">❌</span> Không thể sử dụng
+            </h4>
+            <div v-for="voucher in unavailableVouchers" :key="`unavailable-${voucher.id}`"
+              class="voucher-card voucher-card-unavailable">
+              <div class="voucher-card-header">
+                <span class="voucher-card-code">{{ voucher.ma }}</span>
+                <span class="voucher-card-discount">
+                  {{ formatDiscount(voucher) }}
+                </span>
+              </div>
+              <p class="voucher-card-name">{{ voucher.tenPhieuGiamGia }}</p>
+              <p class="voucher-card-condition">
+                Đơn tối thiểu: {{ formatPrice(voucher.hoaDonToiThieu || 0) }}
+              </p>
+              <p class="voucher-card-expiry">HSD: {{ formatDate(voucher.ngayKetThuc) }}</p>
+              <p class="voucher-card-reason">
+                <span class="reason-icon">⚠️</span>
+                {{ voucher.reason || 'Không đủ điều kiện sử dụng' }}
+              </p>
+            </div>
           </div>
         </div>
       </transition>
@@ -54,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCart } from '@/composables/cart/useCart'
 import { useVoucher } from '@/composables/cart/useVoucher'
 
@@ -62,10 +122,14 @@ import { useVoucher } from '@/composables/cart/useVoucher'
 const { loading } = useCart()
 const {
   availableVouchers,
+  unavailableVouchers,
+  personalVouchers,
   appliedVoucher,
   discountAmount,
+  cartSubtotal,
   applyVoucher: applyVoucherFromComposable,
   removeVoucher: removeVoucherFromComposable,
+  checkVoucherConditions,
   init: initVoucher,
 } = useVoucher()
 
@@ -74,6 +138,11 @@ const voucherCode = ref('')
 const message = ref('')
 const messageType = ref('') // 'success' or 'error'
 const showVouchers = ref(false)
+
+// Computed
+const totalVouchersCount = computed(() => {
+  return availableVouchers.value.length + unavailableVouchers.value.length + personalVouchers.value.length
+})
 
 // Initialize voucher on mount
 onMounted(() => {
@@ -134,6 +203,18 @@ const formatDate = (date) => {
   if (!date) return 'N/A'
   const d = new Date(date)
   return d.toLocaleDateString('vi-VN')
+}
+
+// Kiểm tra voucher có thể dùng được không
+const isVoucherUsable = (voucher) => {
+  const check = checkVoucherConditions(voucher, cartSubtotal.value)
+  return check.canUse
+}
+
+// Lấy lý do không dùng được
+const getVoucherReason = (voucher) => {
+  const check = checkVoucherConditions(voucher, cartSubtotal.value)
+  return check.reason || 'Không đủ điều kiện sử dụng'
 }
 </script>
 
@@ -379,5 +460,92 @@ const formatDate = (date) => {
 
 .vouchers-list::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* Voucher Categories */
+.voucher-category {
+  margin-bottom: 20px;
+}
+
+.voucher-category:last-child {
+  margin-bottom: 0;
+}
+
+.voucher-category-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-icon {
+  font-size: 16px;
+  display: inline-block;
+}
+
+/* Voucher Card Variants */
+.voucher-card-available {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.voucher-card-available:hover {
+  border-color: #059669;
+  background: #dcfce7;
+}
+
+.voucher-card-personal {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  position: relative;
+}
+
+.voucher-card-personal::before {
+  content: 'CỦA BẠN';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #3b82f6;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.voucher-card-personal:hover:not(.voucher-card-disabled) {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.voucher-card-unavailable {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.voucher-card-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #d1d5db;
+}
+
+.voucher-card-reason {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 8px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.reason-icon {
+  font-size: 14px;
+  display: inline-block;
 }
 </style>

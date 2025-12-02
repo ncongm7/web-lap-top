@@ -104,7 +104,8 @@ export const useCartStore = defineStore('cart', () => {
 
       const response = await cartService.getCart(khachHangId)
       if (response.success) {
-        cart.value = response.data
+        // Preserve selected state khi fetch cart
+        updateCartPreservingSelection(response.data)
       } else {
         throw new Error(response.message || 'Không thể lấy giỏ hàng')
       }
@@ -146,7 +147,8 @@ export const useCartStore = defineStore('cart', () => {
       // Assuming the service returns the updated cart directly
       // And assuming the response structure from service is just the data
       if (response.success !== false && response.data) {
-        cart.value = response.data
+        // Preserve selected state khi thêm sản phẩm
+        updateCartPreservingSelection(response.data)
       } else if (response.success === false) {
         throw new Error(response.message || 'Không thể thêm sản phẩm')
       }
@@ -201,7 +203,8 @@ export const useCartStore = defineStore('cart', () => {
       const response = await cartService.updateCartItem(khachHangId, itemId, { quantity })
 
       if (response.success) {
-        cart.value = response.data
+        // Preserve selected state khi cập nhật số lượng
+        updateCartPreservingSelection(response.data)
         return { success: true }
       } else {
         throw new Error(response.message || 'Không thể cập nhật')
@@ -248,10 +251,24 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập')
       }
 
+      // Tìm item trước khi xóa để lấy ctspId
+      const itemToDelete = cartItems.value.find(i => i.id === itemId)
+      const ctspIdToDelete = itemToDelete?.ctspId || itemToDelete?.idCtsp || itemToDelete?.chiTietSanPhamId
+
+      // Preserve selected state khi xóa sản phẩm (trừ item bị xóa)
+      const selectedStateMap = saveSelectedState()
+      // Xóa item bị xóa khỏi map (cả ID và ctspId)
+      selectedStateMap.delete(`id:${itemId}`)
+      if (ctspIdToDelete) {
+        selectedStateMap.delete(`ctsp:${ctspIdToDelete}`)
+      }
+
       const response = await cartService.removeCartItem(khachHangId, itemId)
 
       if (response.success) {
         cart.value = response.data
+        // Restore selected state (không restore item đã bị xóa)
+        restoreSelectedState(selectedStateMap)
         return { success: true, message: 'Đã xóa sản phẩm khỏi giỏ hàng' }
       } else {
         throw new Error(response.message || 'Không thể xóa sản phẩm')
@@ -320,8 +337,9 @@ export const useCartStore = defineStore('cart', () => {
 
       if (voucherData && voucherData.success) {
         // Cập nhật cart từ updatedCart trong response
+        // QUAN TRỌNG: Preserve selected state của các items
         if (voucherData.updatedCart) {
-          cart.value = voucherData.updatedCart
+          updateCartPreservingSelection(voucherData.updatedCart)
         }
         return {
           success: true,
@@ -397,6 +415,9 @@ export const useCartStore = defineStore('cart', () => {
   const removeVoucher = async () => {
     if (!cart.value) return
 
+    // Lưu selected state hiện tại của các items
+    const selectedStateMap = saveSelectedState()
+
     // Cập nhật local state trước
     cart.value.appliedVoucher = null
     cart.value.discount = 0
@@ -405,6 +426,9 @@ export const useCartStore = defineStore('cart', () => {
     // Refresh cart từ backend để đồng bộ
     try {
       await fetchCart()
+
+      // Restore selected state sau khi fetch
+      restoreSelectedState(selectedStateMap)
     } catch (err) {
       console.error('❌ Error refreshing cart after removing voucher:', err)
       // Nếu refresh fail, vẫn giữ state local đã cập nhật
@@ -453,6 +477,60 @@ export const useCartStore = defineStore('cart', () => {
    */
   const getKhachHangId = () => {
     return authService.getCustomerId()
+  }
+
+  /**
+   * Lưu selected state của các items hiện tại
+   * Sử dụng cả ID và ctspId để matching chính xác hơn
+   */
+  const saveSelectedState = () => {
+    const selectedStateMap = new Map()
+    if (cart.value?.items) {
+      cart.value.items.forEach(item => {
+        if (item.selected) {
+          // Lưu theo ID (ưu tiên)
+          if (item.id) {
+            selectedStateMap.set(`id:${item.id}`, true)
+          }
+          // Lưu theo ctspId (fallback nếu ID thay đổi)
+          const ctspId = item.ctspId || item.idCtsp || item.chiTietSanPhamId
+          if (ctspId) {
+            selectedStateMap.set(`ctsp:${ctspId}`, true)
+          }
+        }
+      })
+    }
+    return selectedStateMap
+  }
+
+  /**
+   * Restore selected state cho các items
+   * Match theo cả ID và ctspId để đảm bảo chính xác
+   */
+  const restoreSelectedState = (selectedStateMap) => {
+    if (cart.value?.items && selectedStateMap && selectedStateMap.size > 0) {
+      cart.value.items.forEach(item => {
+        // Kiểm tra theo ID trước
+        if (item.id && selectedStateMap.has(`id:${item.id}`)) {
+          item.selected = true
+          return
+        }
+        // Fallback: kiểm tra theo ctspId
+        const ctspId = item.ctspId || item.idCtsp || item.chiTietSanPhamId
+        if (ctspId && selectedStateMap.has(`ctsp:${ctspId}`)) {
+          item.selected = true
+        }
+      })
+    }
+  }
+
+  /**
+   * Cập nhật cart và preserve selected state
+   */
+  const updateCartPreservingSelection = (newCart) => {
+    const selectedStateMap = saveSelectedState()
+    cart.value = newCart
+    restoreSelectedState(selectedStateMap)
   }
 
   /**

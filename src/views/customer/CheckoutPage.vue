@@ -21,56 +21,32 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                    <input
-                      v-model="formData.tenKhachHang"
-                      type="text"
-                      class="form-control"
-                      required
-                      placeholder="Nhập họ và tên"
-                    />
+                    <input v-model="formData.tenKhachHang" type="text" class="form-control" required
+                      placeholder="Nhập họ và tên" />
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label class="form-label"
-                      >Số điện thoại <span class="text-danger">*</span></label
-                    >
-                    <input
-                      v-model="formData.soDienThoai"
-                      type="tel"
-                      class="form-control"
-                      required
-                      placeholder="Nhập số điện thoại"
-                    />
+                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                    <input v-model="formData.soDienThoai" type="tel" class="form-control" required
+                      placeholder="Nhập số điện thoại" />
                   </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Email</label>
-                  <input
-                    v-model="formData.email"
-                    type="email"
-                    class="form-control"
-                    placeholder="Nhập email (để nhận xác nhận đơn hàng)"
-                  />
+                  <input v-model="formData.email" type="email" class="form-control"
+                    placeholder="Nhập email (để nhận xác nhận đơn hàng)" />
                 </div>
+
+                <!-- Địa chỉ giao hàng -->
                 <div class="mb-3">
-                  <label class="form-label"
-                    >Địa chỉ giao hàng <span class="text-danger">*</span></label
-                  >
-                  <textarea
-                    v-model="formData.diaChi"
-                    class="form-control"
-                    rows="3"
-                    required
-                    placeholder="Nhập địa chỉ giao hàng"
-                  ></textarea>
+                  <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+                  <textarea v-model="formData.diaChi" class="form-control" rows="3" required
+                    placeholder="Nhập địa chỉ giao hàng"></textarea>
                 </div>
+
                 <div class="mb-3">
                   <label class="form-label">Ghi chú</label>
-                  <textarea
-                    v-model="formData.ghiChu"
-                    class="form-control"
-                    rows="2"
-                    placeholder="Ghi chú cho đơn hàng (nếu có)"
-                  ></textarea>
+                  <textarea v-model="formData.ghiChu" class="form-control" rows="2"
+                    placeholder="Ghi chú cho đơn hàng (nếu có)"></textarea>
                 </div>
               </form>
             </div>
@@ -83,33 +59,19 @@
             </div>
             <div class="card-body">
               <div class="form-check mb-3">
-                <input
-                  v-model="formData.phuongThucThanhToan"
-                  class="form-check-input"
-                  type="radio"
-                  name="paymentMethod"
-                  :value="0"
-                  id="cod"
-                />
+                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
+                  :value="0" id="cod" />
                 <label class="form-check-label" for="cod">
                   <strong>Thanh toán khi nhận hàng (COD)</strong>
                   <small class="d-block text-muted">Thanh toán bằng tiền mặt khi nhận hàng</small>
                 </label>
               </div>
               <div class="form-check">
-                <input
-                  v-model="formData.phuongThucThanhToan"
-                  class="form-check-input"
-                  type="radio"
-                  name="paymentMethod"
-                  :value="1"
-                  id="online"
-                />
+                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
+                  :value="1" id="online" />
                 <label class="form-check-label" for="online">
                   <strong>Thanh toán online</strong>
-                  <small class="d-block text-muted"
-                    >Chuyển khoản qua ngân hàng hoặc ví điện tử</small
-                  >
+                  <small class="d-block text-muted">Chuyển khoản qua ngân hàng hoặc ví điện tử</small>
                 </label>
               </div>
             </div>
@@ -118,30 +80,11 @@
           <!-- Online Payment Info -->
           <div v-if="formData.phuongThucThanhToan === 1" class="card mb-4 payment-info-card">
             <div class="card-header payment-info-header">
-              <h5 class="mb-0">Thông tin thanh toán</h5>
+              <h5 class="mb-0">Thanh toán QR</h5>
             </div>
-            <div class="card-body text-center">
-              <div class="mb-3">
-                <h6>Quét mã QR để thanh toán</h6>
-                <div class="qr-code-placeholder bg-light p-4 rounded d-inline-block">
-                  <div class="qr-code">
-                    <div class="qr-placeholder-text">QR Code</div>
-                  </div>
-                  <p class="text-muted small mt-2">Hoặc chuyển khoản đến:</p>
-                </div>
-              </div>
-              <div class="bank-info">
-                <p class="mb-1"><strong>Ngân hàng:</strong> Vietcombank</p>
-                <p class="mb-1">
-                  <strong>Số tài khoản:</strong>
-                  <span class="text-primary fw-bold">1234567890</span>
-                </p>
-                <p class="mb-1"><strong>Chủ tài khoản:</strong> CONG TY TNHH VIETLAPTOP</p>
-                <p class="mb-0">
-                  <strong>Nội dung chuyển khoản:</strong>
-                  <span class="text-danger fw-bold">{{ orderCode }}</span>
-                </p>
-              </div>
+            <div class="card-body">
+              <QRPaymentDisplay :qr-data="qrData" :loading="qrLoading" :error="qrError" :status="qrStatus"
+                @retry="generateQRCode()" @expired="handleQRExpired" />
             </div>
           </div>
         </div>
@@ -155,17 +98,9 @@
             <div class="card-body">
               <!-- Products List -->
               <div class="order-items mb-3">
-                <div
-                  v-for="(item, index) in orderItems"
-                  :key="index"
-                  class="d-flex mb-3 pb-3 border-bottom"
-                >
-                  <img
-                    :src="item.imageUrl || '/placeholder.jpg'"
-                    :alt="item.tenSp"
-                    class="product-image me-2"
-                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px"
-                  />
+                <div v-for="(item, index) in orderItems" :key="index" class="d-flex mb-3 pb-3 border-bottom">
+                  <img :src="item.imageUrl || '/placeholder.jpg'" :alt="item.tenSp" class="product-image me-2"
+                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px" />
                   <div class="flex-grow-1">
                     <h6 class="mb-1 small">{{ item.tenSp }}</h6>
                     <div class="d-flex justify-content-between">
@@ -198,11 +133,7 @@
               </div>
 
               <!-- Submit Button -->
-              <button
-                @click="handleSubmit"
-                class="btn checkout-btn w-100 btn-lg"
-                :disabled="loading || !canSubmit"
-              >
+              <button @click="handleSubmit" class="btn checkout-btn w-100 btn-lg" :disabled="loading || !canSubmit">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ loading ? 'Đang xử lý...' : 'Đặt hàng' }}
               </button>
@@ -215,16 +146,41 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/customer/authStore'
 import { useCartStore } from '@/stores/customer/cartStore'
 import orderService from '@/service/customer/orderService'
 import addressService from '@/service/customer/addressService'
+import { generateQRPayment, checkPaymentStatus } from '@/service/customer/paymentService'
+import { useQRPayment } from '@/composables/customer/useQRPayment'
+import QRPaymentDisplay from '@/components/customer/payment/QRPaymentDisplay.vue'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+
+// QR Payment composable
+const {
+  qrCodeData: qrData,
+  loading: qrLoading,
+  error: qrError,
+  status: qrStatus,
+  generateQR: generateQRCode,
+  checkStatus: checkQRStatus,
+  handleExpired: handleQRExpired
+} = useQRPayment({
+  amount: computed(() => total.value),
+  orderCode: computed(() => orderCode.value),
+  onPaymentConfirmed: (data) => {
+    console.log('✅ Thanh toán QR đã được xác nhận!', data)
+    // Redirect sang trang order detail
+    if (data.hoaDonId) {
+      router.push({ name: 'order-detail', params: { id: data.hoaDonId } })
+    }
+  }
+})
 
 // Form data
 const formData = ref({
@@ -235,6 +191,29 @@ const formData = ref({
   ghiChu: '',
   phuongThucThanhToan: 0, // 0: COD, 1: Online
 })
+
+// Form errors
+const formErrors = ref({
+  tenKhachHang: '',
+  soDienThoai: '',
+  email: '',
+  diaChi: '',
+})
+
+// Address form data
+const addressFormData = ref({
+  diaChi: '',
+  tinh: '',
+  xa: '',
+  tinhCode: '',
+  xaCode: '',
+})
+
+// Saved addresses
+const savedAddresses = ref([])
+const selectedSavedAddressId = ref('')
+const isLoadingAddresses = ref(false)
+const addressFormRef = ref(null)
 
 // Order items
 const orderItems = ref([])
@@ -363,6 +342,9 @@ onMounted(async () => {
             formData.value.soDienThoai = address.sdt || address.soDienThoai
           }
         }
+
+        // Load saved addresses
+        await loadSavedAddresses()
       }
     } catch (error) {
       console.warn(
@@ -436,6 +418,136 @@ onMounted(async () => {
   orderCode.value = 'DH' + Date.now()
 })
 
+// Address methods
+const loadSavedAddresses = async () => {
+  const customerId = authStore.getCustomerId()
+  if (!customerId) return
+
+  try {
+    isLoadingAddresses.value = true
+    // Get customer info to get maKhachHang
+    const customerInfo = await customerService.getCustomerProfile(customerId)
+    const maKhachHang = customerInfo?.data?.maKhachHang || customerInfo?.maKhachHang
+
+    if (maKhachHang) {
+      const response = await addressService.getAddressesByMaKhachHang(maKhachHang)
+      savedAddresses.value = response?.data || response || []
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách địa chỉ:', error)
+    savedAddresses.value = []
+  } finally {
+    isLoadingAddresses.value = false
+  }
+}
+
+const loadSavedAddress = () => {
+  if (!selectedSavedAddressId.value) {
+    return
+  }
+
+  const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
+  if (!address) {
+    return
+  }
+
+  // Load address to form
+  loadAddressToForm(address)
+
+  // Load to AddressForm component
+  if (addressFormRef.value) {
+    addressFormRef.value.form.diaChi = address.diaChi || ''
+    addressFormRef.value.form.tinh = address.tinh || ''
+    addressFormRef.value.form.xa = address.xa || ''
+    addressFormRef.value.form.xaCode = address.xa || ''
+
+    // Load province if needed
+    if (address.tinh && addressFormRef.value.provinces) {
+      const province = addressFormRef.value.provinces.find(p => p.name === address.tinh)
+      if (province) {
+        addressFormRef.value.form.tinhCode = province.id
+        addressFormRef.value.selectProvince(province)
+      }
+    }
+  }
+
+  // Update customer info from address
+  if (address.hoTen && !formData.value.tenKhachHang) {
+    formData.value.tenKhachHang = address.hoTen
+  }
+  if (address.sdt && !formData.value.soDienThoai) {
+    formData.value.soDienThoai = address.sdt
+  }
+}
+
+const loadAddressToForm = (address) => {
+  // Update address form data
+  addressFormData.value.diaChi = address.diaChi || ''
+  addressFormData.value.tinh = address.tinh || ''
+  addressFormData.value.xa = address.xa || ''
+
+  // Build full address string
+  let fullAddress = address.diaChi || ''
+  if (address.xa) {
+    fullAddress += (fullAddress ? ', ' : '') + address.xa
+  }
+  if (address.tinh) {
+    fullAddress += (fullAddress ? ', ' : '') + address.tinh
+  }
+  formData.value.diaChi = fullAddress
+
+  // Update customer info from address
+  if (address.hoTen && !formData.value.tenKhachHang) {
+    formData.value.tenKhachHang = address.hoTen
+  }
+  if (address.sdt && !formData.value.soDienThoai) {
+    formData.value.soDienThoai = address.sdt
+  }
+}
+
+const formatAddressDisplay = (address) => {
+  const parts = []
+  if (address.diaChi) parts.push(address.diaChi)
+  if (address.xa) parts.push(address.xa)
+  if (address.tinh) parts.push(address.tinh)
+  return parts.join(', ')
+}
+
+const checkDuplicateAddress = async (formData) => {
+  if (!formData || !savedAddresses.value.length) return false
+
+  const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ')
+
+  const currentAddress = {
+    diaChi: normalize(formData.diaChi || ''),
+    tinh: normalize(formData.tinh || ''),
+    xa: normalize(formData.xa || ''),
+  }
+
+  const duplicate = savedAddresses.value.find(addr => {
+    const savedAddr = {
+      diaChi: normalize(addr.diaChi || ''),
+      tinh: normalize(addr.tinh || ''),
+      xa: normalize(addr.xa || ''),
+    }
+    return (
+      savedAddr.diaChi === currentAddress.diaChi &&
+      savedAddr.tinh === currentAddress.tinh &&
+      savedAddr.xa === currentAddress.xa
+    )
+  })
+
+  if (duplicate) {
+    selectedSavedAddressId.value = duplicate.id
+    return true
+  }
+  return false
+}
+
+const handleAddressSaved = () => {
+  loadSavedAddresses()
+}
+
 // Computed
 const subtotal = computed(() => {
   // Tính từ orderItems local trước (dữ liệu chính xác nhất)
@@ -507,12 +619,183 @@ const total = computed(() => {
   return 0
 })
 
+// State for created order (for QR payment)
+const createdOrderId = ref(null)
+const createdOrderCode = ref('')
+
+// Watch payment method để tự động tạo đơn hàng và QR khi chọn Online Payment
+watch(() => formData.value.phuongThucThanhToan, async (newMethod) => {
+  if (newMethod === 1) {
+    // User chọn thanh toán Online - Validate và tạo đơn hàng trước
+    if (!validateAll()) {
+      alert('Vui lòng điền đầy đủ thông tin trước khi thanh toán QR')
+      formData.value.phuongThucThanhToan = 0 // Reset về COD
+      return
+    }
+
+    const customerId = authStore.getCustomerId()
+    if (!customerId) {
+      alert('Vui lòng đăng nhập để đặt hàng')
+      formData.value.phuongThucThanhToan = 0
+      router.push({ name: 'login' })
+      return
+    }
+
+    // Tạo đơn hàng ngay
+    loading.value = true
+    try {
+      const voucherCode = cartStore.appliedVoucher?.ma || null
+      const addressParts = []
+      if (addressFormData.value.diaChi) addressParts.push(addressFormData.value.diaChi)
+      if (addressFormData.value.xa) addressParts.push(addressFormData.value.xa)
+      if (addressFormData.value.tinh) addressParts.push(addressFormData.value.tinh)
+      const fullAddress = addressParts.join(', ')
+
+      const orderData = {
+        khachHangId: customerId,
+        tenKhachHang: formData.value.tenKhachHang,
+        soDienThoai: formData.value.soDienThoai,
+        email: formData.value.email,
+        diaChi: fullAddress || formData.value.diaChi,
+        ghiChu: formData.value.ghiChu,
+        phuongThucThanhToan: 1, // QR Payment
+        maPhieuGiamGia: voucherCode,
+        sanPhams: orderItems.value.map((item) => ({
+          idCtsp: item.idCtsp,
+          soLuong: item.soLuong,
+        })),
+      }
+
+      console.log('🔄 [CheckoutPage] Tạo đơn hàng cho QR payment:', orderData)
+
+      const response = await orderService.createOrder(orderData)
+
+      if (response.success || response.data) {
+        const orderId = response.data?.data?.id || response.data?.id
+        const orderCodeFromResponse = response.data?.data?.ma || response.data?.ma
+
+        createdOrderId.value = orderId
+        createdOrderCode.value = orderCodeFromResponse
+        orderCode.value = orderCodeFromResponse
+
+        console.log('✅ [CheckoutPage] Đơn hàng đã tạo:', { orderId, orderCodeFromResponse })
+
+        // Generate QR với orderId thật
+        await generateQRCode(orderCodeFromResponse, total.value, orderId)
+      } else {
+        throw new Error(response.message || 'Không thể tạo đơn hàng')
+      }
+    } catch (error) {
+      console.error('❌ [CheckoutPage] Lỗi tạo đơn hàng:', error)
+      alert('Không thể tạo đơn hàng. Vui lòng thử lại.')
+      formData.value.phuongThucThanhToan = 0 // Reset về COD
+    } finally {
+      loading.value = false
+    }
+  } else {
+    // Reset created order when switching to COD
+    createdOrderId.value = null
+    createdOrderCode.value = ''
+  }
+})
+
+// Validation methods
+const validateTenKhachHang = () => {
+  if (!formData.value.tenKhachHang || !formData.value.tenKhachHang.trim()) {
+    formErrors.value.tenKhachHang = 'Vui lòng nhập họ và tên'
+    return false
+  }
+  if (formData.value.tenKhachHang.trim().length < 2) {
+    formErrors.value.tenKhachHang = 'Họ và tên phải có ít nhất 2 ký tự'
+    return false
+  }
+  if (formData.value.tenKhachHang.trim().length > 100) {
+    formErrors.value.tenKhachHang = 'Họ và tên không được vượt quá 100 ký tự'
+    return false
+  }
+  formErrors.value.tenKhachHang = ''
+  return true
+}
+
+const validateSoDienThoai = () => {
+  if (!formData.value.soDienThoai || !formData.value.soDienThoai.trim()) {
+    formErrors.value.soDienThoai = 'Vui lòng nhập số điện thoại'
+    return false
+  }
+  // Validate phone number: 10-11 digits, can start with 0
+  const phoneRegex = /^(0|\+84)[0-9]{9,10}$/
+  const phoneNumber = formData.value.soDienThoai.trim().replace(/\s+/g, '')
+  if (!phoneRegex.test(phoneNumber)) {
+    formErrors.value.soDienThoai = 'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)'
+    return false
+  }
+  formErrors.value.soDienThoai = ''
+  return true
+}
+
+const validateEmail = () => {
+  if (!formData.value.email || !formData.value.email.trim()) {
+    // Email is optional, so clear error if empty
+    formErrors.value.email = ''
+    return true
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email.trim())) {
+    formErrors.value.email = 'Email không hợp lệ (ví dụ: example@email.com)'
+    return false
+  }
+  formErrors.value.email = ''
+  return true
+}
+
+const validateAddress = () => {
+  // Kiểm tra địa chỉ từ formData (user nhập trực tiếp)
+  if (!formData.value.diaChi || !formData.value.diaChi.trim()) {
+    formErrors.value.diaChi = 'Vui lòng nhập địa chỉ giao hàng'
+    return false
+  }
+
+  // Nếu có addressFormRef (component địa chỉ), validate qua component đó
+  if (addressFormRef.value && typeof addressFormRef.value.validateForm === 'function') {
+    if (!addressFormRef.value.validateForm()) {
+      formErrors.value.diaChi = 'Vui lòng điền đầy đủ thông tin địa chỉ'
+      return false
+    }
+  }
+
+  formErrors.value.diaChi = ''
+  return true
+}
+
+const clearError = (field) => {
+  if (formErrors.value[field]) {
+    formErrors.value[field] = ''
+  }
+}
+
+const validateAll = () => {
+  const isValidTenKhachHang = validateTenKhachHang()
+  const isValidSoDienThoai = validateSoDienThoai()
+  const isValidEmail = validateEmail()
+  const isValidAddress = validateAddress()
+
+  return isValidTenKhachHang && isValidSoDienThoai && isValidEmail && isValidAddress
+}
+
 const canSubmit = computed(() => {
+  // Basic check - full validation will be done on submit
+  // Kiểm tra địa chỉ đã được nhập (từ formData.diaChi)
+  const hasAddress = formData.value.diaChi && formData.value.diaChi.trim().length > 0
+
   return (
     formData.value.tenKhachHang &&
     formData.value.soDienThoai &&
-    formData.value.diaChi &&
-    orderItems.value.length > 0
+    hasAddress &&
+    orderItems.value.length > 0 &&
+    !formErrors.value.tenKhachHang &&
+    !formErrors.value.soDienThoai &&
+    !formErrors.value.email &&
+    !formErrors.value.diaChi
   )
 })
 
@@ -525,6 +808,18 @@ const formatPrice = (price) => {
 }
 
 const handleSubmit = async () => {
+  // Validate all fields
+  if (!validateAll()) {
+    alert('Vui lòng kiểm tra và điền đầy đủ thông tin hợp lệ')
+    // Scroll to first error
+    const firstErrorField = document.querySelector('.is-invalid')
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      firstErrorField.focus()
+    }
+    return
+  }
+
   if (!canSubmit.value) {
     alert('Vui lòng điền đầy đủ thông tin')
     return
@@ -540,15 +835,30 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
+    // Nếu đã tạo đơn hàng cho QR payment, skip việc tạo lại
+    if (formData.value.phuongThucThanhToan === 1 && createdOrderId.value) {
+      console.log('✅ [CheckoutPage] Đơn hàng QR đã được tạo, chờ thanh toán...')
+      alert('Vui lòng quét mã QR để thanh toán')
+      loading.value = false
+      return
+    }
+
     // Lấy voucher code từ cartStore nếu có voucher được áp dụng
     const voucherCode = cartStore.appliedVoucher?.ma || null
+
+    // Build full address from address form
+    const addressParts = []
+    if (addressFormData.value.diaChi) addressParts.push(addressFormData.value.diaChi)
+    if (addressFormData.value.xa) addressParts.push(addressFormData.value.xa)
+    if (addressFormData.value.tinh) addressParts.push(addressFormData.value.tinh)
+    const fullAddress = addressParts.join(', ')
 
     const orderData = {
       khachHangId: customerId,
       tenKhachHang: formData.value.tenKhachHang,
       soDienThoai: formData.value.soDienThoai,
       email: formData.value.email,
-      diaChi: formData.value.diaChi,
+      diaChi: fullAddress || formData.value.diaChi,
       ghiChu: formData.value.ghiChu,
       phuongThucThanhToan: formData.value.phuongThucThanhToan,
       maPhieuGiamGia: voucherCode, // Truyền voucher code vào order
@@ -782,9 +1092,26 @@ const handleSubmit = async () => {
   color: #ffffff;
 }
 
+/* QR Payment Styles */
+.qr-image {
+  max-width: 100%;
+  width: 280px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timer-badge {
+  font-size: 1.05rem;
+}
+
 @media (max-width: 768px) {
   .checkout-page {
     padding: 20px 0;
+  }
+
+  .qr-image {
+    width: 220px;
   }
 }
 </style>
