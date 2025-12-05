@@ -81,10 +81,10 @@
             <i class="icon">🛡️</i>
             <span>Bảo hành</span>
           </router-link>
-          <router-link to="/account/return-request" class="dropdown-item" @click="closeDropdown">
+          <!-- <router-link to="/account/return-request" class="dropdown-item" @click="closeDropdown">
             <i class="icon">↩️</i>
             <span>Trả hàng</span>
-          </router-link>
+          </router-link> -->
           <router-link to="/account/points" class="dropdown-item" @click="closeDropdown">
             <i class="icon">⭐</i>
             <span>Điểm tích lũy</span>

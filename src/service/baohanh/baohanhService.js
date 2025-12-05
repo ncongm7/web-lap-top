@@ -17,6 +17,18 @@ export const baohanhService = {
   },
 
   /**
+   * Lấy danh sách yêu cầu bảo hành theo hóa đơn
+   * @param {string} idHoaDon - UUID của hóa đơn
+   * @returns {Promise} Response chứa danh sách yêu cầu bảo hành
+   */
+  getWarrantyRequestsByInvoice(idHoaDon) {
+    if (!idHoaDon) {
+      return Promise.reject(new Error('ID hóa đơn là bắt buộc'))
+    }
+    return axiosInstance.get(`/api/v1/bao-hanh/hoa-don/${idHoaDon}`)
+  },
+
+  /**
    * Tạo yêu cầu bảo hành
    * @param {Object} requestData - Dữ liệu yêu cầu
    * @param {string} requestData.idHoaDon - UUID của hóa đơn

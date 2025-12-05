@@ -35,6 +35,9 @@
                 <p class="mb-0 mt-2">
                   Các đơn hàng đang chờ thanh toán hoặc đã hủy không thể thực hiện yêu cầu bảo hành.
                 </p>
+                <p class="mb-0 mt-2">
+                  <strong>Lưu ý:</strong> Hóa đơn có thể được bảo hành nhiều lần.
+                </p>
               </div>
               <div v-else>
                 <p class="text-muted mb-3">
@@ -57,16 +60,20 @@
                       <tr
                         v-for="order in orders"
                         :key="order.id"
-                        :class="{ 'table-active': isOrderSelected(order.id) }"
+                        :class="{
+                          'table-active': isOrderSelected(order.id),
+                          'order-disabled': hasActiveWarranty(order.id),
+                        }"
                         class="selectable-row"
-                        @click="toggleOrderSelection(order.id)"
+                        @click="handleOrderClick(order.id)"
                       >
                         <td>
                           <input
                             type="checkbox"
                             class="form-check-input"
                             :checked="isOrderSelected(order.id)"
-                            @click.stop="toggleOrderSelection(order.id)"
+                            :disabled="hasActiveWarranty(order.id)"
+                            @click.stop="handleOrderClick(order.id)"
                           />
                         </td>
                         <td class="fw-semibold">{{ order.ma }}</td>
@@ -95,7 +102,7 @@
                   <span>Đang phân tích đơn hàng và kiểm tra điều kiện bảo hành...</span>
                 </div>
                 <div v-else-if="conditionError" class="alert alert-warning mt-3 mb-0">
-                  {{ conditionError }}
+                  <strong>⚠️ Lưu ý:</strong> {{ conditionError }}
                 </div>
               </div>
             </div>
@@ -180,6 +187,7 @@ const submitting = ref(false)
 const error = ref(null)
 const conditionError = ref(null)
 const orders = ref([])
+const orderWarrantyStatus = ref({}) // Map orderId -> { hasActiveWarranty: boolean }
 const selectedHoaDonId = ref('')
 const conditionInfo = ref(null)
 const createdRequest = ref(null)
@@ -236,6 +244,21 @@ const getStatusLabel = (trangThai) => {
 
 const isOrderSelected = (orderId) => selectedHoaDonId.value === orderId
 
+const hasActiveWarranty = (orderId) => {
+  return orderWarrantyStatus.value[orderId]?.hasActiveWarranty || false
+}
+
+const handleOrderClick = (orderId) => {
+  if (hasActiveWarranty(orderId)) {
+    alert(
+      'Đơn hàng này đang có bảo hành chưa hoàn thành. Vui lòng đợi bảo hành hiện tại hoàn thành trước khi tạo bảo hành mới.',
+    )
+    return
+  }
+
+  toggleOrderSelection(orderId)
+}
+
 const toggleOrderSelection = (orderId) => {
   if (selectedHoaDonId.value === orderId) {
     selectedHoaDonId.value = ''
@@ -244,6 +267,8 @@ const toggleOrderSelection = (orderId) => {
   }
   handleHoaDonChange()
 }
+
+// Bỏ function checkWarrantyStatus - cho phép bảo hành nhiều lần
 
 const loadOrders = async () => {
   loading.value = true
@@ -271,12 +296,34 @@ const loadOrders = async () => {
 
     // Lấy tất cả đơn hàng (trừ đã hủy) - có thể bảo hành
     // Điều kiện: Đã thanh toán, Đang giao, Hoàn thành
+    // Cho phép bảo hành nhiều lần cho cùng một hóa đơn
     const allOrders = pageData.content || []
     orders.value = allOrders.filter(
       (order) =>
         order.trangThai === 'DA_THANH_TOAN' ||
         order.trangThai === 'DANG_GIAO' ||
         order.trangThai === 'HOAN_THANH',
+    )
+
+    // Kiểm tra trạng thái bảo hành cho từng đơn hàng
+    orderWarrantyStatus.value = {}
+    await Promise.all(
+      orders.value.map(async (order) => {
+        try {
+          const response = await baohanhService.getWarrantyRequestsByInvoice(order.id)
+          if (response && response.data) {
+            const warranties = response.data.data || response.data || []
+            // Kiểm tra xem có bảo hành nào chưa hoàn thành (trangThai != 3) không
+            const hasActiveWarranty = warranties.some(
+              (w) => w.trangThai != null && w.trangThai !== 3,
+            )
+            orderWarrantyStatus.value[order.id] = { hasActiveWarranty }
+          }
+        } catch (err) {
+          // Nếu không tìm thấy bảo hành hoặc lỗi, coi như không có bảo hành active
+          orderWarrantyStatus.value[order.id] = { hasActiveWarranty: false }
+        }
+      }),
     )
 
     // Sắp xếp theo ngày tạo mới nhất
@@ -346,14 +393,28 @@ const loadConditionInfo = async () => {
         conditionError.value = null
       }
 
-      // Set form data
+      // Set form data - giữ nguyên serial đã chọn nếu có
       const customerId = authStore.getCustomerId()
       const firstProduct = conditionInfo.value.danhSachSanPham?.[0]
+      const currentSerialId = formData.value.idSerialDaBan
+
+      // Kiểm tra xem serial hiện tại có hợp lệ với sản phẩm mới không
+      const availableSerials = conditionInfo.value.danhSachSerial || []
+      const isValidSerial =
+        currentSerialId &&
+        availableSerials.some(
+          (s) =>
+            s.idSerialDaBan === currentSerialId &&
+            s.idHoaDonChiTiet === firstProduct?.idHoaDonChiTiet,
+        )
+
       formData.value = {
         ...buildEmptyForm(),
         idHoaDon: selectedHoaDonId.value,
         idKhachHang: customerId,
         idHoaDonChiTiet: firstProduct?.idHoaDonChiTiet || '',
+        // Giữ nguyên serial nếu nó vẫn hợp lệ với sản phẩm mới
+        idSerialDaBan: isValidSerial ? currentSerialId : null,
       }
 
       step.value = 2
@@ -476,5 +537,20 @@ onMounted(() => {
 
 .selectable-row input[type='checkbox'] {
   cursor: pointer;
+}
+
+.order-disabled {
+  opacity: 0.5;
+  background-color: #f5f5f5 !important;
+  cursor: not-allowed !important;
+}
+
+.order-disabled:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.order-disabled input[type='checkbox'] {
+  cursor: not-allowed !important;
+  opacity: 0.6;
 }
 </style>
