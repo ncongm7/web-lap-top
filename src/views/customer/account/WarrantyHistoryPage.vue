@@ -1,9 +1,7 @@
 <template>
   <div class="warranty-history-page">
     <div class="container pt-4 pb-5">
-      <div
-        class="header-bar d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
-      >
+      <div class="header-bar d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
         <h2 class="page-title mb-0">Lịch sử bảo hành của bạn</h2>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-primary" @click="fetchHistory" :disabled="loadingHistory">
@@ -43,6 +41,7 @@
                   <th>Ngày bắt đầu</th>
                   <th>Ngày kết thúc</th>
                   <th>Trạng thái</th>
+                  <th>Phiếu hẹn</th>
                 </tr>
               </thead>
               <tbody>
@@ -62,6 +61,23 @@
                       {{ getStatusText(item.trangThai) }}
                     </span>
                   </td>
+                  <td>
+                    <div v-if="item.phieuHen && item.phieuHen.length > 0" class="appointment-info">
+                      <div v-for="phieuHen in item.phieuHen" :key="phieuHen.id" class="appointment-badge mb-1">
+                        <i class="bi bi-calendar-check me-1"></i>
+                        <span class="fw-semibold">{{ phieuHen.maPhieuHen }}</span>
+                        <br>
+                        <small class="text-muted">
+                          {{ formatDate(phieuHen.ngayHen) }} {{ formatTime(phieuHen.gioHen) }}
+                        </small>
+                        <br>
+                        <span :class="['badge badge-sm', getPhieuHenStatusClass(phieuHen.trangThai)]">
+                          {{ getPhieuHenStatusText(phieuHen.trangThai) }}
+                        </span>
+                      </div>
+                    </div>
+                    <span v-else class="text-muted">—</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -76,6 +92,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import warrantyHistoryService from '@/service/customer/warrantyHistoryService'
+import phieuHenBaoHanhService from '@/service/baohanh/phieuHenBaoHanhService'
 
 const router = useRouter()
 const history = ref([])
@@ -85,7 +102,23 @@ const fetchHistory = async () => {
   loadingHistory.value = true
   try {
     const data = await warrantyHistoryService.fetchAll()
-    history.value = Array.isArray(data) ? data : []
+    const warrantyList = Array.isArray(data) ? data : []
+
+    // Fetch phiếu hẹn cho từng bảo hành
+    const historyWithPhieuHen = await Promise.all(
+      warrantyList.map(async (warranty) => {
+        try {
+          const phieuHenData = await phieuHenBaoHanhService.getPhieuHenByBaoHanh(warranty.id)
+          warranty.phieuHen = Array.isArray(phieuHenData) ? phieuHenData : []
+        } catch (error) {
+          console.error(`Lỗi khi tải phiếu hẹn cho bảo hành ${warranty.id}:`, error)
+          warranty.phieuHen = []
+        }
+        return warranty
+      })
+    )
+
+    history.value = historyWithPhieuHen
   } catch (error) {
     console.error('Lỗi tải lịch sử bảo hành:', error)
     history.value = []
@@ -142,6 +175,39 @@ const getStatusClass = (status) => {
 const shortId = (id) => {
   if (!id) return '—'
   return `${id.slice(0, 8)}...${id.slice(-4)}`
+}
+
+const formatTime = (time) => {
+  if (!time) return ''
+  // time có thể là "HH:mm" hoặc LocalTime object
+  if (typeof time === 'string') return time
+  return time.toString()
+}
+
+const getPhieuHenStatusText = (status) => {
+  switch (status) {
+    case 0:
+      return 'Chờ xác nhận'
+    case 1:
+      return 'Đã xác nhận'
+    case 2:
+      return 'Đã hủy'
+    default:
+      return 'Không xác định'
+  }
+}
+
+const getPhieuHenStatusClass = (status) => {
+  switch (status) {
+    case 0:
+      return 'bg-warning text-dark'
+    case 1:
+      return 'bg-success'
+    case 2:
+      return 'bg-danger'
+    default:
+      return 'bg-secondary'
+  }
 }
 
 onMounted(() => {
@@ -204,6 +270,23 @@ onMounted(() => {
   background-color: #fce4ec;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+}
+
+.appointment-info {
+  min-width: 200px;
+}
+
+.appointment-badge {
+  padding: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.badge-sm {
+  font-size: 0.75rem;
+  padding: 2px 6px;
 }
 
 .spinning {

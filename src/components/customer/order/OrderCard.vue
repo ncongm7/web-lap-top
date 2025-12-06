@@ -26,9 +26,10 @@
 
         <!-- Footer: Trạng thái -->
         <div class="order-card__footer">
-            <span :class="['status-badge', getStatusClass(order.trangThai)]">
-                <span class="status-icon">{{ getStatusIcon(order.trangThai) }}</span>
-                <span class="status-text">{{ getStatusText(order.trangThai) }}</span>
+            <!-- Chỉ hiển thị 1 badge duy nhất -->
+            <span :class="['status-badge', getStatusClass(order.trangThai, order)]">
+                <span class="status-icon">{{ getStatusIcon(order.trangThai, order) }}</span>
+                <span class="status-text">{{ getStatusText(order.trangThai, order) }}</span>
             </span>
         </div>
     </div>
@@ -47,6 +48,21 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['click'])
+
+// Helper function để normalize status (cần dùng trong template)
+const normalizeStatus = (status) => {
+    if (typeof status === 'number') {
+        const numberMap = {
+            0: 'CHO_THANH_TOAN',
+            1: 'DA_THANH_TOAN',
+            2: 'DA_HUY',
+            3: 'DANG_GIAO',
+            4: 'HOAN_THANH'
+        }
+        return numberMap[status] || status
+    }
+    return status
+}
 
 // Computed
 const itemsCount = computed(() => {
@@ -85,7 +101,34 @@ const formatCurrency = (value) => {
     }).format(value)
 }
 
-const getStatusText = (status) => {
+
+/**
+ * Get status text with special handling for online orders
+ * - COD (trangThaiThanhToan = 0): "Chờ thanh toán"
+ * - QR (trangThaiThanhToan = 1): "Đã thanh toán - Chờ xác nhận" (nếu trangThai = 0)
+ * - Đã xác nhận: Hiển thị trạng thái bình thường
+ */
+const getStatusText = (status, order = null) => {
+    const normalizedStatus = normalizeStatus(status)
+
+    // Xử lý đặc biệt cho đơn online chưa xác nhận
+    if (order && order.loaiHoaDon === 1) {
+        const trangThai = normalizeStatus(order.trangThai)
+        const trangThaiThanhToan = order.trangThaiThanhToan
+
+        // Đơn online chưa xác nhận (trangThai = CHO_THANH_TOAN hoặc 0)
+        if (trangThai === 'CHO_THANH_TOAN' || trangThai === 0 || order.trangThai === 0) {
+            if (trangThaiThanhToan === 1) {
+                // Đã thanh toán QR nhưng chờ xác nhận - hiển thị cả 2 thông tin trong 1 badge
+                return 'Đã thanh toán - Chờ xác nhận'
+            } else if (trangThaiThanhToan === 0 || trangThaiThanhToan === null) {
+                // Chưa thanh toán (COD)
+                return 'Chờ thanh toán'
+            }
+        }
+    }
+
+    // Xử lý trạng thái bình thường
     const statusMap = {
         'CHO_THANH_TOAN': 'Chờ thanh toán',
         'DA_THANH_TOAN': 'Đã thanh toán',
@@ -94,10 +137,28 @@ const getStatusText = (status) => {
         'HOAN_THANH': 'Hoàn thành'
     }
 
-    return statusMap[status] || status || 'Không xác định'
+    return statusMap[normalizedStatus] || normalizedStatus || 'Không xác định'
 }
 
-const getStatusClass = (status) => {
+const getStatusClass = (status, order = null) => {
+    const normalizedStatus = normalizeStatus(status)
+
+    // Xử lý đặc biệt cho đơn online
+    if (order && order.loaiHoaDon === 1) {
+        const trangThai = normalizeStatus(order.trangThai)
+        const trangThaiThanhToan = order.trangThaiThanhToan
+
+        if (trangThai === 'CHO_THANH_TOAN' || trangThai === 0) {
+            if (trangThaiThanhToan === 1) {
+                // Đã thanh toán QR - màu xanh dương
+                return 'status-paid'
+            } else {
+                // Chưa thanh toán COD - màu vàng
+                return 'status-pending'
+            }
+        }
+    }
+
     const classMap = {
         'CHO_THANH_TOAN': 'status-pending',
         'DA_THANH_TOAN': 'status-paid',
@@ -106,10 +167,26 @@ const getStatusClass = (status) => {
         'HOAN_THANH': 'status-completed'
     }
 
-    return classMap[status] || 'status-unknown'
+    return classMap[normalizedStatus] || 'status-unknown'
 }
 
-const getStatusIcon = (status) => {
+const getStatusIcon = (status, order = null) => {
+    const normalizedStatus = normalizeStatus(status)
+
+    // Xử lý đặc biệt cho đơn online
+    if (order && order.loaiHoaDon === 1) {
+        const trangThai = normalizeStatus(order.trangThai)
+        const trangThaiThanhToan = order.trangThaiThanhToan
+
+        if (trangThai === 'CHO_THANH_TOAN' || trangThai === 0) {
+            if (trangThaiThanhToan === 1) {
+                return '✅' // Đã thanh toán QR
+            } else {
+                return '⏳' // Chờ thanh toán COD
+            }
+        }
+    }
+
     const iconMap = {
         'CHO_THANH_TOAN': '⏳',
         'DA_THANH_TOAN': '✅',
@@ -117,7 +194,7 @@ const getStatusIcon = (status) => {
         'DANG_GIAO': '🚚',
         'HOAN_THANH': '🎉'
     }
-    return iconMap[status] || '❓'
+    return iconMap[normalizedStatus] || '❓'
 }
 </script>
 
@@ -277,6 +354,14 @@ const getStatusIcon = (status) => {
 .status-unknown {
     background-color: #f3f4f6;
     color: #6b7280;
+}
+
+.status-waiting-confirm {
+    background-color: #dbeafe;
+    color: #1e40af;
+    margin-left: 8px;
+    font-size: 12px;
+    padding: 6px 12px;
 }
 
 /* Responsive */

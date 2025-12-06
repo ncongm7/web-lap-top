@@ -15,63 +15,63 @@ export async function getFeaturedProducts() {
   try {
     console.log('🔄 [HomeService] Fetching ALL products...')
     console.log('🔄 API URL:', `${API_BASE_URL}/page`)
-    
+
     // Lấy trang đầu tiên để biết tổng số sản phẩm
     const firstResponse = await axios.get(`${API_BASE_URL}/page`, {
-      params: { 
-        page: 0, 
+      params: {
+        page: 0,
         size: 100, // Lấy 100 sản phẩm đầu tiên
-        sort: 'ngayTao,desc'
-      }
+        sort: 'ngayTao,desc',
+      },
     })
-    
+
     console.log('✅ [HomeService] First page response:', firstResponse.data)
-    
+
     const totalElements = firstResponse.data.totalElements || 0
     const totalPages = firstResponse.data.totalPages || 1
-    
+
     console.log(`📊 [HomeService] Total products: ${totalElements}, Total pages: ${totalPages}`)
-    
+
     // Nếu chỉ có 1 trang, trả về luôn
     if (totalPages <= 1) {
       return firstResponse.data.content || []
     }
-    
+
     // Nếu có nhiều trang, fetch tất cả
     const allProducts = [...(firstResponse.data.content || [])]
-    
+
     // Fetch các trang còn lại
     const promises = []
     for (let page = 1; page < totalPages; page++) {
       promises.push(
         axios.get(`${API_BASE_URL}/page`, {
-          params: { 
-            page, 
+          params: {
+            page,
             size: 100,
-            sort: 'ngayTao,desc'
-          }
-        })
+            sort: 'ngayTao,desc',
+          },
+        }),
       )
     }
-    
+
     const responses = await Promise.all(promises)
-    
+
     // Gộp tất cả sản phẩm
-    responses.forEach(response => {
+    responses.forEach((response) => {
       if (response.data.content) {
         allProducts.push(...response.data.content)
       }
     })
-    
+
     console.log('✅ [HomeService] All products loaded:', allProducts.length)
-    
+
     return allProducts
   } catch (error) {
     console.error('❌ [HomeService] Lỗi khi lấy sản phẩm:', error)
     console.error('❌ [HomeService] Error details:', {
       message: error.message,
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
     })
     throw error
   }
@@ -116,7 +116,7 @@ export async function getTopReviews(limit = 5) {
 export async function getBanners(type = 'main-slider') {
   try {
     console.log('🔄 [HomeService] Fetching banners:', type)
-    
+
     // Try dedicated banners API
     try {
       const response = await axios.get('/api/banners', {
@@ -150,14 +150,43 @@ export async function getBanners(type = 'main-slider') {
   }
 }
 
+/**
+ * Lấy sản phẩm bán chạy nhất
+ * @param {number} limit - Số lượng sản phẩm
+ * @returns {Promise<Array>}
+ */
 export async function getBestSellingProducts(limit = 10) {
-  const res = await axios.get(`${API_BASE_URL}/best-selling`, { params: { limit } })
-  const data = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.content || [])
-  return Array.isArray(data) ? data : []
+  try {
+    // Tạm thời lấy từ API page và sort theo số lượng bán (nếu có)
+    // Hoặc lấy random từ featured products
+    const products = await getFeaturedProducts()
+    // Shuffle và lấy limit đầu tiên
+    const shuffled = [...products].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, limit)
+  } catch (error) {
+    console.error('❌ [HomeService] Lỗi khi lấy sản phẩm bán chạy:', error)
+    return []
+  }
 }
 
+/**
+ * Lấy sản phẩm mới nhất
+ * @param {number} limit - Số lượng sản phẩm
+ * @returns {Promise<Array>}
+ */
 export async function getNewArrivalsProducts(limit = 10) {
-  const res = await axios.get(`${API_BASE_URL}/newest`, { params: { limit } })
-  const data = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.content || [])
-  return Array.isArray(data) ? data : []
+  try {
+    // Lấy sản phẩm và sort theo ngày tạo
+    const products = await getFeaturedProducts()
+    // Sort theo ngayTao giảm dần (mới nhất trước)
+    const sorted = [...products].sort((a, b) => {
+      const dateA = new Date(a.ngayTao || 0)
+      const dateB = new Date(b.ngayTao || 0)
+      return dateB - dateA
+    })
+    return sorted.slice(0, limit)
+  } catch (error) {
+    console.error('❌ [HomeService] Lỗi khi lấy sản phẩm mới:', error)
+    return []
+  }
 }

@@ -79,6 +79,100 @@ export const baohanhService = {
       },
     })
   },
+
+  /**
+   * Tiếp nhận sản phẩm bảo hành
+   * @param {string} idBaoHanh - UUID của phiếu bảo hành
+   * @param {Object} requestData - Dữ liệu tiếp nhận
+   * @returns {Promise} Response
+   */
+  tiepNhanSanPham(idBaoHanh, requestData) {
+    if (!idBaoHanh) {
+      return Promise.reject(new Error('ID bảo hành là bắt buộc'))
+    }
+
+    const formData = new FormData()
+    formData.append('idNhanVienTiepNhan', requestData.idNhanVienTiepNhan)
+    if (requestData.ghiChu) {
+      formData.append('ghiChu', requestData.ghiChu)
+    }
+    if (requestData.hinhAnhTinhTrang && requestData.hinhAnhTinhTrang.length > 0) {
+      requestData.hinhAnhTinhTrang.forEach((file) => {
+        formData.append('hinhAnhTinhTrang', file)
+      })
+    }
+
+    return axiosInstance.post(`/api/v1/bao-hanh/tiep-nhan/${idBaoHanh}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+      .then(response => {
+        if (response.data && response.data.data !== undefined) {
+          return response.data.data
+        }
+        return response.data
+      })
+  },
+
+  /**
+   * Thêm chi phí phát sinh
+   * @param {string} idLichSuBaoHanh - UUID của lịch sử bảo hành
+   * @param {Object} requestData - Dữ liệu chi phí
+   * @returns {Promise} Response
+   */
+  themChiPhiPhatSinh(idLichSuBaoHanh, requestData) {
+    if (!idLichSuBaoHanh) {
+      return Promise.reject(new Error('ID lịch sử bảo hành là bắt buộc'))
+    }
+    return axiosInstance.post(`/api/v1/bao-hanh/chi-phi/${idLichSuBaoHanh}`, requestData)
+      .then(response => {
+        if (response.data && response.data.data !== undefined) {
+          return response.data.data
+        }
+        return response.data
+      })
+  },
+
+  /**
+   * Bàn giao sản phẩm
+   * @param {string} idBaoHanh - UUID của phiếu bảo hành
+   * @param {Object} requestData - Dữ liệu bàn giao
+   * @returns {Promise} Response
+   */
+  banGiaoSanPham(idBaoHanh, requestData) {
+    if (!idBaoHanh) {
+      return Promise.reject(new Error('ID bảo hành là bắt buộc'))
+    }
+
+    const formData = new FormData()
+    if (requestData.idNhanVienBanGiao) {
+      formData.append('idNhanVienBanGiao', requestData.idNhanVienBanGiao)
+    }
+    if (requestData.ghiChu) {
+      formData.append('ghiChu', requestData.ghiChu)
+    }
+    if (requestData.hinhAnhSauSua && requestData.hinhAnhSauSua.length > 0) {
+      requestData.hinhAnhSauSua.forEach((file) => {
+        formData.append('hinhAnhSauSua', file)
+      })
+    }
+    if (requestData.xacNhanKhachHang !== undefined) {
+      formData.append('xacNhanKhachHang', requestData.xacNhanKhachHang)
+    }
+
+    return axiosInstance.post(`/api/v1/bao-hanh/ban-giao/${idBaoHanh}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+      .then(response => {
+        if (response.data && response.data.data !== undefined) {
+          return response.data.data
+        }
+        return response.data
+      })
+  },
 }
 
 export default baohanhService

@@ -22,14 +22,8 @@
           <div class="form-section">
             <label class="form-label">Đánh giá của bạn *</label>
             <div class="rating-selector">
-              <button
-                v-for="i in 5"
-                :key="i"
-                type="button"
-                class="rating-star-btn"
-                :class="{ active: rating >= i }"
-                @click="rating = i"
-              >
+              <button v-for="i in 5" :key="i" type="button" class="rating-star-btn" :class="{ active: rating >= i }"
+                @click="rating = i">
                 ★
               </button>
             </div>
@@ -38,51 +32,64 @@
 
           <!-- Content -->
           <div class="form-section">
+            <label class="form-label" for="review-title">Tiêu đề đánh giá</label>
+            <input id="review-title" v-model="reviewTitle" type="text" class="form-input"
+              placeholder="Tóm tắt ngắn gọn về đánh giá của bạn..." maxlength="255" />
+          </div>
+
+          <div class="form-section">
             <label class="form-label" for="review-content">Nội dung đánh giá *</label>
-            <textarea
-              id="review-content"
-              v-model="content"
-              rows="6"
-              class="form-textarea"
-              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
-            ></textarea>
+            <textarea id="review-content" v-model="content" rows="6" class="form-textarea"
+              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."></textarea>
             <p v-if="contentError" class="error-text">{{ contentError }}</p>
             <p class="form-hint">Tối thiểu 10 ký tự</p>
+          </div>
+
+          <!-- Pros -->
+          <div class="form-section">
+            <label class="form-label">Điểm mạnh</label>
+            <div class="tags-input-container">
+              <div class="tags-list">
+                <span v-for="(pro, idx) in pros" :key="idx" class="tag tag-success">
+                  {{ pro }}
+                  <button type="button" @click="removePro(idx)" class="tag-remove">×</button>
+                </span>
+              </div>
+              <input v-model="proInput" type="text" class="tags-input" placeholder="Nhập điểm mạnh và nhấn Enter..."
+                @keydown.enter.prevent="addPro" />
+            </div>
+          </div>
+
+          <!-- Cons -->
+          <div class="form-section">
+            <label class="form-label">Điểm yếu</label>
+            <div class="tags-input-container">
+              <div class="tags-list">
+                <span v-for="(con, idx) in cons" :key="idx" class="tag tag-warning">
+                  {{ con }}
+                  <button type="button" @click="removeCon(idx)" class="tag-remove">×</button>
+                </span>
+              </div>
+              <input v-model="conInput" type="text" class="tags-input" placeholder="Nhập điểm yếu và nhấn Enter..."
+                @keydown.enter.prevent="addCon" />
+            </div>
           </div>
 
           <!-- Images -->
           <div class="form-section">
             <label class="form-label">Hình ảnh (tối đa 5 ảnh)</label>
             <div class="image-upload-area">
-              <input
-                ref="fileInput"
-                type="file"
-                multiple
-                accept="image/*"
-                @change="handleFileSelect"
-                class="file-input"
-              />
+              <input ref="fileInput" type="file" multiple accept="image/*" @change="handleFileSelect"
+                class="file-input" />
               <div class="upload-preview">
-                <div
-                  v-for="(img, idx) in imagePreviews"
-                  :key="idx"
-                  class="preview-item"
-                >
+                <div v-for="(img, idx) in imagePreviews" :key="idx" class="preview-item">
                   <img :src="img.url" :alt="`Preview ${idx + 1}`" />
-                  <button
-                    type="button"
-                    class="remove-image"
-                    @click="removeImage(idx)"
-                  >
+                  <button type="button" class="remove-image" @click="removeImage(idx)">
                     ×
                   </button>
                 </div>
-                <button
-                  v-if="imagePreviews.length < 5"
-                  type="button"
-                  class="add-image-btn"
-                  @click="$refs.fileInput.click()"
-                >
+                <button v-if="imagePreviews.length < 5" type="button" class="add-image-btn"
+                  @click="$refs.fileInput.click()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -111,6 +118,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useProductReviews } from '@/composables/product-detail/useProductReviews'
+import { useAuthStore } from '@/stores/customer/authStore'
 
 const props = defineProps({
   productId: {
@@ -125,22 +133,20 @@ const props = defineProps({
     type: String,
     default: null,
   },
-  khachHangId: {
-    type: String,
-    default: null,
-  },
-  hoaDonChiTietId: {
-    type: String,
-    default: null,
-  },
 })
 
 const emit = defineEmits(['close', 'submit'])
 
+const authStore = useAuthStore()
 const { submitReview, submitting } = useProductReviews(props.productId)
 
 const rating = ref(0)
+const reviewTitle = ref('')
 const content = ref('')
+const pros = ref([])
+const cons = ref([])
+const proInput = ref('')
+const conInput = ref('')
 const imagePreviews = ref([])
 const ratingError = ref('')
 const contentError = ref('')
@@ -162,11 +168,45 @@ const validate = () => {
   return true
 }
 
+const addPro = () => {
+  if (proInput.value.trim() && pros.value.length < 5) {
+    pros.value.push(proInput.value.trim())
+    proInput.value = ''
+  }
+}
+
+const removePro = (index) => {
+  pros.value.splice(index, 1)
+}
+
+const addCon = () => {
+  if (conInput.value.trim() && cons.value.length < 5) {
+    cons.value.push(conInput.value.trim())
+    conInput.value = ''
+  }
+}
+
+const removeCon = (index) => {
+  cons.value.splice(index, 1)
+}
+
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files || [])
   const remaining = 5 - imagePreviews.value.length
 
   files.slice(0, remaining).forEach((file) => {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`File ${file.name} quá lớn. Tối đa 5MB.`)
+      return
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert(`File ${file.name} không phải là hình ảnh.`)
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       imagePreviews.value.push({
@@ -186,9 +226,9 @@ const handleSubmit = async () => {
   if (!validate()) return
 
   try {
-    // Get customer ID from auth store or props
-    const khachHangId = props.khachHangId || null // TODO: Get from auth store
-    
+    // Get customer ID from auth store
+    const khachHangId = authStore.customerId || authStore.user?.userId
+
     if (!khachHangId) {
       alert('Vui lòng đăng nhập để gửi đánh giá')
       return
@@ -196,14 +236,18 @@ const handleSubmit = async () => {
 
     const reviewData = {
       khachHangId: khachHangId,
-      sanPhamChiTietId: props.variantId,
+      chiTietSanPhamId: props.variantId,
       soSao: rating.value,
+      reviewTitle: reviewTitle.value,
       noiDung: content.value,
-      hoaDonChiTietId: props.hoaDonChiTietId || null, // Optional
+      pros: pros.value.length > 0 ? pros.value : undefined,
+      cons: cons.value.length > 0 ? cons.value : undefined,
+      imageUrls: [], // TODO: Upload images first
+      hoaDonChiTietId: props.hoaDonChiTietId || null // Optional
     }
 
-    await submitReview(null, reviewData) // productId is optional in new API
-    emit('submit', reviewData)
+    await submitReview(reviewData)
+    emit('submit')
     handleClose()
   } catch (error) {
     console.error('Error submitting review:', error)
@@ -301,6 +345,20 @@ const handleClose = () => {
   margin-bottom: 8px;
 }
 
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
 .rating-selector {
   display: flex;
   gap: 8px;
@@ -334,6 +392,64 @@ const handleClose = () => {
 .form-textarea:focus {
   outline: none;
   border-color: #2563eb;
+}
+
+.tags-input-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 60px;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tag-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+}
+
+.tags-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  padding: 4px;
+  width: 100%;
 }
 
 .form-hint {
@@ -461,4 +577,3 @@ const handleClose = () => {
   cursor: not-allowed;
 }
 </style>
-

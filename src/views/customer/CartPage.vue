@@ -52,6 +52,11 @@
                         <!-- Voucher Section -->
                         <VoucherInput />
 
+                        <!-- Points Redemption -->
+                        <PointsRedemption v-if="customerId && availablePoints > 0" v-model="cartStore.pointsUsed"
+                            :available-points="availablePoints" :conversion-rate="quyDoiDiem?.tienTieuDiem || 0"
+                            :max-allowed-points="maxPointsAllowed" @update:model-value="calculatePointsDiscount" />
+
                         <!-- Cart Summary -->
                         <CartSummary />
                     </div>
@@ -70,8 +75,22 @@ import CartSummary from '@/components/customer/cart/CartSummary.vue'
 import VoucherInput from '@/components/customer/cart/VoucherInput.vue'
 import EmptyCart from '@/components/customer/cart/EmptyCart.vue'
 import LoadingSpinner from '@/components/customer/common/LoadingSpinner.vue'
+import PointsRedemption from '@/components/customer/checkout/PointsRedemption.vue'
+import { ref, computed, watch } from 'vue'
+import { useAuthStore } from '@/stores/customer/authStore'
+import { useCartStore } from '@/stores/customer/cartStore'
+import { tichDiemService } from '@/service/diem/tichDiemService'
+import { quyDoiDiemService } from '@/service/diem/quyDoiDiemService'
+import addressService from '@/service/customer/addressService'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const cartStore = useCartStore()
+
+// Points Logic
+const availablePoints = ref(0)
+const quyDoiDiem = ref(null)
+const customerId = computed(() => authStore.getCustomerId())
 
 // Dùng composable thay vì store trực tiếp
 const {
@@ -84,11 +103,91 @@ const {
     fetchCart,
     toggleSelectAll,
     clearCart,
+    subtotal,
+    discount
 } = useCart()
+
+// Computed: Số điểm tối đa được phép sử dụng
+const maxPointsAllowed = computed(() => {
+    if (!quyDoiDiem.value || !quyDoiDiem.value.tienTieuDiem) return 0
+
+    // Tính tổng tiền cần thanh toán sau khi trừ voucher (nhưng chưa trừ điểm)
+    const totalAfterVoucher = Math.max(0, subtotal.value - discount.value)
+
+    // Tính số điểm tối đa có thể dùng dựa trên số tiền này
+    const maxPointsByTotal = Math.floor(totalAfterVoucher / quyDoiDiem.value.tienTieuDiem)
+
+    // Số điểm tối đa là min của (điểm đang có, điểm tối đa theo tiền)
+    return Math.min(availablePoints.value, maxPointsByTotal)
+})
+
+// Load points and conversion rate
+const loadPoints = async () => {
+    if (!customerId.value) return
+
+    try {
+        // Lấy thông tin khách hàng để có UUID của khách hàng
+        const customerInfo = await addressService.getCustomerById(customerId.value)
+        console.log('🔍 Customer Info Response:', customerInfo)
+
+        // Backend có thể wrap trong data.data hoặc data
+        const khachHang = customerInfo?.data?.data || customerInfo?.data || customerInfo
+        console.log('🔍 KhachHang Object:', khachHang)
+
+        const khachHangId = khachHang?.id || khachHang?.maKhachHang
+        console.log('🔍 KhachHang ID:', khachHangId)
+
+        if (!khachHangId) {
+            console.warn('⚠️ Không tìm thấy ID khách hàng cho userId:', customerId.value)
+            availablePoints.value = 0
+            return
+        }
+
+        // Load available points using khachHangId (UUID)
+        const tichDiem = await tichDiemService.getTichDiemByUserId(khachHangId)
+        availablePoints.value = tichDiem?.tongDiem || 0
+
+        // Load conversion rate
+        const quyDoi = await quyDoiDiemService.getQuyDoiDiemDangHoatDong()
+        quyDoiDiem.value = quyDoi
+    } catch (error) {
+        console.error('Lỗi khi tải điểm:', error)
+        availablePoints.value = 0
+    }
+}
+
+// Calculate points discount
+const calculatePointsDiscount = () => {
+    if (!quyDoiDiem.value || !quyDoiDiem.value.tienTieuDiem) {
+        cartStore.setPointsDiscount(0, 0)
+        return
+    }
+
+    const points = cartStore.pointsUsed
+
+    // Validate against maxPointsAllowed
+    if (points > maxPointsAllowed.value) {
+        cartStore.pointsUsed = maxPointsAllowed.value
+        const newDiscount = maxPointsAllowed.value * quyDoiDiem.value.tienTieuDiem
+        cartStore.setPointsDiscount(maxPointsAllowed.value, newDiscount)
+    } else {
+        const discountAmount = points * quyDoiDiem.value.tienTieuDiem
+        cartStore.setPointsDiscount(points, discountAmount)
+    }
+}
+
+// Watch for changes that affect max points
+watch([subtotal, discount, availablePoints], () => {
+    if (cartStore.pointsUsed > maxPointsAllowed.value) {
+        cartStore.pointsUsed = maxPointsAllowed.value
+        calculatePointsDiscount()
+    }
+})
 
 // Lifecycle
 onMounted(async () => {
     await fetchCart()
+    await loadPoints()
 })
 
 // Methods

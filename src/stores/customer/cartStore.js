@@ -10,6 +10,10 @@ export const useCartStore = defineStore('cart', () => {
   const loading = ref(false)
   const error = ref(null)
 
+  // Points state
+  const pointsUsed = ref(0)
+  const pointsDiscount = ref(0)
+
   // Computed
   const cartItems = computed(() => cart.value?.items || [])
 
@@ -77,7 +81,7 @@ export const useCartStore = defineStore('cart', () => {
 
   // Tính total dựa trên subtotal, discount và shippingFee của selectedItems
   const total = computed(() => {
-    return subtotal.value - discount.value + shippingFee.value
+    return Math.max(0, subtotal.value - discount.value + shippingFee.value - pointsDiscount.value)
   })
 
   const appliedVoucher = computed(() => cart.value?.appliedVoucher || null)
@@ -87,6 +91,11 @@ export const useCartStore = defineStore('cart', () => {
   const hasItems = computed(() => cartItems.value.length > 0)
 
   // Actions
+  const setPointsDiscount = (points, discountAmount) => {
+    pointsUsed.value = points
+    pointsDiscount.value = discountAmount
+  }
+
   /**
    * Lấy giỏ hàng từ backend
    */
@@ -252,8 +261,9 @@ export const useCartStore = defineStore('cart', () => {
       }
 
       // Tìm item trước khi xóa để lấy ctspId
-      const itemToDelete = cartItems.value.find(i => i.id === itemId)
-      const ctspIdToDelete = itemToDelete?.ctspId || itemToDelete?.idCtsp || itemToDelete?.chiTietSanPhamId
+      const itemToDelete = cartItems.value.find((i) => i.id === itemId)
+      const ctspIdToDelete =
+        itemToDelete?.ctspId || itemToDelete?.idCtsp || itemToDelete?.chiTietSanPhamId
 
       // Preserve selected state khi xóa sản phẩm (trừ item bị xóa)
       const selectedStateMap = saveSelectedState()
@@ -486,7 +496,7 @@ export const useCartStore = defineStore('cart', () => {
   const saveSelectedState = () => {
     const selectedStateMap = new Map()
     if (cart.value?.items) {
-      cart.value.items.forEach(item => {
+      cart.value.items.forEach((item) => {
         if (item.selected) {
           // Lưu theo ID (ưu tiên)
           if (item.id) {
@@ -509,7 +519,7 @@ export const useCartStore = defineStore('cart', () => {
    */
   const restoreSelectedState = (selectedStateMap) => {
     if (cart.value?.items && selectedStateMap && selectedStateMap.size > 0) {
-      cart.value.items.forEach(item => {
+      cart.value.items.forEach((item) => {
         // Kiểm tra theo ID trước
         if (item.id && selectedStateMap.has(`id:${item.id}`)) {
           item.selected = true
@@ -554,6 +564,8 @@ export const useCartStore = defineStore('cart', () => {
     cart,
     loading,
     error,
+    pointsUsed,
+    pointsDiscount,
 
     // Computed
     cartItems,
@@ -568,6 +580,7 @@ export const useCartStore = defineStore('cart', () => {
     hasItems,
 
     // Actions
+    setPointsDiscount,
     fetchCart,
     addToCart,
     updateCartItem,

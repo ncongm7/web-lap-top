@@ -52,6 +52,11 @@
             </div>
           </div>
 
+          <!-- Points Usage -->
+          <PointsRedemption v-if="customerId && availablePoints > 0" v-model="pointsToUse"
+            :available-points="availablePoints" :conversion-rate="quyDoiDiem?.tienTieuDiem || 0"
+            :max-allowed-points="maxPointsAllowed" @update:model-value="calculatePointsDiscount" />
+
           <!-- Payment Method -->
           <div class="card mb-4">
             <div class="card-header checkout-header">
@@ -83,8 +88,10 @@
               <h5 class="mb-0">Thanh toán QR</h5>
             </div>
             <div class="card-body">
-              <QRPaymentDisplay :qr-data="qrData" :loading="qrLoading" :error="qrError" :status="qrStatus"
-                @retry="generateQRCode()" @expired="handleQRExpired" />
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Sau khi đặt hàng, bạn sẽ được chuyển đến trang thanh toán QR
+              </div>
             </div>
           </div>
         </div>
@@ -125,6 +132,10 @@
                   <span>Giảm giá:</span>
                   <span>-{{ formatPrice(discount) }}</span>
                 </div>
+                <div v-if="pointsDiscount > 0" class="d-flex justify-content-between mb-2 text-success">
+                  <span>Giảm từ điểm:</span>
+                  <span>-{{ formatPrice(pointsDiscount) }}</span>
+                </div>
                 <hr />
                 <div class="d-flex justify-content-between mb-3">
                   <strong>Tổng cộng:</strong>
@@ -142,6 +153,11 @@
         </div>
       </div>
     </div>
+
+    <!-- QR Payment Modal -->
+    <QRPaymentModal :show="showQRPaymentModal" :qr-data="qrData" :loading="qrLoading" :error="qrError"
+      :status="qrStatus" :order-id="createdOrderId" @close="handleCloseQRModal"
+      @payment-confirmed="handlePaymentConfirmed" @retry="handleRetryQR" @expired="handleQRExpired" />
   </div>
 </template>
 
@@ -154,7 +170,10 @@ import orderService from '@/service/customer/orderService'
 import addressService from '@/service/customer/addressService'
 import { generateQRPayment, checkPaymentStatus } from '@/service/customer/paymentService'
 import { useQRPayment } from '@/composables/customer/useQRPayment'
-import QRPaymentDisplay from '@/components/customer/payment/QRPaymentDisplay.vue'
+import QRPaymentModal from '@/components/customer/payment/QRPaymentModal.vue'
+import { tichDiemService } from '@/service/diem/tichDiemService'
+import { quyDoiDiemService } from '@/service/diem/quyDoiDiemService'
+import PointsRedemption from '@/components/customer/checkout/PointsRedemption.vue'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -169,16 +188,15 @@ const {
   status: qrStatus,
   generateQR: generateQRCode,
   checkStatus: checkQRStatus,
-  handleExpired: handleQRExpired
+  handleExpired: handleQRExpired,
+  pausePolling,
+  resumePolling
 } = useQRPayment({
   amount: computed(() => total.value),
   orderCode: computed(() => orderCode.value),
   onPaymentConfirmed: (data) => {
     console.log('✅ Thanh toán QR đã được xác nhận!', data)
-    // Redirect sang trang order detail
-    if (data.hoaDonId) {
-      router.push({ name: 'order-detail', params: { id: data.hoaDonId } })
-    }
+    // Payment confirmed - modal will handle the UI
   }
 })
 
@@ -416,6 +434,11 @@ onMounted(async () => {
 
   // Generate order code
   orderCode.value = 'DH' + Date.now()
+
+  // Load points if customer is logged in
+  if (customerId.value) {
+    loadPoints()
+  }
 })
 
 // Address methods
@@ -599,105 +622,117 @@ const discount = computed(() => {
 })
 
 const total = computed(() => {
-  // Tính từ các giá trị đã có
-  const calculatedTotal = subtotal.value + shippingFee.value - discount.value
-
-  // Nếu có orderItems và đã tính được total, ưu tiên dùng giá trị này
-  if (calculatedTotal > 0) {
-    // Nếu có cartStore với voucher, ưu tiên dùng cartStore.total (có voucher tính)
-    if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.total > 0) {
-      return cartStore.total
-    }
-    return calculatedTotal
-  }
-
-  // Nếu không có orderItems, thử lấy từ cartStore
+  // Nếu dùng cartStore, total đã bao gồm giảm giá điểm
   if (cartStore.selectedItems && cartStore.selectedItems.length > 0 && cartStore.total > 0) {
     return cartStore.total
   }
 
-  return 0
+  // Nếu không (ví dụ mua ngay), tính thủ công
+  const calculatedTotal = subtotal.value + shippingFee.value - discount.value - pointsDiscount.value
+  return Math.max(0, calculatedTotal)
 })
 
-// State for created order (for QR payment)
+// State for QR Payment Modal
+const showQRPaymentModal = ref(false)
 const createdOrderId = ref(null)
-const createdOrderCode = ref('')
 
-// Watch payment method để tự động tạo đơn hàng và QR khi chọn Online Payment
-watch(() => formData.value.phuongThucThanhToan, async (newMethod) => {
-  if (newMethod === 1) {
-    // User chọn thanh toán Online - Validate và tạo đơn hàng trước
-    if (!validateAll()) {
-      alert('Vui lòng điền đầy đủ thông tin trước khi thanh toán QR')
-      formData.value.phuongThucThanhToan = 0 // Reset về COD
-      return
-    }
-
-    const customerId = authStore.getCustomerId()
-    if (!customerId) {
-      alert('Vui lòng đăng nhập để đặt hàng')
-      formData.value.phuongThucThanhToan = 0
-      router.push({ name: 'login' })
-      return
-    }
-
-    // Tạo đơn hàng ngay
-    loading.value = true
-    try {
-      const voucherCode = cartStore.appliedVoucher?.ma || null
-      const addressParts = []
-      if (addressFormData.value.diaChi) addressParts.push(addressFormData.value.diaChi)
-      if (addressFormData.value.xa) addressParts.push(addressFormData.value.xa)
-      if (addressFormData.value.tinh) addressParts.push(addressFormData.value.tinh)
-      const fullAddress = addressParts.join(', ')
-
-      const orderData = {
-        khachHangId: customerId,
-        tenKhachHang: formData.value.tenKhachHang,
-        soDienThoai: formData.value.soDienThoai,
-        email: formData.value.email,
-        diaChi: fullAddress || formData.value.diaChi,
-        ghiChu: formData.value.ghiChu,
-        phuongThucThanhToan: 1, // QR Payment
-        maPhieuGiamGia: voucherCode,
-        sanPhams: orderItems.value.map((item) => ({
-          idCtsp: item.idCtsp,
-          soLuong: item.soLuong,
-        })),
-      }
-
-      console.log('🔄 [CheckoutPage] Tạo đơn hàng cho QR payment:', orderData)
-
-      const response = await orderService.createOrder(orderData)
-
-      if (response.success || response.data) {
-        const orderId = response.data?.data?.id || response.data?.id
-        const orderCodeFromResponse = response.data?.data?.ma || response.data?.ma
-
-        createdOrderId.value = orderId
-        createdOrderCode.value = orderCodeFromResponse
-        orderCode.value = orderCodeFromResponse
-
-        console.log('✅ [CheckoutPage] Đơn hàng đã tạo:', { orderId, orderCodeFromResponse })
-
-        // Generate QR với orderId thật
-        await generateQRCode(orderCodeFromResponse, total.value, orderId)
-      } else {
-        throw new Error(response.message || 'Không thể tạo đơn hàng')
-      }
-    } catch (error) {
-      console.error('❌ [CheckoutPage] Lỗi tạo đơn hàng:', error)
-      alert('Không thể tạo đơn hàng. Vui lòng thử lại.')
-      formData.value.phuongThucThanhToan = 0 // Reset về COD
-    } finally {
-      loading.value = false
-    }
-  } else {
-    // Reset created order when switching to COD
-    createdOrderId.value = null
-    createdOrderCode.value = ''
-  }
+// Points
+const availablePoints = ref(0)
+const pointsToUse = computed({
+  get: () => cartStore.pointsUsed,
+  set: (val) => cartStore.pointsUsed = val
 })
+const pointsDiscount = computed(() => cartStore.pointsDiscount)
+const pointsError = ref('')
+const quyDoiDiem = ref(null)
+const customerId = computed(() => authStore.getCustomerId())
+
+// Computed: Số điểm tối đa được phép sử dụng
+const maxPointsAllowed = computed(() => {
+  if (!quyDoiDiem.value || !quyDoiDiem.value.tienTieuDiem) return 0
+
+  // Tính tổng tiền cần thanh toán sau khi trừ voucher (nhưng chưa trừ điểm)
+  const totalAfterVoucher = Math.max(0, subtotal.value - discount.value)
+
+  // Tính số điểm tối đa có thể dùng dựa trên số tiền này
+  const maxPointsByTotal = Math.floor(totalAfterVoucher / quyDoiDiem.value.tienTieuDiem)
+
+  // Số điểm tối đa là min của (điểm đang có, điểm tối đa theo tiền)
+  return Math.min(availablePoints.value, maxPointsByTotal)
+})
+
+// Load points and conversion rate
+const loadPoints = async () => {
+  if (!customerId.value) return
+
+  try {
+    // Lấy thông tin khách hàng để có UUID của khách hàng
+    const customerInfo = await addressService.getCustomerById(customerId.value)
+    const khachHangId = customerInfo?.data?.id || customerInfo?.id
+    
+    if (!khachHangId) {
+      console.warn('⚠️ Không tìm thấy ID khách hàng cho userId:', customerId.value)
+      availablePoints.value = 0
+      return
+    }
+
+    // Load available points using khachHangId (UUID)
+    const tichDiem = await tichDiemService.getTichDiemByUserId(khachHangId)
+    availablePoints.value = tichDiem?.tongDiem || 0
+
+    // Load conversion rate
+    const quyDoi = await quyDoiDiemService.getQuyDoiDiemDangHoatDong()
+    quyDoiDiem.value = quyDoi
+  } catch (error) {
+    console.error('Lỗi khi tải điểm:', error)
+    availablePoints.value = 0
+  }
+}
+
+// Calculate points discount
+const calculatePointsDiscount = () => {
+  pointsError.value = ''
+
+  if (!pointsToUse.value || pointsToUse.value <= 0) {
+    cartStore.setPointsDiscount(0, 0)
+    return
+  }
+
+  // Validate against maxPointsAllowed
+  if (pointsToUse.value > maxPointsAllowed.value) {
+    pointsToUse.value = maxPointsAllowed.value
+    pointsError.value = `Tối đa có thể dùng ${maxPointsAllowed.value} điểm`
+  }
+
+  if (!quyDoiDiem.value || !quyDoiDiem.value.tienTieuDiem) {
+    cartStore.setPointsDiscount(pointsToUse.value, 0)
+    return
+  }
+
+  // Calculate discount
+  const discountAmount = pointsToUse.value * quyDoiDiem.value.tienTieuDiem
+  cartStore.setPointsDiscount(pointsToUse.value, discountAmount)
+}
+
+// Watch for changes that affect max points and recalculate discount
+watch([subtotal, discount, availablePoints, pointsToUse], () => {
+  // Ensure points don't exceed max allowed
+  if (pointsToUse.value > maxPointsAllowed.value) {
+    pointsToUse.value = maxPointsAllowed.value
+  }
+  // Recalculate discount
+  calculatePointsDiscount()
+})
+
+// Clear points
+const clearPoints = () => {
+  pointsToUse.value = 0
+  cartStore.setPointsDiscount(0, 0)
+  pointsError.value = ''
+}
+
+// Removed: Watch tự động tạo QR khi chọn phương thức thanh toán
+// QR sẽ được tạo sau khi user click "Đặt hàng" và đơn hàng được tạo thành công
 
 // Validation methods
 const validateTenKhachHang = () => {
@@ -835,14 +870,6 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    // Nếu đã tạo đơn hàng cho QR payment, skip việc tạo lại
-    if (formData.value.phuongThucThanhToan === 1 && createdOrderId.value) {
-      console.log('✅ [CheckoutPage] Đơn hàng QR đã được tạo, chờ thanh toán...')
-      alert('Vui lòng quét mã QR để thanh toán')
-      loading.value = false
-      return
-    }
-
     // Lấy voucher code từ cartStore nếu có voucher được áp dụng
     const voucherCode = cartStore.appliedVoucher?.ma || null
 
@@ -862,6 +889,7 @@ const handleSubmit = async () => {
       ghiChu: formData.value.ghiChu,
       phuongThucThanhToan: formData.value.phuongThucThanhToan,
       maPhieuGiamGia: voucherCode, // Truyền voucher code vào order
+      soDiemSuDung: pointsToUse.value > 0 ? pointsToUse.value : null, // Truyền số điểm sử dụng
       sanPhams: orderItems.value.map((item) => ({
         idCtsp: item.idCtsp,
         soLuong: item.soLuong,
@@ -924,16 +952,36 @@ const handleSubmit = async () => {
 
       // Get order ID from response
       const orderId = response.data?.data?.id || response.data?.id
-      const orderCode = response.data?.data?.ma || response.data?.ma || 'N/A'
+      const orderCodeFromResponse = response.data?.data?.ma || response.data?.ma || 'N/A'
 
-      // Redirect to order success page with query params
-      router.push({
-        name: 'order-success',
-        query: {
-          orderId: orderId || null,
-          orderCode: orderCode,
-        },
-      })
+      // Update orderCode ref
+      orderCode.value = orderCodeFromResponse
+
+      // Nếu là thanh toán online, tạo QR và mở modal
+      if (formData.value.phuongThucThanhToan === 1) {
+        console.log('🔄 [CheckoutPage] Tạo QR code cho đơn hàng:', { orderId, orderCode: orderCodeFromResponse, total: total.value })
+
+        // Store order ID for modal
+        createdOrderId.value = orderId
+
+        // Generate QR với orderId thật
+        await generateQRCode(orderCodeFromResponse, total.value, orderId)
+
+        // Resume polling if was paused
+        resumePolling()
+
+        // Mở modal QR payment
+        showQRPaymentModal.value = true
+      } else {
+        // COD: Redirect đến order success page
+        router.push({
+          name: 'order-success',
+          query: {
+            orderId: orderId || null,
+            orderCode: orderCodeFromResponse,
+          },
+        })
+      }
     } else {
       throw new Error(response.message || 'Không thể tạo đơn hàng')
     }
@@ -946,6 +994,27 @@ const handleSubmit = async () => {
     loading.value = false
   }
 }
+
+// QR Payment Modal handlers
+const handleCloseQRModal = () => {
+  showQRPaymentModal.value = false
+  pausePolling()
+}
+
+const handlePaymentConfirmed = (data) => {
+  console.log('✅ [CheckoutPage] Payment confirmed:', data)
+  // Modal will auto-close after 3 seconds
+  // User can click "Xem đơn hàng" button
+}
+
+const handleRetryQR = async () => {
+  if (createdOrderId.value && orderCode.value) {
+    await generateQRCode(orderCode.value, total.value, createdOrderId.value)
+    resumePolling()
+  }
+}
+
+
 </script>
 
 <style scoped>

@@ -16,24 +16,11 @@
     <!-- News & Reviews Section -->
     <NewsReviewsSection />
 
-    <!-- Featured Products Section (Keep existing for backward compatibility) -->
-    <FeaturedProducts
-      :products="featuredProducts"
-      :loading="loadingProducts"
-      :error="productsError"
-      @add-to-cart="handleAddToCart"
-      @retry="fetchFeaturedProducts"
-    />
-
     <!-- Customer Reviews (Keep existing) -->
     <TestimonialSlider :reviews="topReviews" :loading="loadingReviews" />
 
     <!-- Login/Register Modal -->
-    <LoginRegisterModal
-      :show="showLoginModal"
-      @close="showLoginModal = false"
-      @success="handleLoginSuccess"
-    />
+    <LoginRegisterModal :show="showLoginModal" @close="showLoginModal = false" @success="handleLoginSuccess" />
   </div>
 </template>
 
@@ -58,16 +45,11 @@ const layoutStore = useLayoutStore()
 const cartStore = useCartStore()
 
 // State
-const loadingProducts = ref(false)
-const loadingPromotions = ref(false)
 const loadingReviews = ref(false)
-const productsError = ref(null)
 const showLoginModal = ref(false)
 const pendingProduct = ref(null) // Lưu sản phẩm đang chờ thêm vào giỏ
 
 // Data from store
-const featuredProducts = ref([])
-const activePromotions = ref([])
 const topReviews = ref([])
 
 // Hero banners data (static for now, can be fetched from backend later)
@@ -101,51 +83,10 @@ const banners = ref([
   },
 ])
 
-// Fetch featured products
-const fetchFeaturedProducts = async () => {
+// Load reviews
+const loadReviews = async () => {
   try {
-    loadingProducts.value = true
-    loadingPromotions.value = true
     loadingReviews.value = true
-    productsError.value = null
-
-    // Lấy sản phẩm thật từ API
-    console.log('🔄 [HomePage] Fetching products from API...')
-    const { getFeaturedProducts } = await import('@/service/customer/homeService')
-    const products = await getFeaturedProducts()
-
-    console.log('📦 [HomePage] Raw products from API:', products)
-    console.log('📊 [HomePage] First product sample:', products[0])
-
-    // Lấy tối đa 8 sản phẩm để hiển thị
-    featuredProducts.value = products.slice(0, 8)
-
-    console.log('✅ [HomePage] Loaded featured products:', featuredProducts.value.length)
-    console.log(
-      '🔍 [HomePage] Featured products IDs:',
-      featuredProducts.value.map((p) => ({ id: p.id, name: p.tenSanPham })),
-    )
-
-    // Lấy promotions từ API
-    console.log('🔄 [HomePage] Fetching promotions from API...')
-    const { getCampaigns } = await import('@/service/customer/promotionService')
-    const promotionsData = await getCampaigns('active', 0, 10)
-    activePromotions.value = promotionsData.campaigns || []
-    console.log('✅ [HomePage] Loaded promotions:', activePromotions.value.length)
-
-    // Cập nhật banners từ promotions (lấy 3 campaigns đầu tiên)
-    if (activePromotions.value.length > 0) {
-      banners.value = activePromotions.value.slice(0, 3).map((campaign) => ({
-        id: campaign.id,
-        tenKm: campaign.tenKm,
-        moTa: campaign.moTa,
-        bannerImageUrl: campaign.bannerImageUrl,
-        link: `/khuyen-mai/${campaign.id}`,
-        buttonText: 'Xem ngay',
-        bgColor: '#047857',
-      }))
-    }
-
     // Mock data for reviews (sẽ thay bằng API sau)
     topReviews.value = [
       {
@@ -173,37 +114,11 @@ const fetchFeaturedProducts = async () => {
         ngayDanhGia: '2025-10-18',
       },
     ]
-
-    loadingProducts.value = false
-    loadingPromotions.value = false
     loadingReviews.value = false
   } catch (error) {
-    console.error('Error loading homepage data:', error)
-    productsError.value = 'Không thể tải dữ liệu. Vui lòng thử lại.'
-    loadingProducts.value = false
-    loadingPromotions.value = false
+    console.error('Error loading reviews:', error)
     loadingReviews.value = false
   }
-}
-
-// Test function để debug API
-const testFeaturedProductsAPI = async () => {
-  try {
-    console.log('🧪 Testing featured products API directly...')
-    const { getFeaturedProducts } = await import('@/service/customer/homeService')
-    const products = await getFeaturedProducts() // Lấy tất cả sản phẩm
-    console.log('🧪 Direct API test result:', products)
-    console.log('🧪 Products count:', products.length)
-    return products
-  } catch (error) {
-    console.error('🧪 Direct API test failed:', error)
-    return []
-  }
-}
-
-// Expose test function to window
-if (typeof window !== 'undefined') {
-  window.testFeaturedProductsAPI = testFeaturedProductsAPI
 }
 
 // Handle add to cart
@@ -271,7 +186,7 @@ const handleLoginSuccess = async (authData) => {
 
 // Lifecycle
 onMounted(() => {
-  fetchFeaturedProducts()
+  loadReviews()
 })
 </script>
 

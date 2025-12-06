@@ -25,18 +25,10 @@
                 </td> -->
                 <td>
                   <div class="d-flex flex-wrap gap-1">
-                    <span
-                      v-for="serial in getSerialsForProduct(sp.idHoaDonChiTiet)"
-                      :key="serial"
-                      class="serial-pill"
-                    >
+                    <span v-for="serial in getSerialsForProduct(sp.idHoaDonChiTiet)" :key="serial" class="serial-pill">
                       {{ serial }}
                     </span>
-                    <span
-                      v-if="getSerialsForProduct(sp.idHoaDonChiTiet).length === 0"
-                      class="text-muted"
-                      >—</span
-                    >
+                    <span v-if="getSerialsForProduct(sp.idHoaDonChiTiet).length === 0" class="text-muted">—</span>
                   </div>
                 </td>
               </tr>
@@ -48,15 +40,9 @@
       <h6 class="section-title">2. Thông tin yêu cầu</h6>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
-          <label class="form-label"
-            >Chọn sản phẩm cần bảo hành <span class="text-danger">*</span></label
-          >
-          <select
-            :value="formData.idHoaDonChiTiet"
-            @change="updateFormDataField('idHoaDonChiTiet', $event.target.value)"
-            class="form-select"
-            required
-          >
+          <label class="form-label">Chọn sản phẩm cần bảo hành <span class="text-danger">*</span></label>
+          <select :value="formData.idHoaDonChiTiet"
+            @change="updateFormDataField('idHoaDonChiTiet', $event.target.value)" class="form-select" required>
             <option value="">-- Chọn sản phẩm trong hóa đơn --</option>
             <option v-for="sp in productList" :key="sp.idHoaDonChiTiet" :value="sp.idHoaDonChiTiet">
               {{ sp.tenSanPham }} ({{ sp.maCtsp }})
@@ -65,42 +51,47 @@
         </div>
         <div class="col-md-6">
           <label class="form-label">Số ngày từ khi mua</label>
-          <input
-            type="text"
-            class="form-control bg-light"
-            :value="daysAfterPurchaseDisplay"
-            disabled
-          />
+          <input type="text" class="form-control bg-light" :value="daysAfterPurchaseDisplay" disabled />
         </div>
       </div>
 
-      <!-- <div class="mb-3">
-        <label class="form-label"
-          >Lý do yêu cầu trả/bảo hành <span class="text-danger">*</span></label
-        >
-        <textarea
-          :value="formData.lyDoTraHang"
-          @input="updateFormDataField('lyDoTraHang', $event.target.value)"
-          class="form-control"
-          rows="4"
-          placeholder="Mô tả lý do bạn muốn trả hàng/bảo hành..."
-          required
-        ></textarea>
-      </div> -->
+      <!-- Lý do bảo hành với tabs phân loại -->
+      <div class="mb-4">
+        <label class="form-label">
+          Lý do bảo hành <span class="text-danger">*</span>
+        </label>
+
+        <!-- Tabs phân loại -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item" v-for="loai in loaiLyDoList" :key="loai.code">
+            <button class="nav-link" :class="{ active: selectedLoai === loai.code }" @click="selectedLoai = loai.code"
+              type="button">
+              <i :class="loai.icon" class="me-2"></i>
+              {{ loai.label }}
+            </button>
+          </li>
+        </ul>
+
+        <!-- Dropdown lý do -->
+        <select :value="formData.idLyDoBaoHanh" @change="updateFormDataField('idLyDoBaoHanh', $event.target.value)"
+          class="form-select" required>
+          <option value="">-- Chọn lý do bảo hành --</option>
+          <option v-for="lyDo in filteredLyDoList" :key="lyDo.id" :value="lyDo.id">
+            {{ lyDo.tenLyDo }}
+          </option>
+        </select>
+        <small class="text-muted d-block mt-2">
+          <i class="bi bi-info-circle me-1"></i>
+          {{ selectedLyDoMoTa || 'Vui lòng chọn lý do bảo hành để xem mô tả chi tiết' }}
+        </small>
+      </div>
 
       <!-- Mô tả tình trạng -->
       <div class="mb-3">
-        <label class="form-label"
-          >Mô tả chi tiết tình trạng <span class="text-danger">*</span></label
-        >
-        <textarea
-          :value="formData.moTaTinhTrang"
-          @input="updateFormDataField('moTaTinhTrang', $event.target.value)"
-          class="form-control"
-          rows="4"
-          placeholder="Mô tả chi tiết tình trạng sản phẩm, lỗi gặp phải..."
-          required
-        ></textarea>
+        <label class="form-label">Mô tả chi tiết tình trạng <span class="text-danger">*</span></label>
+        <textarea :value="formData.moTaTinhTrang" @input="updateFormDataField('moTaTinhTrang', $event.target.value)"
+          class="form-control" rows="4" placeholder="Mô tả chi tiết tình trạng sản phẩm, lỗi gặp phải..."
+          required></textarea>
       </div>
 
       <!-- Lý do -->
@@ -120,7 +111,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import lyDoBaoHanhService from '@/service/baohanh/lyDoBaoHanhService'
 
 const props = defineProps({
   mode: {
@@ -146,9 +138,31 @@ const emit = defineEmits(['submit', 'cancel', 'update:formData'])
 
 const fileInput = ref(null)
 const previewImages = ref([])
+const lyDoList = ref([])
+const selectedLoai = ref('PHAN_CUNG')
+
+// Danh sách loại lý do với icon
+const loaiLyDoList = [
+  { code: 'PHAN_CUNG', label: 'Phần cứng', icon: 'bi bi-cpu' },
+  { code: 'PHAN_MEM', label: 'Phần mềm', icon: 'bi bi-code-slash' },
+  { code: 'PHU_KIEN', label: 'Phụ kiện', icon: 'bi bi-plug' },
+  { code: 'KHAC', label: 'Khác', icon: 'bi bi-three-dots' },
+]
 
 // Computed
 const productList = computed(() => props.conditionInfo?.danhSachSanPham || [])
+
+// Lọc lý do theo loại đã chọn
+const filteredLyDoList = computed(() => {
+  return lyDoList.value.filter(lyDo => lyDo.loaiLyDo === selectedLoai.value)
+})
+
+// Lấy mô tả của lý do đã chọn
+const selectedLyDoMoTa = computed(() => {
+  if (!props.formData.idLyDoBaoHanh) return null
+  const selected = lyDoList.value.find(lyDo => lyDo.id === props.formData.idLyDoBaoHanh)
+  return selected ? selected.moTa : null
+})
 
 const isReturnMode = computed(() => props.mode === 'return')
 const submitButtonLabel = computed(() =>
@@ -344,6 +358,26 @@ const handleSubmit = () => {
 
   emit('submit', sanitizedData)
 }
+
+// Load danh sách lý do bảo hành
+onMounted(async () => {
+  try {
+    const data = await lyDoBaoHanhService.getAllLyDo()
+    lyDoList.value = data || []
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách lý do bảo hành:', error)
+  }
+})
+
+// Watch để tự động chuyển tab khi chọn lý do
+watch(() => props.formData.idLyDoBaoHanh, (newId) => {
+  if (newId) {
+    const selected = lyDoList.value.find(lyDo => lyDo.id === newId)
+    if (selected && selected.loaiLyDo) {
+      selectedLoai.value = selected.loaiLyDo
+    }
+  }
+})
 </script>
 
 <style scoped>
@@ -644,6 +678,41 @@ textarea.form-control::placeholder {
 /* Additional polish */
 .warranty-request-form form {
   background: transparent;
+}
+
+/* Nav tabs styling */
+.nav-tabs {
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -2px;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom-color: #d1d5db;
+  color: #1e293b;
+}
+
+.nav-tabs .nav-link.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background: transparent;
+}
+
+.nav-tabs .nav-link i {
+  font-size: 16px;
 }
 
 /* Smooth transitions */

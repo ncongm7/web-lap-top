@@ -112,6 +112,21 @@ import OrderCard from '@/components/customer/order/OrderCard.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Helper function để normalize status (number -> string enum)
+const normalizeStatus = (status) => {
+    if (typeof status === 'number') {
+        const numberMap = {
+            0: 'CHO_THANH_TOAN',
+            1: 'DA_THANH_TOAN',
+            2: 'DA_HUY',
+            3: 'DANG_GIAO',
+            4: 'HOAN_THANH'
+        }
+        return numberMap[status] || status
+    }
+    return status
+}
+
 // State
 const orders = ref([])
 const isLoading = ref(false)
@@ -126,6 +141,8 @@ const totalPages = ref(0)
 const totalElements = ref(0)
 
 // Status tabs configuration
+// Backend API /api/v1/customer/orders không có filter theo trangThai
+// Sẽ filter ở client-side sau khi lấy tất cả đơn hàng
 const statusTabs = [
     { label: 'Tất cả', value: null },
     { label: 'Chờ thanh toán', value: 'CHO_THANH_TOAN' },
@@ -159,10 +176,11 @@ const fetchOrders = async () => {
             return
         }
 
+        // Backend API không có filter, lấy tất cả rồi filter ở client-side
         const response = await orderService.getOrders(
             currentPage.value,
             pageSize.value,
-            selectedStatus.value,
+            null, // Không gửi status filter vì backend không hỗ trợ
             khachHangId
         )
 
@@ -170,12 +188,21 @@ const fetchOrders = async () => {
 
         if (response.data && response.data.data) {
             const pageData = response.data.data
+            let allOrders = pageData.content || []
 
-            orders.value = pageData.content || []
+            // Filter ở client-side theo selectedStatus
+            if (selectedStatus.value) {
+                allOrders = allOrders.filter(order => {
+                    const orderStatus = normalizeStatus(order.trangThai)
+                    return orderStatus === selectedStatus.value
+                })
+            }
+
+            orders.value = allOrders
             totalPages.value = pageData.totalPages || 0
-            totalElements.value = pageData.totalElements || 0
+            totalElements.value = selectedStatus.value ? allOrders.length : pageData.totalElements || 0
 
-            console.log(`📦 Loaded ${orders.value.length} orders`)
+            console.log(`📦 Loaded ${orders.value.length} orders (filtered: ${selectedStatus.value || 'none'})`)
         } else {
             orders.value = []
         }

@@ -9,12 +9,8 @@
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <p class="error-message">{{ error }}</p>
       <button class="retry-button" @click="fetchOrderDetail">Thử lại</button>
@@ -28,12 +24,7 @@
         <div class="header-left">
           <router-link to="/orders" class="back-button">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 19l-7-7 7-7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
             Quay lại
           </router-link>
@@ -43,37 +34,25 @@
           </div>
         </div>
         <div class="header-right">
-          <span :class="['status-badge-large', getStatusClass(order.trangThai)]">
-            <span class="status-icon-large">{{ getStatusIcon(order.trangThai) }}</span>
-            {{ getStatusText(order.trangThai) }}
-          </span>
+          <div class="header-status-group">
+            <span :class="['status-badge-large', getStatusClass(order.trangThai)]">
+              <span class="status-icon-large">{{ getStatusIcon(order.trangThai) }}</span>
+              {{ getStatusText(order.trangThai) }}
+            </span>
+            <!-- WebSocket connection indicator -->
+            <!-- <span v-if="wsConnected" class="ws-indicator" title="Đang kết nối real-time">
+              <span class="ws-dot"></span>
+              <span class="ws-text">Live</span>
+            </span> -->
+          </div>
         </div>
       </div>
 
-      <!-- Status Timeline Section (Prominent) -->
-      <div class="status-timeline-section">
-        <div class="section-header">
-          <h2 class="section-title-large">
-            <svg class="section-icon-large" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-            Trạng thái đơn hàng
-          </h2>
-        </div>
-        <div class="timeline-wrapper">
-          <OrderStatusTimeline
-            :current-status="order.trangThai"
-            :order-date="order.ngayTao"
-            :payment-date="order.ngayThanhToan"
-            :shipping-date="order.ngayGiaoHang"
-            :completed-date="order.ngayHoanThanh"
-          />
-        </div>
+      <!-- Order Progress (Horizontal) -->
+      <div class="order-progress-section">
+        <OrderStatusProgress :current-status="order.trangThai" :order-date="order.ngayTao"
+          :payment-date="order.ngayThanhToan" :shipping-date="order.ngayGiaoHang" :completed-date="order.ngayHoanThanh"
+          :loai-hoa-don="order.loaiHoaDon" :trang-thai-thanh-toan="order.trangThaiThanhToan" />
       </div>
 
       <!-- 2 Column Layout -->
@@ -84,25 +63,15 @@
           <div class="section">
             <h2 class="section-title">Sản phẩm trong đơn</h2>
             <div class="products-table">
-              <div
-                v-if="!order.chiTietList || order.chiTietList.length === 0"
-                class="empty-products"
-              >
+              <div v-if="!order.chiTietList || order.chiTietList.length === 0" class="empty-products">
                 Không có sản phẩm nào trong đơn hàng
               </div>
               <div v-else>
-                <div
-                  v-for="item in order.chiTietList"
-                  :key="item.idChiTietSanPham"
-                  class="product-row"
-                >
+                <div v-for="item in order.chiTietList" :key="item.idChiTietSanPham" class="product-row">
                   <!-- Product Image -->
                   <div class="product-image">
-                    <img
-                      :src="item.hinhAnh || getPlaceholderImage()"
-                      :alt="item.tenSanPham"
-                      @error="handleImageError"
-                    />
+                    <img :src="item.hinhAnh || getPlaceholderImage()" :alt="item.tenSanPham"
+                      @error="handleImageError" />
                   </div>
 
                   <!-- Product Info -->
@@ -128,10 +97,7 @@
               <span class="pricing-label">Tạm tính</span>
               <span class="pricing-value">{{ formatCurrency(order.tongTien) }}</span>
             </div>
-            <div
-              v-if="order.tienDuocGiam && order.tienDuocGiam > 0"
-              class="pricing-row discount-row"
-            >
+            <div v-if="order.tienDuocGiam && order.tienDuocGiam > 0" class="pricing-row discount-row">
               <span class="pricing-label">Giảm giá</span>
               <span class="pricing-value discount">- {{ formatCurrency(order.tienDuocGiam) }}</span>
             </div>
@@ -139,7 +105,7 @@
               <span class="pricing-label total-label">Tổng cộng</span>
               <span class="pricing-value total-value">{{
                 formatCurrency(order.tongTienSauGiam || order.tongTien)
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -158,12 +124,8 @@
             <div class="info-box">
               <div class="info-row">
                 <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <div>
                   <div class="info-label">Người nhận</div>
@@ -174,12 +136,8 @@
               </div>
               <div class="info-row">
                 <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 <div>
                   <div class="info-label">Số điện thoại</div>
@@ -190,18 +148,10 @@
               </div>
               <div class="info-row">
                 <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div>
                   <div class="info-label">Địa chỉ</div>
@@ -211,47 +161,48 @@
             </div>
           </div>
 
-          <!-- Order Timeline -->
-          <div class="section">
+          <!-- Order Summary Info -->
+          <div class="section summary-section">
             <h2 class="section-title">
               <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Trạng thái đơn hàng
+              Thông tin đơn hàng
             </h2>
-            <OrderStatusTimeline
-              :current-status="order.trangThai"
-              :order-date="order.ngayTao"
-              :payment-date="order.ngayThanhToan"
-              :shipping-date="order.ngayGiaoHang"
-              :completed-date="order.ngayHoanThanh"
-            />
+            <div class="summary-info">
+              <div class="summary-row">
+                <span class="summary-label">Mã đơn:</span>
+                <span class="summary-value">{{ order.ma }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Loại đơn:</span>
+                <span class="summary-value">{{ order.loaiHoaDon === 1 ? 'Online' : 'Tại quầy' }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Ngày đặt:</span>
+                <span class="summary-value">{{ formatDate(order.ngayTao) }}</span>
+              </div>
+              <div v-if="order.ngayThanhToan" class="summary-row">
+                <span class="summary-label">Ngày thanh toán:</span>
+                <span class="summary-value">{{ formatDate(order.ngayThanhToan) }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Payment Info -->
           <div v-if="order.trangThaiThanhToan !== undefined" class="section payment-section">
             <h2 class="section-title">
               <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
               Thông tin thanh toán
             </h2>
             <div class="payment-info">
               <div class="payment-row">
                 <span class="payment-label">Trạng thái thanh toán:</span>
-                <span
-                  :class="['payment-status', order.trangThaiThanhToan === 1 ? 'paid' : 'unpaid']"
-                >
+                <span :class="['payment-status', order.trangThaiThanhToan === 1 ? 'paid' : 'unpaid']">
                   {{ order.trangThaiThanhToan === 1 ? 'Đã thanh toán' : 'Chưa thanh toán' }}
                 </span>
               </div>
@@ -259,56 +210,43 @@
                 <span class="payment-label">Ngày thanh toán:</span>
                 <span class="payment-value">{{ formatDate(order.ngayThanhToan) }}</span>
               </div>
-              <div v-if="order.loaiHoaDon === 1" class="payment-row">
+              <div class="payment-row">
                 <span class="payment-label">Phương thức:</span>
-                <span class="payment-value">Thanh toán khi nhận hàng (COD)</span>
+                <span class="payment-value">
+                  {{ order.loaiHoaDon === 1
+                    ? (order.trangThaiThanhToan === 1 ? 'Thanh toán QR' : 'Thanh toán khi nhận hàng (COD)')
+                    : 'Thanh toán tại quầy' }}
+                </span>
+              </div>
+              <div v-if="order.soDiemSuDung && order.soDiemSuDung > 0" class="payment-row">
+                <span class="payment-label">Điểm đã dùng:</span>
+                <span class="payment-value">{{ order.soDiemSuDung }} điểm</span>
               </div>
             </div>
           </div>
 
           <!-- Action Buttons -->
           <div class="section actions-section">
-            <button
-              v-if="canCancelOrder || order.canCancel"
-              class="action-button cancel-button"
-              @click="handleCancelOrder"
-              :disabled="isCancelling"
-            >
+            <button v-if="canCancelOrder || order.canCancel" class="action-button cancel-button"
+              @click="handleCancelOrder" :disabled="isCancelling">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
               {{ isCancelling ? 'Đang hủy...' : 'Hủy đơn hàng' }}
             </button>
 
-            <button
-              class="action-button reorder-button"
-              @click="handleReorder"
-              :disabled="isReordering"
-            >
+            <button class="action-button reorder-button" @click="handleReorder" :disabled="isReordering">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {{ isReordering ? 'Đang xử lý...' : 'Mua lại' }}
             </button>
 
             <button class="action-button support-button">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               Liên hệ hỗ trợ
             </button>
@@ -320,11 +258,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/customer/authStore'
 import orderService from '@/service/customer/orderService'
-import OrderStatusTimeline from '@/components/customer/order/OrderStatusTimeline.vue'
+import OrderStatusProgress from '@/components/customer/order/OrderStatusProgress.vue'
+import { useOrderWebSocket } from '@/composables/customer/useOrderWebSocket'
+import { useToast } from 'vue-toastification'
 
 // Router
 const route = useRoute()
@@ -332,6 +272,7 @@ const router = useRouter()
 
 // Stores
 const authStore = useAuthStore()
+const toast = useToast()
 
 // State
 const order = ref(null)
@@ -593,6 +534,21 @@ const formatAddress = (order) => {
 }
 
 const getStatusText = (status) => {
+  // Xử lý đặc biệt cho đơn online
+  if (order.value && order.value.loaiHoaDon === 1) {
+    const trangThai = normalizeStatus(order.value.trangThai)
+    const trangThaiThanhToan = order.value.trangThaiThanhToan
+
+    // Đơn online chưa xác nhận
+    if (trangThai === 'CHO_THANH_TOAN' || trangThai === 0) {
+      if (trangThaiThanhToan === 1) {
+        return 'Đã thanh toán - Chờ xác nhận'
+      } else {
+        return 'Chờ thanh toán'
+      }
+    }
+  }
+
   const statusMap = {
     CHO_THANH_TOAN: 'Chờ thanh toán',
     DA_THANH_TOAN: 'Đã thanh toán',
@@ -601,10 +557,33 @@ const getStatusText = (status) => {
     HOAN_THANH: 'Hoàn thành',
   }
 
-  return statusMap[status] || status || 'Không xác định'
+  return statusMap[normalizeStatus(status)] || status || 'Không xác định'
+}
+
+// Helper để normalize status
+const normalizeStatus = (status) => {
+  if (typeof status === 'number') {
+    const map = { 0: 'CHO_THANH_TOAN', 1: 'DA_THANH_TOAN', 2: 'DA_HUY', 3: 'DANG_GIAO', 4: 'HOAN_THANH' }
+    return map[status] || status
+  }
+  return status
 }
 
 const getStatusClass = (status) => {
+  // Xử lý đặc biệt cho đơn online
+  if (order.value && order.value.loaiHoaDon === 1) {
+    const trangThai = normalizeStatus(order.value.trangThai)
+    const trangThaiThanhToan = order.value.trangThaiThanhToan
+
+    if (trangThai === 'CHO_THANH_TOAN' || trangThai === 0) {
+      if (trangThaiThanhToan === 1) {
+        return 'status-paid' // Đã thanh toán QR
+      } else {
+        return 'status-pending' // Chờ thanh toán COD
+      }
+    }
+  }
+
   const classMap = {
     CHO_THANH_TOAN: 'status-pending',
     DA_THANH_TOAN: 'status-paid',
@@ -613,7 +592,7 @@ const getStatusClass = (status) => {
     HOAN_THANH: 'status-completed',
   }
 
-  return classMap[status] || 'status-unknown'
+  return classMap[normalizeStatus(status)] || 'status-unknown'
 }
 
 const getStatusIcon = (status) => {
@@ -645,10 +624,70 @@ const handleImageError = (event) => {
   event.target.src = getPlaceholderImage()
 }
 
+/**
+ * Xử lý khi nhận được WebSocket event cập nhật trạng thái
+ */
+const handleStatusUpdate = async (data) => {
+  console.log('🔄 [OrderDetailPage] Nhận được cập nhật trạng thái:', data)
+
+  // Hiển thị thông báo
+  const statusMap = {
+    0: 'Chờ thanh toán',
+    1: 'Đã thanh toán',
+    2: 'Đã hủy',
+    3: 'Đang giao hàng',
+    4: 'Hoàn thành'
+  }
+
+  const oldStatusText = statusMap[data.oldStatus] || 'Không xác định'
+  const newStatusText = statusMap[data.newStatus] || 'Không xác định'
+
+  toast.info(`Trạng thái đơn hàng đã thay đổi: ${oldStatusText} → ${newStatusText}`, {
+    timeout: 5000,
+    position: 'top-right'
+  })
+
+  // Refresh order detail để lấy dữ liệu mới nhất
+  await fetchOrderDetail()
+}
+
+// WebSocket connection cho real-time updates
+const wsConnected = ref(false)
+let orderWebSocket = null
+
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   console.log('🎬 OrderDetailPage mounted')
-  fetchOrderDetail()
+  const orderIdFromRoute = route.params.id
+
+  // Kết nối WebSocket ngay với orderId từ route (không cần đợi fetch)
+  if (orderIdFromRoute) {
+    console.log('🔌 [OrderDetailPage] Kết nối WebSocket cho order:', orderIdFromRoute)
+    orderWebSocket = useOrderWebSocket(orderIdFromRoute, handleStatusUpdate)
+
+    // Watch connection status - sử dụng watchEffect để reactive
+    if (orderWebSocket) {
+      watch(() => {
+        if (orderWebSocket && orderWebSocket.isConnected) {
+          return orderWebSocket.isConnected.value
+        }
+        return false
+      }, (connected) => {
+        wsConnected.value = connected
+      }, { immediate: true })
+    }
+  }
+
+  // Fetch order detail
+  await fetchOrderDetail()
+})
+
+onUnmounted(() => {
+  // Cleanup WebSocket khi unmount
+  if (orderWebSocket) {
+    orderWebSocket.disconnect()
+    orderWebSocket = null
+  }
 })
 </script>
 
@@ -819,43 +858,59 @@ onMounted(() => {
   color: #6b7280;
 }
 
-/* Status Timeline Section (Prominent) */
-.status-timeline-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 2px solid #e5e7eb;
-}
-
-.section-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.section-title-large {
+.header-status-group {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
 }
 
-.section-icon-large {
-  width: 28px;
-  height: 28px;
-  color: #3b82f6;
+.ws-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #065f46;
 }
 
-.timeline-wrapper {
+.ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse-dot 2s infinite;
+}
+
+.ws-text {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+}
+
+/* Order Progress Section (Horizontal) */
+.order-progress-section {
   background: #ffffff;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* 2 Column Layout */
@@ -1048,10 +1103,44 @@ onMounted(() => {
   font-weight: 600;
 }
 
+/* Summary Info */
+.summary-section {
+  border: 1px solid #e5e7eb;
+}
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 600;
+}
+
 /* Payment Info */
 .payment-section {
-  border: 2px solid #e5e7eb;
-  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+  border: 1px solid #e5e7eb;
 }
 
 .payment-info {
