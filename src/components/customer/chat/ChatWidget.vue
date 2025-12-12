@@ -86,6 +86,12 @@
                 <i class="bi bi-chevron-right topic-arrow"></i>
               </button>
             </div>
+            <div class="consultation-button-wrapper">
+              <button @click="startConsultation" class="consultation-btn">
+                <i class="bi bi-robot"></i>
+                Tư vấn chọn laptop tự động
+              </button>
+            </div>
           </div>
 
           <div v-else class="messages-list">
@@ -254,6 +260,13 @@
         </button>
       </div>
     </div>
+
+    <!-- Consultation Flow Modal -->
+    <ConsultationFlow
+      :show="showConsultationFlow"
+      @close="showConsultationFlow = false"
+      @complete="handleConsultationComplete"
+    />
   </div>
 </template>
 
@@ -263,6 +276,7 @@ import { chatService } from '@/service/customer/chatService'
 import { useAuthStore } from '@/stores/customer/authStore'
 import ChatQuickReplies from './ChatQuickReplies.vue'
 import EmojiPicker from './EmojiPicker.vue'
+import ConsultationFlow from './ConsultationFlow.vue'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import heroIllustration from '@/assets/chat/assistant-hero.svg?url'
@@ -297,6 +311,9 @@ const showEmojiPicker = ref(false)
 const currentQuickReplies = ref([])
 const showEscalateButton = ref(false)
 const botTyping = ref(false)
+
+// Consultation Flow
+const showConsultationFlow = ref(false)
 
 const heroImage = heroIllustration
 
@@ -1202,6 +1219,46 @@ const handleWelcomeOption = (topic) => {
   handleQuickReplySelect(topic)
 }
 
+const startConsultation = () => {
+  showConsultationFlow.value = true
+}
+
+const handleConsultationComplete = async (data) => {
+  showConsultationFlow.value = false
+  
+  // Send consultation data to backend via WebSocket
+  if (currentCustomerId.value && conversationId.value) {
+    const messageData = {
+      khachHangId: currentCustomerId.value,
+      nhanVienId: null,
+      noiDung: 'Tư vấn chọn laptop dựa trên thông tin đã cung cấp',
+      conversationId: conversationId.value,
+      messageType: 'text',
+      isFromCustomer: true,
+      consultationData: {
+        purposes: data.purposes,
+        budget: data.budget,
+        features: data.features
+      }
+    }
+    
+    // Send via WebSocket if connected
+    if (stompClient && stompClient.connected) {
+      stompClient.publish({
+        destination: '/app/chat.send',
+        body: JSON.stringify(messageData)
+      })
+    } else {
+      // Fallback to REST API
+      try {
+        await chatService.sendMessage(messageData)
+      } catch (error) {
+        console.error('Error sending consultation data:', error)
+      }
+    }
+  }
+}
+
 const applyWelcomeStateIfNeeded = () => {
   if (messages.value.length === 0) {
     currentQuickReplies.value = [...defaultQuickReplies]
@@ -1545,12 +1602,45 @@ onUnmounted(() => {
   text-align: left;
 }
 
-.welcome-topic-card .topic-text span {
-  color: #6b7280;
-  font-size: 12px;
-}
+  .welcome-topic-card .topic-text span {
+    color: #6b7280;
+    font-size: 12px;
+  }
 
-.topic-arrow {
+  .consultation-button-wrapper {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .consultation-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .consultation-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .consultation-btn i {
+    font-size: 18px;
+  }
+
+  .topic-arrow {
   position: absolute;
   right: 10px;
   top: 50%;
