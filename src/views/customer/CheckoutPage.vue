@@ -21,26 +21,72 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                    <input v-model="formData.tenKhachHang" type="text" class="form-control" required
-                      placeholder="Nhập họ và tên" />
+                    <input v-model="formData.tenKhachHang" type="text" class="form-control"
+                      :class="{ 'is-invalid': formErrors.tenKhachHang }" required placeholder="Nhập họ và tên"
+                      @input="clearError('tenKhachHang')" />
+                    <div class="invalid-feedback">{{ formErrors.tenKhachHang }}</div>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                    <input v-model="formData.soDienThoai" type="tel" class="form-control" required
-                      placeholder="Nhập số điện thoại" />
+                    <input v-model="formData.soDienThoai" type="tel" class="form-control"
+                      :class="{ 'is-invalid': formErrors.soDienThoai }" required placeholder="Nhập số điện thoại"
+                      @input="clearError('soDienThoai')" />
+                    <div class="invalid-feedback">{{ formErrors.soDienThoai }}</div>
                   </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Email</label>
                   <input v-model="formData.email" type="email" class="form-control"
-                    placeholder="Nhập email (để nhận xác nhận đơn hàng)" />
+                    :class="{ 'is-invalid': formErrors.email }" placeholder="Nhập email (để nhận xác nhận đơn hàng)"
+                    @input="clearError('email')" />
+                  <div class="invalid-feedback">{{ formErrors.email }}</div>
                 </div>
 
                 <!-- Địa chỉ giao hàng -->
+                <!-- Địa chỉ giao hàng -->
+                <!-- Địa chỉ giao hàng -->
                 <div class="mb-3">
-                  <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                  <textarea v-model="formData.diaChi" class="form-control" rows="3" required
-                    placeholder="Nhập địa chỉ giao hàng"></textarea>
+                  <div class="d-flex align-items-center mb-2">
+                    <label class="form-label mb-0 me-3">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+                  </div>
+
+                  <div v-if="savedAddresses.length > 0" class="input-group mb-3">
+                    <select class="form-select" v-model="selectedSavedAddressId" @change="loadSavedAddress">
+                      <option value="">-- Chọn địa chỉ đã lưu --</option>
+                      <option v-for="addr in savedAddresses" :key="addr.id" :value="addr.id">
+                        {{ formatAddressDisplay(addr) }}
+                      </option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" @click="switchToNewAddress"
+                      title="Thêm địa chỉ mới">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                  </div>
+
+                  <!-- Static Address Display (ReadOnly) -->
+                  <div v-if="!isNewAddress && selectedSavedAddressId" class="alert alert-secondary mb-3">
+                    <div class="d-flex justify-content-between">
+                      <strong>Địa chỉ nhận hàng:</strong>
+                      <button class="btn btn-sm btn-link p-0 text-primary" @click="switchToNewAddress">Thay đổi</button>
+                    </div>
+                    <p class="mb-0 mt-1">{{ formData.diaChi }}</p>
+                    <small v-if="formData.tenKhachHang" class="text-muted d-block mt-1">Người nhận: {{
+                      formData.tenKhachHang }} - {{ formData.soDienThoai }}</small>
+                  </div>
+
+                  <!-- Address Form Component (Edit/New Mode) -->
+                  <div v-if="isNewAddress || !selectedSavedAddressId">
+                    <div v-if="savedAddresses.length > 0 && isNewAddress" class="d-flex justify-content-between mb-2">
+                      <span class="text-muted small">Nhập địa chỉ mới bên dưới:</span>
+                      <button class="btn btn-sm btn-link text-danger p-0" @click="cancelNewAddress">Hủy</button>
+                    </div>
+                    <AddressForm ref="addressFormRef" v-model="addressFormData" :show-save-button="false" />
+                  </div>
+
+                  <!-- Hidden input for validation error display mapping -->
+                  <div v-if="formErrors.diaChi" class="text-danger small mt-1">
+                    {{ formErrors.diaChi }}
+                  </div>
                 </div>
 
                 <div class="mb-3">
@@ -175,6 +221,7 @@ import { tichDiemService } from '@/service/diem/tichDiemService'
 import { quyDoiDiemService } from '@/service/diem/quyDoiDiemService'
 import PointsRedemption from '@/components/customer/checkout/PointsRedemption.vue'
 import dayjs from 'dayjs'
+import AddressForm from '@/components/customer/checkout/AddressForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -222,14 +269,18 @@ const formErrors = ref({
 const addressFormData = ref({
   diaChi: '',
   tinh: '',
+  huyen: '',
   xa: '',
   tinhCode: '',
+  huyenCode: '',
   xaCode: '',
+  fullAddress: ''
 })
 
 // Saved addresses
 const savedAddresses = ref([])
 const selectedSavedAddressId = ref('')
+const isNewAddress = ref(false)
 const isLoadingAddresses = ref(false)
 const addressFormRef = ref(null)
 
@@ -293,45 +344,23 @@ onMounted(async () => {
           const addresses = addressResponse.data || addressResponse || []
           console.log('🔍 [CheckoutPage] Addresses list:', addresses)
 
-          // Tìm địa chỉ mặc định (macDinh = true)
+          // Assign to savedAddresses ref SO THE DROPDOWN WORKS
+          savedAddresses.value = addresses
+
+          // Find default address (macDinh = true)
           const defaultAddress = addresses.find((addr) => addr.macDinh === true)
           console.log('🔍 [CheckoutPage] Default address:', defaultAddress)
 
           if (defaultAddress) {
-            // Ưu tiên: Lấy thông tin từ địa chỉ mặc định
-            if (defaultAddress.hoTen) {
-              formData.value.tenKhachHang = defaultAddress.hoTen
-            }
-
-            // Lấy số điện thoại (có thể là sdt hoặc soDienThoai)
-            if (defaultAddress.sdt || defaultAddress.soDienThoai) {
-              formData.value.soDienThoai = defaultAddress.sdt || defaultAddress.soDienThoai
-            }
-
-            // Tạo chuỗi địa chỉ đầy đủ từ các thành phần
-            const addressParts = []
-            if (defaultAddress.diaChi) {
-              addressParts.push(defaultAddress.diaChi)
-            }
-            if (defaultAddress.xa) {
-              addressParts.push(defaultAddress.xa)
-            }
-            if (defaultAddress.tinh) {
-              addressParts.push(defaultAddress.tinh)
-            }
-
-            // Ghép địa chỉ với dấu phẩy và khoảng trắng
-            if (addressParts.length > 0) {
-              formData.value.diaChi = addressParts.join(', ')
-            }
-
-            console.log('✅ [CheckoutPage] Đã điền thông tin từ địa chỉ mặc định:', {
-              tenKhachHang: formData.value.tenKhachHang,
-              soDienThoai: formData.value.soDienThoai,
-              diaChi: formData.value.diaChi,
-            })
+            selectedSavedAddressId.value = defaultAddress.id
+            loadSavedAddress() // This will fill formData and switch to View Mode
+          } else if (addresses.length > 0) {
+            // If no default, pick first
+            selectedSavedAddressId.value = addresses[0].id
+            loadSavedAddress()
           } else {
-            console.warn('⚠️ [CheckoutPage] Không tìm thấy địa chỉ mặc định trong danh sách')
+            // No addresses, switch to new
+            isNewAddress.value = true
           }
         } catch (addressError) {
           console.error('❌ [CheckoutPage] Lỗi khi lấy địa chỉ mặc định:', addressError)
@@ -441,6 +470,21 @@ onMounted(async () => {
   }
 })
 
+// Watch address form changes to update main form
+watch(addressFormData, (newVal) => {
+  if (newVal.fullAddress) {
+    formData.value.diaChi = newVal.fullAddress
+  } else {
+    // Fallback compilation if fullAddress not present
+    let full = newVal.diaChi || ''
+    if (newVal.xa) full += `, ${newVal.xa}`
+    if (newVal.huyen) full += `, ${newVal.huyen}`
+    if (newVal.tinh) full += `, ${newVal.tinh}`
+    formData.value.diaChi = full
+  }
+  formErrors.value.diaChi = '' // Clear error on change
+}, { deep: true })
+
 // Address methods
 const loadSavedAddresses = async () => {
   const customerId = authStore.getCustomerId()
@@ -455,6 +499,14 @@ const loadSavedAddresses = async () => {
     if (maKhachHang) {
       const response = await addressService.getAddressesByMaKhachHang(maKhachHang)
       savedAddresses.value = response?.data || response || []
+
+      // Auto-select first address if available
+      if (savedAddresses.value.length > 0) {
+        selectedSavedAddressId.value = savedAddresses.value[0].id
+        loadSavedAddress()
+      } else {
+        isNewAddress.value = true
+      }
     }
   } catch (error) {
     console.error('Lỗi khi lấy danh sách địa chỉ:', error)
@@ -465,67 +517,74 @@ const loadSavedAddresses = async () => {
 }
 
 const loadSavedAddress = () => {
-  if (!selectedSavedAddressId.value) {
-    return
-  }
+  isNewAddress.value = false
+  if (!selectedSavedAddressId.value) return
 
   const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
-  if (!address) {
-    return
+  if (!address) return
+
+  const formatted = formatAddressDisplay(address)
+  formData.value.diaChi = formatted
+
+  if (address.hoTen) formData.value.tenKhachHang = address.hoTen
+  if (address.sdt) formData.value.soDienThoai = address.sdt
+}
+
+const switchToNewAddress = () => {
+  isNewAddress.value = true
+  selectedSavedAddressId.value = ''
+  formData.value.diaChi = ''
+  addressFormData.value = { diaChi: '', fullAddress: '', tinh: '', huyen: '', xa: '', tinhCode: '', huyenCode: '', xaCode: '' }
+}
+
+const cancelNewAddress = () => {
+  if (savedAddresses.value.length > 0) {
+    selectedSavedAddressId.value = savedAddresses.value[0].id
+    loadSavedAddress()
   }
+}
 
-  // Load address to form
-  loadAddressToForm(address)
+const loadSavedAddress_Old = async () => {
+  if (!selectedSavedAddressId.value) return
 
-  // Load to AddressForm component
+  const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
+  if (!address) return
+
+  // Basic fill
+  addressFormData.value.diaChi = address.diaChi || ''
+  addressFormData.value.tinh = address.tinh || ''
+  addressFormData.value.xa = address.xa || '' // Assuming xa might contain ward info or composite
+
+  // Try to reverse lookup codes if possible (Best effort)
   if (addressFormRef.value) {
-    addressFormRef.value.form.diaChi = address.diaChi || ''
-    addressFormRef.value.form.tinh = address.tinh || ''
-    addressFormRef.value.form.xa = address.xa || ''
-    addressFormRef.value.form.xaCode = address.xa || ''
+    // Reset
+    addressFormData.value.tinhCode = ''
+    addressFormData.value.huyenCode = ''
+    addressFormData.value.xaCode = ''
 
-    // Load province if needed
-    if (address.tinh && addressFormRef.value.provinces) {
-      const province = addressFormRef.value.provinces.find(p => p.name === address.tinh)
+    if (address.tinh) {
+      // Wait for provinces to load if using component ref
+      if (!addressFormRef.value.provinces || addressFormRef.value.provinces.length === 0) {
+        // Should trigger fetch? It mounts automatically.
+      }
+      const province = addressFormRef.value.provinces.find(p => p.name.includes(address.tinh) || address.tinh.includes(p.name))
       if (province) {
-        addressFormRef.value.form.tinhCode = province.id
-        addressFormRef.value.selectProvince(province)
+        addressFormData.value.tinhCode = province.id
+        // Trigger fetch districts
+        await addressFormRef.value.selectProvince(province) // This mocks selecting it
+        // After this, districts should be loaded.
+
+        // Note: Saving 'huyen' is tricky if we don't have it in saved address. 
+        // If checking 'xa' string for district name is too complex, we skip.
+        // But if we saved it previously as "Ward, District", we might parse it?
+        // For now, let's just trust the text values or manual re-selection.
       }
     }
   }
 
-  // Update customer info from address
-  if (address.hoTen && !formData.value.tenKhachHang) {
-    formData.value.tenKhachHang = address.hoTen
-  }
-  if (address.sdt && !formData.value.soDienThoai) {
-    formData.value.soDienThoai = address.sdt
-  }
-}
-
-const loadAddressToForm = (address) => {
-  // Update address form data
-  addressFormData.value.diaChi = address.diaChi || ''
-  addressFormData.value.tinh = address.tinh || ''
-  addressFormData.value.xa = address.xa || ''
-
-  // Build full address string
-  let fullAddress = address.diaChi || ''
-  if (address.xa) {
-    fullAddress += (fullAddress ? ', ' : '') + address.xa
-  }
-  if (address.tinh) {
-    fullAddress += (fullAddress ? ', ' : '') + address.tinh
-  }
-  formData.value.diaChi = fullAddress
-
-  // Update customer info from address
-  if (address.hoTen && !formData.value.tenKhachHang) {
-    formData.value.tenKhachHang = address.hoTen
-  }
-  if (address.sdt && !formData.value.soDienThoai) {
-    formData.value.soDienThoai = address.sdt
-  }
+  // Update customer info
+  if (address.hoTen) formData.value.tenKhachHang = address.hoTen
+  if (address.sdt) formData.value.soDienThoai = address.sdt
 }
 
 const formatAddressDisplay = (address) => {
@@ -534,41 +593,6 @@ const formatAddressDisplay = (address) => {
   if (address.xa) parts.push(address.xa)
   if (address.tinh) parts.push(address.tinh)
   return parts.join(', ')
-}
-
-const checkDuplicateAddress = async (formData) => {
-  if (!formData || !savedAddresses.value.length) return false
-
-  const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ')
-
-  const currentAddress = {
-    diaChi: normalize(formData.diaChi || ''),
-    tinh: normalize(formData.tinh || ''),
-    xa: normalize(formData.xa || ''),
-  }
-
-  const duplicate = savedAddresses.value.find(addr => {
-    const savedAddr = {
-      diaChi: normalize(addr.diaChi || ''),
-      tinh: normalize(addr.tinh || ''),
-      xa: normalize(addr.xa || ''),
-    }
-    return (
-      savedAddr.diaChi === currentAddress.diaChi &&
-      savedAddr.tinh === currentAddress.tinh &&
-      savedAddr.xa === currentAddress.xa
-    )
-  })
-
-  if (duplicate) {
-    selectedSavedAddressId.value = duplicate.id
-    return true
-  }
-  return false
-}
-
-const handleAddressSaved = () => {
-  loadSavedAddresses()
 }
 
 // Computed
@@ -669,7 +693,7 @@ const loadPoints = async () => {
     // Lấy thông tin khách hàng để có UUID của khách hàng
     const customerInfo = await addressService.getCustomerById(customerId.value)
     const khachHangId = customerInfo?.data?.id || customerInfo?.id
-    
+
     if (!khachHangId) {
       console.warn('⚠️ Không tìm thấy ID khách hàng cho userId:', customerId.value)
       availablePoints.value = 0
@@ -784,6 +808,16 @@ const validateEmail = () => {
 }
 
 const validateAddress = () => {
+  // If in read-only saved mode, just check if we have an address string
+  if (!isNewAddress.value && selectedSavedAddressId.value) {
+    if (!formData.value.diaChi || !formData.value.diaChi.trim()) {
+      formErrors.value.diaChi = 'Vui lòng chọn địa chỉ'
+      return false
+    }
+    return true
+  }
+
+  // If in New Address (Form) mode
   // Kiểm tra địa chỉ từ formData (user nhập trực tiếp)
   if (!formData.value.diaChi || !formData.value.diaChi.trim()) {
     formErrors.value.diaChi = 'Vui lòng nhập địa chỉ giao hàng'
@@ -987,8 +1021,20 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('Error creating order:', error)
-    const errorMessage =
-      error.response?.data?.message || error.message || 'Có lỗi xảy ra khi đặt hàng'
+    console.error('Error response data:', error.response?.data)
+    console.error('Error response status:', error.response?.status)
+
+    // Improved Error Handling for Stock Issues
+    const errorData = error.response?.data
+    const errorMessage = errorData?.message || error.message || 'Có lỗi xảy ra khi đặt hàng'
+    const errorCode = errorData?.code // Assuming backend sends code, or we check text
+
+    if (errorMessage && errorMessage.toLowerCase().includes('hết hàng')) {
+      alert(`⚠️ Rất tiếc, ${errorMessage}\n\nVui lòng cập nhật giỏ hàng.`)
+      router.push('/cart')
+      return
+    }
+
     alert(errorMessage)
   } finally {
     loading.value = false

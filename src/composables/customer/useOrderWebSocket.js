@@ -126,6 +126,31 @@ export function useOrderWebSocket(orderId, onStatusUpdate) {
             )
 
             console.log('✅ [useOrderWebSocket] Đã subscribe vào /topic/order-status-changed')
+
+            // Subscribe vào topic hủy đơn hàng riêng cho order này
+            if (currentOrderIdStr) {
+                 subscriptionCancelled.value = stompClient.value.subscribe(
+                    `/topic/order-cancelled/${currentOrderIdStr}`,
+                    (message) => {
+                        try {
+                            const data = JSON.parse(message.body)
+                            console.log('🚫 [useOrderWebSocket] Nhận được event hủy đơn:', data)
+                             if (onStatusUpdate) {
+                                // Map to similar structure or handle explicitly
+                                onStatusUpdate({
+                                    ...data,
+                                    newStatus: 2, // Assuming 2 is Cancelled, or use reason
+                                    isCancelled: true
+                                })
+                            }
+                        } catch (error) {
+                            console.error('❌ [useOrderWebSocket] Lỗi parse message hủy:', error)
+                        }
+                    }
+                )
+                 console.log(`✅ [useOrderWebSocket] Đã subscribe vào /topic/order-cancelled/${currentOrderIdStr}`)
+            }
+
         } catch (error) {
             console.error('❌ [useOrderWebSocket] Lỗi khi subscribe:', error)
         }

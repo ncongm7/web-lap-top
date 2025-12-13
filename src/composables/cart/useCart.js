@@ -86,6 +86,15 @@ export function useCart() {
     router.push('/checkout')
   }
 
+  // Points methods
+  const applyPoints = (points, conversionRate, maxAllowed) => {
+    cartStore.applyPoints(points, conversionRate, maxAllowed)
+  }
+
+  const removePoints = () => {
+    cartStore.removePoints()
+  }
+
   // Helper: Lấy item theo ID
   const getItemById = (itemId) => {
     return cartItems.value.find((item) => item.id === itemId)
@@ -102,6 +111,13 @@ export function useCart() {
     return cartItems.value.length > 0 && cartItems.value.every((item) => item.selected)
   })
 
+  // Points state
+  const pointsUsed = computed(() => cartStore.pointsUsed)
+  const memberPoints = computed(() => cartStore.memberPoints)
+
+  // Points Actions
+  const setMemberPoints = (data) => cartStore.setMemberPoints(data)
+
   return {
     // State
     cartItems,
@@ -110,6 +126,8 @@ export function useCart() {
     subtotal,
     discount,
     pointsDiscount,
+    pointsUsed,
+    memberPoints,
     shippingFee,
     total,
     appliedVoucher,
@@ -128,6 +146,9 @@ export function useCart() {
     toggleSelectAll,
     clearCart,
     checkout,
+    applyPoints,
+    removePoints,
+    setMemberPoints,
 
     // Helpers
     getItemById,

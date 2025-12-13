@@ -262,18 +262,18 @@
     </div>
 
     <!-- Consultation Flow Modal -->
-    <ConsultationFlow
-      :show="showConsultationFlow"
-      @close="showConsultationFlow = false"
-      @complete="handleConsultationComplete"
-    />
+    <ConsultationFlow :show="showConsultationFlow" @close="showConsultationFlow = false"
+      @complete="handleConsultationComplete" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { chatService } from '@/service/customer/chatService'
 import { useAuthStore } from '@/stores/customer/authStore'
+import { useCartStore } from '@/stores/customer/cartStore'
+import { useToast } from 'vue-toastification'
 import ChatQuickReplies from './ChatQuickReplies.vue'
 import EmojiPicker from './EmojiPicker.vue'
 import ConsultationFlow from './ConsultationFlow.vue'
@@ -281,7 +281,10 @@ import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import heroIllustration from '@/assets/chat/assistant-hero.svg?url'
 
+const router = useRouter()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
+const toast = useToast()
 
 // State
 const isOpen = ref(false)
@@ -750,6 +753,198 @@ const handleTyping = () => {
   }, 1000)
 }
 
+// ========== CHATBOT ACTION HANDLERS ==========
+
+/**
+ * Handle Quick Reply Selection
+ */
+const handleQuickReplySelect = async (reply) => {
+  console.log('🎯 Quick reply selected:', reply)
+
+  // Handle ACTION type quick replies
+  if (reply.replyType === 'ACTION') {
+    await handleQuickReplyAction(reply.replyValue)
+  }
+
+  // For all types, send message to bot
+  newMessage.value = reply.replyText
+  await sendMessage()
+}
+
+/**
+ * Handle Quick Reply Actions
+ * Format: "action_type|parameter"
+ */
+const handleQuickReplyAction = async (replyValue) => {
+  const [action, param] = replyValue.split('|')
+
+  try {
+    switch (action) {
+      // ========== SALES ACTIONS ==========
+      case 'add_to_cart':
+        try {
+          // Get product to find first variant
+          const productResponse = await fetch(`http://localhost:8080/api/san-pham/${param}`)
+          const productData = await productResponse.json()
+
+          if (productData.data?.chiTietSanPhams?.length > 0) {
+            const firstVariant = productData.data.chiTietSanPhams[0]
+            await cartStore.addToCart(firstVariant.id, 1)
+            toast.success('✅ Đã thêm sản phẩm vào giỏ hàng!')
+          } else {
+            toast.error('Sản phẩm không có biến thể')
+          }
+        } catch (error) {
+          console.error('Error adding to cart:', error)
+          toast.error('Không thể thêm vào giỏ hàng')
+        }
+        break
+
+      case 'view_product':
+        router.push(`/products/${param}`)
+        closeChat()
+        break
+
+      // ========== ORDER ACTIONS ==========
+      case 'view_order':
+        router.push(`/orders/${param}`)
+        closeChat()
+        break
+
+      case 'pay_order':
+        router.push(`/checkout?orderId=${param}`)
+        closeChat()
+        break
+
+      case 'cancel_order':
+        if (confirm('Bạn có chắc muốn hủy đơn hàng?')) {
+          try {
+            await fetch(`http://localhost:8080/api/v1/customer/orders/${param}/cancel`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('customer_token')}`,
+                'Content-Type': 'application/json'
+              }
+            })
+            toast.success('Đơn hàng đã được hủy')
+            newMessage.value = 'Tôi đã hủy đơn hàng'
+            await sendMessage()
+          } catch (error) {
+            toast.error('Không thể hủy đơn hàng')
+          }
+        }
+        break
+
+      case 'review_order':
+        router.push(`/orders/${param}/review`)
+        closeChat()
+        break
+
+      // ========== WARRANTY ACTIONS ==========
+      case 'create_warranty':
+        router.push(`/warranty/create?serial=${param}`)
+        closeChat()
+        break
+
+      case 'warranty_history':
+        router.push(`/warranty/history?serial=${param}`)
+        closeChat()
+        break
+
+      // ========== ACCOUNT ACTIONS ==========
+      case 'login_redirect':
+        router.push('/login')
+        closeChat()
+        break
+
+      case 'register_redirect':
+        router.push('/register')
+        closeChat()
+        break
+
+      case 'profile_page':
+        router.push('/profile')
+        closeChat()
+        break
+
+      case 'change_password':
+        router.push('/profile?tab=security')
+        closeChat()
+        break
+
+      case 'manage_address':
+        router.push('/profile?tab=addresses')
+        closeChat()
+        break
+
+      case 'points_page':
+        router.push('/profile?tab=points')
+        closeChat()
+        break
+
+      // ========== SUPPORT ACTIONS ==========
+      case 'ESCALATE':
+        await requestHumanSupport()
+        break
+
+      default:
+        console.warn('Unknown action:', action)
+        newMessage.value = replyValue
+        await sendMessage()
+    }
+  } catch (error) {
+    console.error('Error handling action:', error)
+    toast.error('Có lỗi xảy ra')
+  }
+}
+
+/**
+ * Request Human Support
+ */
+const requestHumanSupport = async () => {
+  try {
+    newMessage.value = 'Tôi muốn nói chuyện với nhân viên'
+    await sendMessage()
+
+    if (conversationId.value) {
+      await fetch(`http://localhost:8080/api/chat/escalate/${conversationId.value}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('customer_token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+    }
+
+    toast.info('Đang kết nối với nhân viên...')
+    showEscalateButton.value = false
+  } catch (error) {
+    console.error('Error requesting support:', error)
+  }
+}
+
+/**
+ * Handle bot response with quick replies
+ */
+const handleBotResponse = (message) => {
+  messages.value.push(message)
+
+  // Update quick replies
+  if (message.quickReplies && Array.isArray(message.quickReplies)) {
+    currentQuickReplies.value = message.quickReplies
+  } else {
+    currentQuickReplies.value = []
+  }
+
+  // Update escalate button
+  if (message.shouldEscalate) {
+    showEscalateButton.value = true
+  }
+
+  nextTick(() => scrollToBottom())
+}
+
+
 const connectWebSocket = () => {
   if (stompClient && stompClient.connected) {
     wsConnectionStatus.value = 'connected'
@@ -1179,39 +1374,7 @@ watch(conversationId, (newConvId) => {
 
 // Lifecycle - moved to after toggleSound function
 
-// NEW: Bot functions
-const handleQuickReplySelect = (reply) => {
-  console.log('🎯 Quick reply selected:', reply)
 
-  if (reply.replyType === 'intent_trigger') {
-    // Trigger another intent
-    newMessage.value = reply.replyValue
-  } else if (reply.replyType === 'url') {
-    // Open URL
-    window.open(reply.replyValue, '_blank')
-    return
-  } else {
-    // Send as text message
-    newMessage.value = reply.replyValue || reply.replyText
-  }
-
-  // Clear quick replies after selection
-  currentQuickReplies.value = []
-
-  // Auto send
-  nextTick(() => {
-    sendMessage()
-  })
-}
-
-const requestHumanSupport = async () => {
-  if (!canSendMessage.value) return
-
-  newMessage.value = 'Tôi muốn nói chuyện với nhân viên'
-  await sendMessage()
-
-  showEscalateButton.value = false
-}
 
 const handleWelcomeOption = (topic) => {
   if (!topic) return
@@ -1225,7 +1388,7 @@ const startConsultation = () => {
 
 const handleConsultationComplete = async (data) => {
   showConsultationFlow.value = false
-  
+
   // Send consultation data to backend via WebSocket
   if (currentCustomerId.value && conversationId.value) {
     const messageData = {
@@ -1241,7 +1404,7 @@ const handleConsultationComplete = async (data) => {
         features: data.features
       }
     }
-    
+
     // Send via WebSocket if connected
     if (stompClient && stompClient.connected) {
       stompClient.publish({
@@ -1602,45 +1765,45 @@ onUnmounted(() => {
   text-align: left;
 }
 
-  .welcome-topic-card .topic-text span {
-    color: #6b7280;
-    font-size: 12px;
-  }
+.welcome-topic-card .topic-text span {
+  color: #6b7280;
+  font-size: 12px;
+}
 
-  .consultation-button-wrapper {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
-  }
+.consultation-button-wrapper {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
 
-  .consultation-btn {
-    width: 100%;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.3s;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  }
+.consultation-btn {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
 
-  .consultation-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  }
+.consultation-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
 
-  .consultation-btn i {
-    font-size: 18px;
-  }
+.consultation-btn i {
+  font-size: 18px;
+}
 
-  .topic-arrow {
+.topic-arrow {
   position: absolute;
   right: 10px;
   top: 50%;

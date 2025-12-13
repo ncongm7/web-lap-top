@@ -19,6 +19,17 @@
       <!-- Main Content -->
       <div v-else>
         <div v-if="step !== 3">
+          <!-- Selected Serial Hint -->
+          <div v-if="selectedSerial" class="alert alert-warning shadow-sm border-0 d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+            <div>
+              <strong>Bạn đang báo lỗi cho sản phẩm: {{ selectedSerial.tenSanPham }}</strong>
+              <br>
+              <span class="small">Serial: {{ selectedSerial.serialNo }}</span>
+              <div class="mt-1">Vui lòng chọn hóa đơn chứa sản phẩm này bên dưới để tiếp tục.</div>
+            </div>
+          </div>
+
           <!-- Order selection -->
           <div class="card">
             <div class="card-header">
@@ -57,24 +68,13 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr
-                        v-for="order in orders"
-                        :key="order.id"
-                        :class="{
-                          'table-active': isOrderSelected(order.id),
-                          'order-disabled': hasActiveWarranty(order.id),
-                        }"
-                        class="selectable-row"
-                        @click="handleOrderClick(order.id)"
-                      >
+                      <tr v-for="order in orders" :key="order.id" :class="{
+                        'table-active': isOrderSelected(order.id),
+                        'order-disabled': hasActiveWarranty(order.id),
+                      }" class="selectable-row" @click="handleOrderClick(order.id)">
                         <td>
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            :checked="isOrderSelected(order.id)"
-                            :disabled="hasActiveWarranty(order.id)"
-                            @click.stop="handleOrderClick(order.id)"
-                          />
+                          <input type="checkbox" class="form-check-input" :checked="isOrderSelected(order.id)"
+                            :disabled="hasActiveWarranty(order.id)" @click.stop="handleOrderClick(order.id)" />
                         </td>
                         <td class="fw-semibold">{{ order.ma }}</td>
                         <td>{{ formatDate(order.ngayTao) }}</td>
@@ -94,10 +94,7 @@
                   ✔ Hệ thống đang phân tích đơn hàng
                   <strong>{{ selectedOrderCode }}</strong> để đưa ra gợi ý phù hợp.
                 </p>
-                <div
-                  v-if="loadingCondition"
-                  class="alert alert-secondary mt-3 d-flex align-items-center gap-2"
-                >
+                <div v-if="loadingCondition" class="alert alert-secondary mt-3 d-flex align-items-center gap-2">
                   <span class="spinner-border spinner-border-sm" role="status"></span>
                   <span>Đang phân tích đơn hàng và kiểm tra điều kiện bảo hành...</span>
                 </div>
@@ -112,11 +109,7 @@
           <div class="card mt-4">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="mb-0">Điền form trả/bảo hành</h5>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @click="backToStep1"
-                v-if="selectedHoaDonId"
-              >
+              <button class="btn btn-sm btn-outline-secondary" @click="backToStep1" v-if="selectedHoaDonId">
                 Làm mới lựa chọn
               </button>
             </div>
@@ -134,14 +127,8 @@
                 </div>
               </div>
               <div v-else>
-                <WarrantyRequestForm
-                  :condition-info="conditionInfo"
-                  :form-data="formData"
-                  :loading="submitting"
-                  @submit="handleSubmit"
-                  @cancel="backToStep1"
-                  @update:form-data="updateFormData"
-                />
+                <WarrantyRequestForm :condition-info="conditionInfo" :form-data="formData" :loading="submitting"
+                  @submit="handleSubmit" @cancel="backToStep1" @update:form-data="updateFormData" />
               </div>
             </div>
           </div>
@@ -176,6 +163,13 @@ import { useAuthStore } from '@/stores/customer/authStore'
 import orderService from '@/service/customer/orderService'
 import baohanhService from '@/service/baohanh/baohanhService'
 import WarrantyRequestForm from './WarrantyRequestForm.vue'
+
+const props = defineProps({
+  selectedSerial: {
+    type: Object,
+    default: null
+  }
+})
 
 const authStore = useAuthStore()
 

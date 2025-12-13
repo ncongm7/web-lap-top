@@ -1,100 +1,85 @@
 <template>
-  <div class="cart-summary">
+  <div class="cart-summary-card">
     <h3 class="summary-title">Tổng quan đơn hàng</h3>
 
-    <!-- Points Info Card (if logged in) -->
-    <div v-if="availablePoints > 0 || pointsEarned > 0" class="points-info-card">
+    <!-- Points Info -->
+    <div v-if="memberPoints.available > 0 || pointsEarned > 0" class="points-info-card">
       <div class="points-header">
-        <div class="points-icon">⭐</div>
-        <div class="points-title">Điểm tích lũy</div>
+        <div class="points-icon">🎁</div>
+        <div class="points-title">Ưu đãi thành viên</div>
       </div>
-      <div v-if="availablePoints > 0" class="points-current">
-        <span class="points-label">Điểm hiện có:</span>
-        <span class="points-value">{{ formatPoints(availablePoints) }}</span>
+      
+      <div v-if="memberPoints.available > 0" class="points-row">
+        <span>Điểm hiện có:</span>
+        <span class="points-value">{{ formatPoints(memberPoints.available) }}</span>
       </div>
-      <div v-if="pointsEarned > 0" class="points-earned">
-        <span class="points-label">Sẽ nhận được:</span>
-        <span class="points-value earned">+{{ formatPoints(pointsEarned) }} điểm</span>
-        <span class="points-note">(Sau khi thanh toán thành công)</span>
+      
+      <div v-if="pointsEarned > 0" class="points-row earned">
+        <span>Tích lũy đơn này:</span>
+        <span class="points-value">
+          +{{ formatPoints(pointsEarned) }} điểm
+        </span>
       </div>
-      <div v-if="conversionRate > 0" class="points-rate">
-        <span class="rate-text">1 điểm = {{ formatPrice(conversionRate) }}</span>
+    </div>
+
+    <div class="summary-content">
+      <!-- Subtotal -->
+      <div class="summary-row">
+        <span class="label">Tạm tính:</span>
+        <span class="value">{{ formatPrice(subtotal) }}</span>
       </div>
-    </div>
 
-    <!-- Subtotal -->
-    <div class="summary-row">
-      <span class="summary-label">Tạm tính:</span>
-      <span class="summary-value">{{ formatPrice(subtotal) }}</span>
-    </div>
+      <!-- Discount -->
+      <div v-if="discount > 0" class="summary-row discount">
+        <span class="label">
+          Giảm giá
+          <span v-if="appliedVoucher" class="voucher-tag">{{ appliedVoucher.ma }}</span>
+        </span>
+        <span class="value">-{{ formatPrice(discount) }}</span>
+      </div>
 
-    <!-- Discount -->
-    <div v-if="discount > 0" class="summary-row discount-row">
-      <span class="summary-label">
-        Giảm giá:
-        <span v-if="appliedVoucher" class="voucher-code">({{ appliedVoucher.ma }})</span>
-      </span>
-      <span class="summary-value discount">-{{ formatPrice(discount) }}</span>
-    </div>
+      <!-- Points Discount -->
+      <div v-if="pointsDiscount > 0" class="summary-row points-discount">
+        <span class="label">
+          <span class="icon">💎</span> Điểm thưởng ({{ formatPoints(pointsUsed) }})
+        </span>
+        <span class="value">-{{ formatPrice(pointsDiscount) }}</span>
+      </div>
 
-    <!-- Points Discount -->
-    <div v-if="pointsDiscount > 0" class="summary-row discount-row points-discount-row">
-      <span class="summary-label">
-        <span class="points-discount-icon">💎</span>
-        Điểm đã sử dụng:
-        <span class="points-used-badge">{{ formatPoints(pointsUsed) }}</span>
-      </span>
-      <span class="summary-value discount">-{{ formatPrice(pointsDiscount) }}</span>
-    </div>
+      <!-- Shipping -->
+      <div class="summary-row">
+        <span class="label">Phí vận chuyển:</span>
+        <span class="value" :class="{ 'free': shippingFee === 0 }">
+          {{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}
+        </span>
+      </div>
 
-    <!-- Shipping -->
-    <div class="summary-row">
-      <span class="summary-label">Phí vận chuyển:</span>
-      <span class="summary-value free">
-        {{ shippingFee > 0 ? formatPrice(shippingFee) : 'Miễn phí' }}
-      </span>
-    </div>
+      <div class="divider"></div>
 
-    <div class="summary-divider"></div>
-
-    <!-- Total -->
-    <div class="summary-row total-row">
-      <span class="summary-label">Tổng cộng:</span>
-      <span class="summary-value total">{{ formatPrice(total) }}</span>
-    </div>
-
-    <!-- Selected Items Info -->
-    <div v-if="selectedCount > 0" class="selected-info">
-      <span class="selected-icon">✓</span>
-      Đã chọn {{ selectedCount }} sản phẩm
+      <!-- Total -->
+      <div class="summary-row total">
+        <span class="label">Tổng cộng:</span>
+        <div class="total-wrapper">
+           <span class="value">{{ formatPrice(total) }}</span>
+           <span class="vat-text">(Đã bao gồm VAT)</span>
+        </div>
+      </div>
     </div>
 
     <!-- Checkout Button -->
-    <button @click="checkout" class="checkout-btn" :disabled="!canCheckout || loading">
-      <span v-if="!loading">
-        <span class="btn-icon">🛒</span>
-        Tiến hành thanh toán
-      </span>
-      <span v-else>
-        <span class="spinner"></span>
-        Đang xử lý...
-      </span>
+    <button @click="handleCheckout" class="checkout-btn" :disabled="!canCheckout || loading">
+      <span v-if="loading" class="spinner"></span>
+      <span>{{ loading ? 'Đang xử lý...' : 'Tiến hành thanh toán' }}</span>
     </button>
-
-    <!-- Additional Info -->
-    <div class="additional-info">
-      <div class="info-item">
-        <span class="info-icon">🚚</span>
-        <span>Miễn phí vận chuyển cho đơn hàng trên 1.000.000đ</span>
-      </div>
-      <div class="info-item">
-        <span class="info-icon">💳</span>
-        <span>Hỗ trợ thanh toán khi nhận hàng</span>
-      </div>
-      <div class="info-item">
-        <span class="info-icon">🛡️</span>
-        <span>Bảo hành chính hãng</span>
-      </div>
+    
+    <!-- Policies -->
+    <div class="policies-list">
+       <div class="policy-item">
+         <span class="icon">🛡️</span> Bảo hành chính hãng
+       </div>
+       <div class="policy-item">
+         <span class="icon">🚚</span> Freeship đơn từ 1tr
+       </div>
     </div>
   </div>
 </template>
@@ -102,18 +87,13 @@
 <script setup>
 import { computed } from 'vue'
 import { useCart } from '@/composables/cart/useCart'
-import { useCartStore } from '@/stores/customer/cartStore'
-import { useAuthStore } from '@/stores/customer/authStore'
-import { ref, onMounted } from 'vue'
-import { tichDiemService } from '@/service/diem/tichDiemService'
-import { quyDoiDiemService } from '@/service/diem/quyDoiDiemService'
-import addressService from '@/service/customer/addressService'
 
-// Dùng composable thay vì props/emits
 const {
   subtotal,
   discount,
   pointsDiscount,
+  pointsUsed,
+  memberPoints,
   shippingFee,
   total,
   appliedVoucher,
@@ -122,86 +102,25 @@ const {
   checkout,
 } = useCart()
 
-const cartStore = useCartStore()
-const authStore = useAuthStore()
-
-// Points data
-const availablePoints = ref(0)
-const conversionRate = ref(0) // tienTieuDiem - để tính discount
-const pointsEarnedRate = ref(0) // tienTichDiem - để tính điểm sẽ được tích
+// Calculate points earned based on current cart total
 const pointsEarned = computed(() => {
-  if (pointsEarnedRate.value <= 0) return 0
-  // Tính điểm sẽ được tích dựa trên tổng tiền sau giảm (không tính phần đã dùng điểm)
-  const totalAfterDiscount = Math.max(0, subtotal.value - discount.value)
-  return Math.floor(totalAfterDiscount / pointsEarnedRate.value)
+  const rate = memberPoints.value?.earnedRate || 0
+  if (rate <= 0) return 0
+  
+  // Calculate based on total after discount (excluding points usage itself usually, but keeping logic consistent)
+  // Logic: Earn points on the amount effectively paid (subtotal - discount)
+  // If points are used, usually earn on the REMAINING amount.
+  // Using (subtotal - discount - pointsDiscount) is safer for business
+  // But let's stick to safe max(0, ...)
+  const paidAmount = Math.max(0, subtotal.value - discount.value - pointsDiscount.value)
+  return Math.floor(paidAmount / rate)
 })
 
-const pointsUsed = computed(() => cartStore.pointsUsed)
+const canCheckout = computed(() => selectedItems.value.length > 0 && total.value > 0)
 
-// Load points data
-const loadPointsData = async () => {
-  const customerId = authStore.getCustomerId()
-  if (!customerId) {
-    availablePoints.value = 0
-    return
-  }
-
-  try {
-    // Lấy thông tin khách hàng để có UUID
-    const customerInfo = await addressService.getCustomerById(customerId)
-    const khachHang = customerInfo?.data?.data || customerInfo?.data || customerInfo
-    const khachHangId = khachHang?.id || khachHang?.maKhachHang
-
-    if (!khachHangId) {
-      console.warn('⚠️ Không tìm thấy ID khách hàng cho userId:', customerId)
-      availablePoints.value = 0
-      return
-    }
-
-    // Load available points - backend sẽ tự động tạo ví điểm nếu chưa có
-    try {
-      const tichDiem = await tichDiemService.getTichDiemByUserId(khachHangId)
-      availablePoints.value = tichDiem?.tongDiem || 0
-    } catch (pointsError) {
-      console.warn('⚠️ Không thể tải điểm tích lũy (có thể chưa có ví điểm):', pointsError)
-      availablePoints.value = 0
-    }
-
-    // Load conversion rates
-    try {
-      const quyDoi = await quyDoiDiemService.getQuyDoiDiemDangHoatDong()
-      if (quyDoi) {
-        conversionRate.value = quyDoi.tienTieuDiem || 0 // Để tính discount
-        pointsEarnedRate.value = quyDoi.tienTichDiem || 0 // Để tính điểm sẽ được tích
-      } else {
-        // Không có quy đổi điểm đang hoạt động
-        console.warn('⚠️ Chưa có quy đổi điểm đang hoạt động trong hệ thống')
-        conversionRate.value = 0
-        pointsEarnedRate.value = 0
-      }
-    } catch (quyDoiError) {
-      console.warn('⚠️ Không thể tải thông tin quy đổi điểm:', quyDoiError)
-      conversionRate.value = 0
-      pointsEarnedRate.value = 0
-    }
-  } catch (error) {
-    console.error('❌ Lỗi khi tải thông tin điểm:', error)
-    // Set default values để không break UI
-    availablePoints.value = 0
-    conversionRate.value = 0
-    pointsEarnedRate.value = 0
-  }
+const handleCheckout = () => {
+  checkout()
 }
-
-onMounted(() => {
-  loadPointsData()
-})
-
-const selectedCount = computed(() => selectedItems.value.length)
-
-const canCheckout = computed(() => {
-  return selectedCount.value > 0 && total.value > 0
-})
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -216,28 +135,28 @@ const formatPoints = (points) => {
 </script>
 
 <style scoped>
-.cart-summary {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+.cart-summary-card {
+  background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 100px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .summary-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 20px 0;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
-/* Points Info Card */
+/* Points Card */
 .points-info-card {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #fbbf24;
-  border-radius: 10px;
+  background: linear-gradient(to right, #fffbeb, #fef3c7);
+  border: 1px solid #fde68a;
+  border-radius: 8px;
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -245,62 +164,39 @@ const formatPoints = (points) => {
 .points-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.points-icon {
-  font-size: 24px;
-  line-height: 1;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .points-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #92400e;
 }
 
-.points-current,
-.points-earned {
+.points-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.points-label {
   font-size: 13px;
   color: #78350f;
+  margin-bottom: 4px;
+}
+
+.points-row.earned {
+  color: #15803d;
   font-weight: 500;
+  border-top: 1px dashed #fcd34d;
+  padding-top: 4px;
+  margin-top: 4px;
 }
 
 .points-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #92400e;
+  font-weight: 600;
 }
 
-.points-value.earned {
-  color: #059669;
-}
-
-.points-note {
-  font-size: 11px;
-  color: #a16207;
-  font-style: italic;
-  margin-left: 8px;
-}
-
-.points-rate {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(146, 64, 14, 0.2);
-}
-
-.rate-text {
-  font-size: 12px;
-  color: #78350f;
-  font-weight: 500;
+/* Summary Rows */
+.summary-content {
+  margin-bottom: 24px;
 }
 
 .summary-row {
@@ -308,192 +204,132 @@ const formatPoints = (points) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-}
-
-.summary-label {
   font-size: 14px;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  color: #64748b;
 }
 
-.voucher-code {
+.summary-row .value {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.voucher-tag {
+  background: #ecfdf5;
+  color: #10b981;
+  padding: 2px 6px;
+  border-radius: 4px;
   font-size: 12px;
+  margin-left: 6px;
+}
+
+.summary-row.discount .value,
+.summary-row.points-discount .value {
   color: #10b981;
-  font-weight: 500;
 }
 
-.points-discount-icon {
-  font-size: 16px;
-}
-
-.points-used-badge {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.summary-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.summary-value.discount {
+.summary-row .value.free {
   color: #10b981;
   font-weight: 600;
 }
 
-.summary-value.free {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.points-discount-row {
-  background: #f0fdf4;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin: 8px 0;
-}
-
-.summary-divider {
+.divider {
   height: 1px;
-  background: #e5e7eb;
+  background: #e2e8f0;
   margin: 16px 0;
 }
 
-.total-row {
-  margin-bottom: 16px;
+.summary-row.total {
+  align-items: flex-start;
+  margin-bottom: 0;
 }
 
-.total-row .summary-label {
+.summary-row.total .label {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #0f172a;
 }
 
-.total-row .summary-value.total {
+.total-wrapper {
+  text-align: right;
+}
+
+.summary-row.total .value {
   font-size: 20px;
   font-weight: 700;
   color: #dc2626;
+  display: block;
 }
 
-.selected-info {
-  font-size: 13px;
-  color: #6b7280;
-  text-align: center;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px;
-  background: #f9fafb;
-  border-radius: 6px;
+.vat-text {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+  font-weight: 400;
 }
 
-.selected-icon {
-  color: #10b981;
-  font-weight: 600;
-}
-
+/* Checkout Button */
 .checkout-btn {
   width: 100%;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  border: none;
   padding: 14px;
+  background: #dc2626;
+  color: white;
+  border: none;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 16px;
+  transition: background 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
 .checkout-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
-  transform: translateY(-1px);
+  background: #b91c1c;
 }
 
 .checkout-btn:disabled {
-  background: #d1d5db;
+  background: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
 }
 
-.btn-icon {
-  font-size: 18px;
+/* Policies */
+.policies-list {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.policy-item {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .spinner {
-  display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #ffffff;
-  border-top-color: transparent;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.additional-info {
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
-}
-
-.info-item:last-child {
-  margin-bottom: 0;
-}
-
-.info-icon {
-  font-size: 14px;
-  flex-shrink: 0;
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 1024px) {
-  .cart-summary {
+  .cart-summary-card {
     position: static;
     margin-top: 20px;
-  }
-}
-
-@media (max-width: 640px) {
-  .points-info-card {
-    padding: 12px;
-  }
-
-  .points-title {
-    font-size: 14px;
-  }
-
-  .points-value {
-    font-size: 14px;
   }
 }
 </style>

@@ -3,21 +3,21 @@
     <!-- Nếu chưa đăng nhập -->
     <div v-if="!isLoggedIn" class="login-actions">
       <button ref="actionButtonRef" @click="toggleDropdown" class="action-btn">
-        <i class="icon">👤</i>
+        <i class="bi bi-person fs-4"></i>
         <span class="label">Tài khoản</span>
-        <span class="dropdown-icon-small">▼</span>
+        <span class="dropdown-icon-small"><i class="bi bi-caret-down-fill" style="font-size: 8px;"></i></span>
       </button>
 
       <!-- Dropdown khi chưa đăng nhập -->
       <transition name="dropdown">
-        <div ref="loggedOutDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu"
+        <div ref="loggedOutDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu shadow"
           @click.stop>
           <button @click="handleLoginClick" class="dropdown-item">
-            <i class="icon">🔐</i>
+            <i class="bi bi-box-arrow-in-right me-2 text-primary"></i>
             <span>Đăng nhập</span>
           </button>
           <button @click="handleRegisterClick" class="dropdown-item">
-            <i class="icon">📝</i>
+            <i class="bi bi-pencil-square me-2 text-info"></i>
             <span>Đăng ký</span>
           </button>
         </div>
@@ -28,18 +28,18 @@
     <div v-else class="user-actions">
       <button ref="userButtonRef" @click.stop="toggleDropdown" @mousedown.stop class="user-btn" type="button"
         style="position: relative; z-index: 1">
-        <div class="user-avatar">{{ displayName.charAt(0).toUpperCase() }}</div>
-        <span class="user-name">{{ displayName }}</span>
-        <span class="dropdown-icon">▼</span>
+        <div class="user-avatar shadow-sm">{{ displayName.charAt(0).toUpperCase() }}</div>
+        <span class="user-name d-none d-md-block">{{ displayName }}</span>
+        <i class="bi bi-caret-down-fill ms-1 text-muted" style="font-size: 10px;"></i>
       </button>
 
       <!-- Dropdown Menu khi đã đăng nhập -->
       <transition name="dropdown">
-        <div ref="loggedInDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu"
+        <div ref="loggedInDropdownRef" v-if="showDropdown" v-click-outside="closeDropdown" class="dropdown-menu shadow"
           @click.stop>
           <div class="dropdown-header">
             <div class="user-info">
-              <div class="user-avatar-large">{{ displayName.charAt(0).toUpperCase() }}</div>
+              <div class="user-avatar-large shadow-sm">{{ displayName.charAt(0).toUpperCase() }}</div>
               <div class="user-details">
                 <div class="user-name-display">{{ displayName }}</div>
                 <div class="user-email" v-if="userEmail">{{ userEmail }}</div>
@@ -48,34 +48,30 @@
           </div>
           <hr class="dropdown-divider" />
           <router-link to="/account/profile" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">👤</i>
+            <i class="bi bi-person-circle me-3 text-secondary"></i>
             <span>Tài khoản của tôi</span>
           </router-link>
 
           <router-link to="/orders" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">📦</i>
+            <i class="bi bi-box-seam me-3 text-secondary"></i>
             <span>Đơn hàng của tôi</span>
           </router-link>
 
           <router-link to="/account/addresses" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">📍</i>
+            <i class="bi bi-geo-alt me-3 text-secondary"></i>
             <span>Địa chỉ</span>
           </router-link>
           <router-link to="/account/warranty" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">🛡️</i>
+            <i class="bi bi-shield-check me-3 text-secondary"></i>
             <span>Bảo hành</span>
           </router-link>
-          <!-- <router-link to="/account/return-request" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">↩️</i>
-            <span>Trả hàng</span>
-          </router-link> -->
           <router-link to="/account/points" class="dropdown-item" @click="closeDropdown">
-            <i class="icon">⭐</i>
+            <i class="bi bi-star me-3 text-warning"></i>
             <span>Điểm tích lũy</span>
           </router-link>
           <hr class="dropdown-divider" />
           <button @click="handleLogout" class="dropdown-item logout-btn">
-            <i class="icon">🚪</i>
+            <i class="bi bi-box-arrow-right me-3"></i>
             <span>Đăng xuất</span>
           </button>
         </div>

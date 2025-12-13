@@ -78,11 +78,24 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useOrderWebSocket } from '@/composables/customer/useOrderWebSocket'
 
 const route = useRoute()
+const router = useRouter()
 const orderId = ref(null)
 const orderCode = ref(null)
+
+const handleStatusUpdate = (data) => {
+    // Check if order is cancelled (Status 8 is typically cancelled, or use isCancelled flag from our composable)
+    if (data.newStatus === 8 || data.isCancelled) {
+        alert('⚠️ Đơn hàng của bạn đã bị hủy (do hết hàng hoặc lý do khác).\n\nBạn sẽ được chuyển về trang chủ.')
+        router.push('/')
+    }
+}
+
+// WebSocket setup handled automatically when orderId is valid
+useOrderWebSocket(orderId, handleStatusUpdate)
 
 onMounted(() => {
     // Lấy orderId và orderCode từ query params

@@ -114,6 +114,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'payment-confirmed', 'retry', 'expired'])
 
 const router = useRouter()
+let autoRedirectTimer = null
 
 // Computed current step for checklist
 const computedCurrentStep = computed(() => {
@@ -155,8 +156,14 @@ const handleEscape = (e) => {
 // Emit payment confirmed event
 watch(() => props.status, (newStatus) => {
   if (newStatus === 'confirmed') {
-    // Emit event để parent component (CheckoutPage) xử lý redirect
+    // Emit event để parent component (CheckoutPage) xử lý redirect (nếu cần)
     emit('payment-confirmed', { orderId: props.orderId })
+    
+    // Auto redirect after 2s to show success message
+    if (autoRedirectTimer) clearTimeout(autoRedirectTimer)
+    autoRedirectTimer = setTimeout(() => {
+      viewOrder()
+    }, 2000)
   }
 })
 

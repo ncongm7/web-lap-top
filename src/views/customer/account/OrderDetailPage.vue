@@ -144,8 +144,28 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import orderService from '@/service/customer/orderService'
+import { useOrderWebSocket } from '@/composables/customer/useOrderWebSocket'
+import { useToast } from 'vue-toastification' // Assuming existing toast or use alert
 
 const route = useRoute()
+const toast = useToast() // Or generic alert
+
+const handleStatusUpdate = (data) => {
+  // Update local order status
+  if (order.value) {
+    // Check if cancelled
+    if (data.newStatus === 8 || data.isCancelled) {
+         order.value.trangThai = 'DA_HUY' // Or Enum
+         // Show alert
+         alert('⚠️ Đơn hàng đã bị hủy. Lý do: ' + (data.reason || 'Hết hàng'))
+    } else {
+         // Map numeric status back to string if needed, or just refresh
+         loadOrderDetail()
+    }
+  }
+}
+
+useOrderWebSocket(route.params.id, handleStatusUpdate)
 
 const order = ref(null)
 const loading = ref(false)

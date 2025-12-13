@@ -13,6 +13,11 @@ export const useCartStore = defineStore('cart', () => {
   // Points state
   const pointsUsed = ref(0)
   const pointsDiscount = ref(0)
+  const memberPoints = ref({
+    available: 0,
+    conversionRate: 0, // tienTieuDiem
+    earnedRate: 0 // tienTichDiem
+  })
 
   // Computed
   const cartItems = computed(() => cart.value?.items || [])
@@ -86,7 +91,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const appliedVoucher = computed(() => cart.value?.appliedVoucher || null)
 
-  const availablePoints = computed(() => cart.value?.availablePoints || 0)
+  const availablePoints = computed(() => memberPoints.value.available || cart.value?.availablePoints || 0)
 
   const hasItems = computed(() => cartItems.value.length > 0)
 
@@ -94,6 +99,38 @@ export const useCartStore = defineStore('cart', () => {
   const setPointsDiscount = (points, discountAmount) => {
     pointsUsed.value = points
     pointsDiscount.value = discountAmount
+  }
+
+  const setMemberPoints = ({ available, conversionRate, earnedRate }) => {
+    memberPoints.value = {
+      available: available || 0,
+      conversionRate: conversionRate || 0,
+      earnedRate: earnedRate || 0
+    }
+  }
+
+  /**
+   * Áp dụng điểm tích lũy
+   */
+  const applyPoints = (pointsToUse, conversionRate, maxAllowed) => {
+    if (pointsToUse <= 0) {
+      removePoints()
+      return
+    }
+
+    // Validate points
+    const actualPoints = Math.min(pointsToUse, maxAllowed)
+    const discountAmount = actualPoints * conversionRate
+
+    setPointsDiscount(actualPoints, discountAmount)
+  }
+
+  /**
+   * Hủy dùng điểm
+   */
+  const removePoints = () => {
+    pointsUsed.value = 0
+    pointsDiscount.value = 0
   }
 
   /**
@@ -104,7 +141,6 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
 
     try {
-      // TODO: Get khachHangId from auth store
       const khachHangId = getKhachHangId()
       if (!khachHangId) {
         cart.value = createEmptyCart()
@@ -115,6 +151,9 @@ export const useCartStore = defineStore('cart', () => {
       if (response.success) {
         // Preserve selected state khi fetch cart
         updateCartPreservingSelection(response.data)
+        
+        // Reset points if cart changes significantly (optional, but safer)
+        // For now, keep points if total allows, otherwise re-validate in component watcher
       } else {
         throw new Error(response.message || 'Không thể lấy giỏ hàng')
       }
@@ -153,8 +192,6 @@ export const useCartStore = defineStore('cart', () => {
         quantity: soLuong,
       })
 
-      // Assuming the service returns the updated cart directly
-      // And assuming the response structure from service is just the data
       if (response.success !== false && response.data) {
         // Preserve selected state khi thêm sản phẩm
         updateCartPreservingSelection(response.data)
@@ -163,34 +200,10 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       console.error('❌ Error adding to cart:', err)
-      console.error('❌ Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      })
-
-      // Parse error message từ nhiều nguồn
-      let errorMessage = 'Không thể thêm sản phẩm vào giỏ hàng'
-
-      if (err.response?.data) {
-        const errorData = err.response.data
-        // Nếu là ResponseObject với message
-        if (errorData.message) {
-          errorMessage = errorData.message
-        } else if (errorData.data?.message) {
-          errorMessage = errorData.data.message
-        }
-        // Nếu là validation error từ Spring
-        else if (Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.map((e) => e.defaultMessage || e.message).join(', ')
-        }
-      } else if (err.message) {
-        errorMessage = err.message
-      }
-
-      error.value = errorMessage
-      // Re-throw the error so the calling component knows about it
-      throw new Error(errorMessage)
+      // Error handling logic reused...
+      const errorMessage = parseErrorMessage(err)
+      error.value = errorMessage || 'Không thể thêm sản phẩm'
+      throw new Error(error.value)
     } finally {
       loading.value = false
     }
@@ -209,10 +222,10 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập')
       }
 
+      console.log('🔍 [cartStore] Updating cart item:', { itemId, quantity, khachHangId })
       const response = await cartService.updateCartItem(khachHangId, itemId, { quantity })
 
       if (response.success) {
-        // Preserve selected state khi cập nhật số lượng
         updateCartPreservingSelection(response.data)
         return { success: true }
       } else {
@@ -220,12 +233,15 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       console.error('❌ Error updating cart item:', err)
-      error.value = err.message || 'Không thể cập nhật'
+      console.error('❌ Error response:', err.response?.data)
+      error.value = parseErrorMessage(err) || 'Không thể cập nhật'
       return { success: false, message: error.value }
     } finally {
       loading.value = false
     }
   }
+
+  // ... (increaseQuantity, decreaseQuantity use updateCartItem)
 
   /**
    * Tăng số lượng sản phẩm
@@ -260,14 +276,10 @@ export const useCartStore = defineStore('cart', () => {
         throw new Error('Vui lòng đăng nhập')
       }
 
-      // Tìm item trước khi xóa để lấy ctspId
       const itemToDelete = cartItems.value.find((i) => i.id === itemId)
-      const ctspIdToDelete =
-        itemToDelete?.ctspId || itemToDelete?.idCtsp || itemToDelete?.chiTietSanPhamId
+      const ctspIdToDelete = itemToDelete?.ctspId || itemToDelete?.idCtsp || itemToDelete?.chiTietSanPhamId
 
-      // Preserve selected state khi xóa sản phẩm (trừ item bị xóa)
       const selectedStateMap = saveSelectedState()
-      // Xóa item bị xóa khỏi map (cả ID và ctspId)
       selectedStateMap.delete(`id:${itemId}`)
       if (ctspIdToDelete) {
         selectedStateMap.delete(`ctsp:${ctspIdToDelete}`)
@@ -277,7 +289,6 @@ export const useCartStore = defineStore('cart', () => {
 
       if (response.success) {
         cart.value = response.data
-        // Restore selected state (không restore item đã bị xóa)
         restoreSelectedState(selectedStateMap)
         return { success: true, message: 'Đã xóa sản phẩm khỏi giỏ hàng' }
       } else {
@@ -285,7 +296,7 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       console.error('❌ Error removing cart item:', err)
-      error.value = err.message || 'Không thể xóa sản phẩm'
+      error.value = parseErrorMessage(err) || 'Không thể xóa sản phẩm'
       return { success: false, message: error.value }
     } finally {
       loading.value = false
@@ -321,33 +332,14 @@ export const useCartStore = defineStore('cart', () => {
 
     try {
       const khachHangId = getKhachHangId()
-      if (!khachHangId) {
-        throw new Error('Vui lòng đăng nhập')
-      }
-
-      if (!voucherCode || !voucherCode.trim()) {
-        throw new Error('Vui lòng nhập mã giảm giá')
-      }
+      if (!khachHangId) throw new Error('Vui lòng đăng nhập')
+      if (!voucherCode?.trim()) throw new Error('Vui lòng nhập mã giảm giá')
 
       const response = await voucherService.applyVoucher(khachHangId, voucherCode.trim())
-      console.log('🔍 [cartStore] applyVoucher response:', response)
-
-      // Parse response structure: ResponseObject<VoucherApplyResponse>
-      // Structure: { success: true, data: VoucherApplyResponse, message: "..." }
-      // VoucherApplyResponse: { success: true/false, message: "...", discountAmount: ..., updatedCart: ... }
-
-      let voucherData = null
-      if (response?.data) {
-        // response.data là VoucherApplyResponse
-        voucherData = response.data
-      } else if (response) {
-        // Nếu response là VoucherApplyResponse trực tiếp
-        voucherData = response
-      }
-
+      
+      let voucherData = response?.data || response
+      
       if (voucherData && voucherData.success) {
-        // Cập nhật cart từ updatedCart trong response
-        // QUAN TRỌNG: Preserve selected state của các items
         if (voucherData.updatedCart) {
           updateCartPreservingSelection(voucherData.updatedCart)
         }
@@ -357,61 +349,12 @@ export const useCartStore = defineStore('cart', () => {
           discountAmount: voucherData.discountAmount || 0,
         }
       } else {
-        // Voucher không hợp lệ hoặc có lỗi
-        const errorMessage =
-          voucherData?.message || response?.message || 'Không thể áp dụng voucher'
+        const errorMessage = voucherData?.message || 'Không thể áp dụng voucher'
         throw new Error(errorMessage)
       }
     } catch (err) {
       console.error('❌ Error applying voucher:', err)
-      console.error('❌ Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        fullResponse: err.response,
-      })
-
-      // Parse error message từ nhiều nguồn
-      let errorMessage = 'Không thể áp dụng voucher'
-
-      if (err.response?.data) {
-        const errorData = err.response.data
-        console.log('🔍 Error data structure:', JSON.stringify(errorData, null, 2))
-
-        // 1. Nếu là ResponseObject với success = false (từ controller line 52)
-        // Structure: { success: false, data: VoucherApplyResponse, message: "..." }
-        if (errorData.data && typeof errorData.data === 'object') {
-          // errorData.data là VoucherApplyResponse
-          if (errorData.data.message) {
-            errorMessage = errorData.data.message
-          } else if (errorData.message) {
-            errorMessage = errorData.message
-          }
-        }
-        // 2. Nếu là ApiException từ GlobalExceptionHandler
-        // Structure: { status: "FAILED", code: "...", message: "..." }
-        else if (errorData.status === 'FAILED' && errorData.message) {
-          errorMessage = errorData.message
-        }
-        // 3. Nếu là validation error từ Spring (@Valid) - GlobalExceptionHandler
-        // Structure: { status: "FAILED", code: "VALIDATION_ERROR", errors: {...} }
-        else if (errorData.status === 'FAILED' && errorData.errors) {
-          const errorMessages = Object.values(errorData.errors)
-          errorMessage =
-            errorMessages.length > 0 ? errorMessages.join(', ') : 'Dữ liệu không hợp lệ'
-        }
-        // 4. Nếu là ResponseObject trực tiếp
-        else if (errorData.message) {
-          errorMessage = errorData.message
-        }
-        // 5. Fallback: lấy từ code hoặc error
-        else if (errorData.code || errorData.error) {
-          errorMessage = errorData.message || errorData.error || 'Lỗi từ server'
-        }
-      } else if (err.message) {
-        errorMessage = err.message
-      }
-
+      const errorMessage = parseErrorMessage(err)
       error.value = errorMessage
       return { success: false, message: errorMessage }
     } finally {
@@ -425,23 +368,17 @@ export const useCartStore = defineStore('cart', () => {
   const removeVoucher = async () => {
     if (!cart.value) return
 
-    // Lưu selected state hiện tại của các items
     const selectedStateMap = saveSelectedState()
 
-    // Cập nhật local state trước
     cart.value.appliedVoucher = null
     cart.value.discount = 0
     cart.value.total = cart.value.subtotal + cart.value.shippingFee
 
-    // Refresh cart từ backend để đồng bộ
     try {
       await fetchCart()
-
-      // Restore selected state sau khi fetch
       restoreSelectedState(selectedStateMap)
     } catch (err) {
       console.error('❌ Error refreshing cart after removing voucher:', err)
-      // Nếu refresh fail, vẫn giữ state local đã cập nhật
     }
   }
 
@@ -468,64 +405,48 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       console.error('❌ Error clearing cart:', err)
-      error.value = err.message || 'Không thể xóa giỏ hàng'
+      error.value = parseErrorMessage(err) || 'Không thể xóa giỏ hàng'
     } finally {
       loading.value = false
     }
   }
 
   // Helper Functions
-  /**
-   * Kiểm tra người dùng đã đăng nhập chưa
-   */
-  const isAuthenticated = () => {
-    return authService.isAuthenticated()
+  const isAuthenticated = () => authService.isAuthenticated()
+  const getKhachHangId = () => authService.getCustomerId()
+
+  // Helper to parse error messages (extracted for reuse)
+  const parseErrorMessage = (err) => {
+    if (err.response?.data) {
+      const data = err.response.data
+      if (data.data?.message) return data.data.message
+      if (data.message) return data.message
+      if (data.errors) return Object.values(data.errors).join(', ')
+    }
+    return err.message
   }
 
-  /**
-   * Lấy khách hàng ID từ auth service
-   */
-  const getKhachHangId = () => {
-    return authService.getCustomerId()
-  }
-
-  /**
-   * Lưu selected state của các items hiện tại
-   * Sử dụng cả ID và ctspId để matching chính xác hơn
-   */
   const saveSelectedState = () => {
     const selectedStateMap = new Map()
     if (cart.value?.items) {
       cart.value.items.forEach((item) => {
         if (item.selected) {
-          // Lưu theo ID (ưu tiên)
-          if (item.id) {
-            selectedStateMap.set(`id:${item.id}`, true)
-          }
-          // Lưu theo ctspId (fallback nếu ID thay đổi)
+          if (item.id) selectedStateMap.set(`id:${item.id}`, true)
           const ctspId = item.ctspId || item.idCtsp || item.chiTietSanPhamId
-          if (ctspId) {
-            selectedStateMap.set(`ctsp:${ctspId}`, true)
-          }
+          if (ctspId) selectedStateMap.set(`ctsp:${ctspId}`, true)
         }
       })
     }
     return selectedStateMap
   }
 
-  /**
-   * Restore selected state cho các items
-   * Match theo cả ID và ctspId để đảm bảo chính xác
-   */
   const restoreSelectedState = (selectedStateMap) => {
-    if (cart.value?.items && selectedStateMap && selectedStateMap.size > 0) {
+    if (cart.value?.items && selectedStateMap?.size > 0) {
       cart.value.items.forEach((item) => {
-        // Kiểm tra theo ID trước
         if (item.id && selectedStateMap.has(`id:${item.id}`)) {
           item.selected = true
           return
         }
-        // Fallback: kiểm tra theo ctspId
         const ctspId = item.ctspId || item.idCtsp || item.chiTietSanPhamId
         if (ctspId && selectedStateMap.has(`ctsp:${ctspId}`)) {
           item.selected = true
@@ -534,18 +455,12 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  /**
-   * Cập nhật cart và preserve selected state
-   */
   const updateCartPreservingSelection = (newCart) => {
     const selectedStateMap = saveSelectedState()
     cart.value = newCart
     restoreSelectedState(selectedStateMap)
   }
 
-  /**
-   * Tạo giỏ hàng trống
-   */
   const createEmptyCart = () => {
     return {
       id: null,
@@ -581,6 +496,8 @@ export const useCartStore = defineStore('cart', () => {
 
     // Actions
     setPointsDiscount,
+    applyPoints,
+    removePoints, // NEW
     fetchCart,
     addToCart,
     updateCartItem,
@@ -596,5 +513,13 @@ export const useCartStore = defineStore('cart', () => {
     // Helper
     isAuthenticated,
     getKhachHangId,
+
+    // Points
+    memberPoints,
+    pointsUsed,
+    pointsDiscount,
+    setMemberPoints,
+    applyPoints,
+    removePoints,
   }
 })
