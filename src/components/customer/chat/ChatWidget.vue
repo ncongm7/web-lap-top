@@ -11,10 +11,17 @@
           <small>Hỗ trợ nhanh trong giờ làm việc</small>
         </div>
       </div>
-      <button class="chat-button" type="button" aria-label="Mở chat" :class="{ 'has-unread': unreadCount > 0 }"
-        @click.stop="openChat">
+      <button
+        class="chat-button"
+        type="button"
+        aria-label="Mở chat"
+        :class="{ 'has-unread': unreadCount > 0 }"
+        @click.stop="openChat"
+      >
         <i class="bi bi-chat-dots-fill"></i>
-        <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+        <span v-if="unreadCount > 0" class="unread-badge">{{
+          unreadCount > 9 ? '9+' : unreadCount
+        }}</span>
       </button>
     </div>
 
@@ -32,22 +39,35 @@
           </div>
         </div>
         <div class="header-actions">
-          <button class="btn btn-sm btn-link" @click="toggleSound"
-            :title="soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'">
+          <button
+            class="btn btn-sm btn-link"
+            @click="toggleSound"
+            :title="soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'"
+          >
             <i :class="soundEnabled ? 'bi bi-volume-up' : 'bi bi-volume-mute'"></i>
           </button>
         </div>
         <div class="header-status">
           <!-- Connection status indicator -->
-          <div v-if="wsConnectionStatus === 'connected'" class="status-indicator connected" title="Đã kết nối">
+          <div
+            v-if="wsConnectionStatus === 'connected'"
+            class="status-indicator connected"
+            title="Đã kết nối"
+          >
             <i class="bi bi-circle-fill"></i>
           </div>
-          <div v-else-if="wsConnectionStatus === 'connecting'" class="status-indicator connecting"
-            title="Đang kết nối...">
+          <div
+            v-else-if="wsConnectionStatus === 'connecting'"
+            class="status-indicator connecting"
+            title="Đang kết nối..."
+          >
             <i class="bi bi-circle-fill"></i>
           </div>
-          <div v-else-if="wsConnectionStatus === 'reconnecting'" class="status-indicator reconnecting"
-            title="Đang kết nối lại...">
+          <div
+            v-else-if="wsConnectionStatus === 'reconnecting'"
+            class="status-indicator reconnecting"
+            title="Đang kết nối lại..."
+          >
             <i class="bi bi-arrow-clockwise"></i>
           </div>
           <div v-else class="status-indicator disconnected" title="Mất kết nối">
@@ -73,11 +93,18 @@
             <div class="welcome-intro">
               <span class="welcome-badge"><i class="bi bi-robot"></i> Trợ lý Dell AI</span>
               <h5>Xin chào {{ customerDisplayName }}!</h5>
-              <p>Hãy chọn nhanh một chủ đề bên dưới hoặc gõ câu hỏi của bạn, đội ngũ Dell sẽ hỗ trợ ngay.</p>
+              <p>
+                Hãy chọn nhanh một chủ đề bên dưới hoặc gõ câu hỏi của bạn, đội ngũ Dell sẽ hỗ trợ
+                ngay.
+              </p>
             </div>
             <div class="welcome-topic-grid">
-              <button v-for="topic in welcomeTopics" :key="topic.id" class="welcome-topic-card"
-                @click="handleWelcomeOption(topic)">
+              <button
+                v-for="topic in welcomeTopics"
+                :key="topic.id"
+                class="welcome-topic-card"
+                @click="handleWelcomeOption(topic)"
+              >
                 <i :class="topic.icon"></i>
                 <div class="topic-text">
                   <strong>{{ topic.title }}</strong>
@@ -95,8 +122,15 @@
           </div>
 
           <div v-else class="messages-list">
-            <div v-for="(message, index) in messages" :key="message.id" class="message-wrapper"
-              :class="{ 'message-customer': message.isFromCustomer, 'message-staff': !message.isFromCustomer }">
+            <div
+              v-for="(message, index) in messages"
+              :key="message.id"
+              class="message-wrapper"
+              :class="{
+                'message-customer': message.isFromCustomer,
+                'message-staff': !message.isFromCustomer,
+              }"
+            >
               <div v-if="shouldShowDateSeparator(message, index)" class="date-separator">
                 {{ formatDate(message.ngayPhanHoi) }}
               </div>
@@ -106,7 +140,11 @@
                   <i class="bi bi-robot"></i> Trợ lý tự động
                 </div>
 
-                <div v-if="message.replyTo" class="reply-preview" @click="scrollToMessage(message.replyToId)">
+                <div
+                  v-if="message.replyTo"
+                  class="reply-preview"
+                  @click="scrollToMessage(message.replyToId)"
+                >
                   <div class="reply-line"></div>
                   <div class="reply-content">
                     <strong>{{ message.replyTo.isFromCustomer ? 'Bạn' : 'Nhân viên' }}</strong>
@@ -115,10 +153,20 @@
                 </div>
 
                 <div class="message-content">
-                  <div v-if="message.messageType === 'image' && message.fileUrl" class="message-image">
-                    <img :src="message.fileUrl" alt="Image" @click="openImageModal(message.fileUrl)" />
+                  <div
+                    v-if="message.messageType === 'image' && message.fileUrl"
+                    class="message-image"
+                  >
+                    <img
+                      :src="message.fileUrl"
+                      alt="Image"
+                      @click="openImageModal(message.fileUrl)"
+                    />
                   </div>
-                  <div v-else-if="message.messageType === 'file' && message.fileUrl" class="message-file">
+                  <div
+                    v-else-if="message.messageType === 'file' && message.fileUrl"
+                    class="message-file"
+                  >
                     <a :href="message.fileUrl" target="_blank" class="file-link">
                       <i class="bi bi-file-earmark"></i>
                       <span>Tải file</span>
@@ -130,11 +178,20 @@
                   <div class="message-meta">
                     <span class="message-time">{{ formatMessageTime(message.ngayPhanHoi) }}</span>
                     <span v-if="message.isFromCustomer" class="read-indicator">
-                      <span v-if="message.status === 'sending'" class="status-sending" title="Đang gửi...">
+                      <span
+                        v-if="message.status === 'sending'"
+                        class="status-sending"
+                        title="Đang gửi..."
+                      >
                         <i class="bi bi-clock"></i>
                       </span>
-                      <span v-else-if="message.status === 'sent' || (!message.isRead && !message.status)"
-                        class="status-sent" title="Đã gửi">
+                      <span
+                        v-else-if="
+                          message.status === 'sent' || (!message.isRead && !message.status)
+                        "
+                        class="status-sent"
+                        title="Đã gửi"
+                      >
                         <i class="bi bi-check2"></i>
                       </span>
                       <span v-else-if="message.isRead" class="status-read" title="Đã đọc">
@@ -165,8 +222,11 @@
         </div>
 
         <!-- Quick Replies (ngoài messages-list) -->
-        <ChatQuickReplies v-if="currentQuickReplies.length > 0" :quick-replies="currentQuickReplies"
-          @select="handleQuickReplySelect" />
+        <ChatQuickReplies
+          v-if="currentQuickReplies.length > 0"
+          :quick-replies="currentQuickReplies"
+          @select="handleQuickReplySelect"
+        />
       </div>
 
       <!-- Escalate to human button -->
@@ -182,23 +242,30 @@
         <div class="file-preview-content">
           <div class="file-preview-header">
             <h6>Xem trước file</h6>
-            <button class="btn btn-sm btn-link" @click="filePreview = null; filePreviewUrl = null">
+            <button class="btn btn-sm btn-link" @click="closeFilePreview">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <div class="file-preview-body">
-            <img v-if="filePreviewType === 'image'" :src="filePreviewUrl" alt="Preview" class="preview-image" />
+            <img
+              v-if="filePreviewType === 'image'"
+              :src="filePreviewUrl"
+              alt="Preview"
+              class="preview-image"
+            />
             <div v-else class="preview-file">
-              <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
+              <i class="bi bi-file-earmark" style="font-size: 3rem"></i>
               <p>{{ filePreview.name }}</p>
               <p class="text-muted">{{ formatFileSize(filePreview.size) }}</p>
             </div>
           </div>
           <div class="file-preview-footer">
-            <button class="btn btn-secondary btn-sm" @click="filePreview = null; filePreviewUrl = null">
-              Hủy
-            </button>
-            <button class="btn btn-primary btn-sm" @click="sendFileMessage" :disabled="uploadingFile">
+            <button class="btn btn-secondary btn-sm" @click="closeFilePreview">Hủy</button>
+            <button
+              class="btn btn-primary btn-sm"
+              @click="sendFileMessage"
+              :disabled="uploadingFile"
+            >
               <span v-if="uploadingFile" class="spinner-border spinner-border-sm"></span>
               <span v-else>Gửi</span>
             </button>
@@ -227,27 +294,54 @@
         </div>
 
         <div class="input-group">
-          <button class="btn btn-outline-secondary btn-sm" @click="showEmojiPicker = !showEmojiPicker" title="Emoji">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="showEmojiPicker = !showEmojiPicker"
+            title="Emoji"
+          >
             <i class="bi bi-emoji-smile"></i>
           </button>
-          <button class="btn btn-outline-secondary btn-sm" @click="triggerFileUpload" title="Gửi file"
-            :disabled="uploadingFile">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="triggerFileUpload"
+            title="Gửi file"
+            :disabled="uploadingFile"
+          >
             <i class="bi bi-paperclip"></i>
           </button>
-          <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*,.pdf,.doc,.docx"
-            style="display: none" />
-          <textarea class="form-control" v-model="newMessage" @keydown.enter.exact.prevent="handleEnterKey"
-            @keydown.enter.shift.exact="newMessage += '\n'" @input="handleTyping" placeholder="Nhập tin nhắn..."
-            rows="1" ref="messageInput"></textarea>
-          <button class="btn btn-primary btn-sm" @click="sendMessage"
-            :disabled="!canSendMessage || isSending || uploadingFile">
+          <input
+            type="file"
+            ref="fileInput"
+            @change="handleFileSelect"
+            accept="image/*,.pdf,.doc,.docx"
+            style="display: none"
+          />
+          <textarea
+            class="form-control"
+            v-model="newMessage"
+            @keydown.enter.exact.prevent="handleEnterKey"
+            @keydown.enter.shift.exact="newMessage += '\n'"
+            @input="handleTyping"
+            placeholder="Nhập tin nhắn..."
+            rows="1"
+            ref="messageInput"
+          ></textarea>
+          <button
+            class="btn btn-primary btn-sm"
+            @click="sendMessage"
+            :disabled="!canSendMessage || isSending || uploadingFile"
+          >
             <span v-if="isSending" class="spinner-border spinner-border-sm"></span>
             <i v-else class="bi bi-send"></i>
           </button>
         </div>
 
         <!-- Emoji Picker -->
-        <EmojiPicker :is-open="showEmojiPicker" @select="insertEmoji" @close="showEmojiPicker = false" />
+        <EmojiPicker
+          :is-open="showEmojiPicker"
+          @select="insertEmoji"
+          @close="showEmojiPicker = false"
+        />
       </div>
     </div>
 
@@ -262,8 +356,11 @@
     </div>
 
     <!-- Consultation Flow Modal -->
-    <ConsultationFlow :show="showConsultationFlow" @close="showConsultationFlow = false"
-      @complete="handleConsultationComplete" />
+    <ConsultationFlow
+      :show="showConsultationFlow"
+      @close="showConsultationFlow = false"
+      @complete="handleConsultationComplete"
+    />
   </div>
 </template>
 
@@ -310,6 +407,11 @@ const soundEnabled = ref(true)
 const audioContext = ref(null)
 const showEmojiPicker = ref(false)
 
+// Escalation state
+const escalationMode = ref('BOT') // 'BOT' | 'HUMAN'
+const canReturnToBot = ref(false)
+const assignedStaffName = ref(null)
+
 // NEW: Bot features
 const currentQuickReplies = ref([])
 const showEscalateButton = ref(false)
@@ -326,29 +428,29 @@ const defaultQuickReplies = [
     replyText: 'Tra cứu đơn hàng',
     replyValue: 'Tra cứu đơn hàng',
     replyType: 'intent_trigger',
-    icon: 'bi bi-box-seam'
+    icon: 'bi bi-box-seam',
   },
   {
     id: 'quick-warranty',
     replyText: 'Kiểm tra bảo hành',
     replyValue: 'Chính sách bảo hành',
     replyType: 'intent_trigger',
-    icon: 'bi bi-shield-check'
+    icon: 'bi bi-shield-check',
   },
   {
     id: 'quick-promotion',
     replyText: 'Ưu đãi hiện có',
     replyValue: 'Khuyến mãi hiện tại',
     replyType: 'intent_trigger',
-    icon: 'bi bi-stars'
+    icon: 'bi bi-stars',
   },
   {
     id: 'quick-installment',
     replyText: 'Tư vấn trả góp',
     replyValue: 'Trả góp 0%',
     replyType: 'intent_trigger',
-    icon: 'bi bi-credit-card-2-front'
-  }
+    icon: 'bi bi-credit-card-2-front',
+  },
 ]
 
 const welcomeTopics = [
@@ -359,7 +461,7 @@ const welcomeTopics = [
     replyText: 'Tra cứu đơn hàng',
     replyValue: 'Tra cứu đơn hàng',
     replyType: 'intent_trigger',
-    icon: 'bi bi-truck'
+    icon: 'bi bi-truck',
   },
   {
     id: 'welcome-consult',
@@ -368,7 +470,7 @@ const welcomeTopics = [
     replyText: 'Tư vấn chọn laptop',
     replyValue: 'Tư vấn chọn laptop',
     replyType: 'intent_trigger',
-    icon: 'bi bi-cpu'
+    icon: 'bi bi-cpu',
   },
   {
     id: 'welcome-warranty',
@@ -377,7 +479,7 @@ const welcomeTopics = [
     replyText: 'Chính sách bảo hành',
     replyValue: 'Chính sách bảo hành',
     replyType: 'intent_trigger',
-    icon: 'bi bi-shield-lock'
+    icon: 'bi bi-shield-lock',
   },
   {
     id: 'welcome-promo',
@@ -386,8 +488,8 @@ const welcomeTopics = [
     replyText: 'Khuyến mãi hiện tại',
     replyValue: 'Khuyến mãi hiện tại',
     replyType: 'intent_trigger',
-    icon: 'bi bi-gift'
-  }
+    icon: 'bi bi-gift',
+  },
 ]
 
 // WebSocket
@@ -404,7 +506,8 @@ const canSendMessage = computed(() => {
 
 const currentCustomerId = computed(() => {
   // Sử dụng customerId từ computed property hoặc từ user
-  const userId = authStore.customerId ||
+  const userId =
+    authStore.customerId ||
     authStore.user?.userId ||
     authStore.user?.id ||
     authStore.user?.user_id ||
@@ -416,7 +519,7 @@ const currentCustomerId = computed(() => {
     console.warn('Không tìm thấy customer ID trong authStore:', {
       customerId: authStore.customerId,
       user: authStore.user,
-      localStorage: localStorage.getItem('customer_id')
+      localStorage: localStorage.getItem('customer_id'),
     })
   }
 
@@ -442,12 +545,21 @@ const openChat = async () => {
   isOpen.value = true
 
   // Kết nối WebSocket trước (quan trọng để tin nhắn hiển thị ngay)
-  if (!stompClient || !stompClient.connected) {
+  if (stompClient && stompClient.connected) {
+    // Already connected, do nothing
+  } else if (wsConnectionStatus.value === 'connecting') {
+    // Already connecting, wait
+    let waitCount = 0
+    while (wsConnectionStatus.value === 'connecting' && waitCount < 50) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      waitCount++
+    }
+  } else {
     connectWebSocket()
     // Đợi WebSocket kết nối (tối đa 5 giây)
     let waitCount = 0
     while ((!stompClient || !stompClient.connected) && waitCount < 50) {
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 100))
       waitCount++
     }
   }
@@ -562,11 +674,16 @@ const sendMessage = async () => {
       conversationId: conversationId.value || null, // null nếu là tin nhắn đầu tiên
       messageType: 'text',
       isFromCustomer: true, // Đảm bảo là boolean, không phải undefined
-      replyToId: replyingTo.value?.id || null
+      replyToId: replyingTo.value?.id || null,
     }
 
     console.log('Gửi tin nhắn với data:', messageData)
-    console.log('Customer ID type:', typeof currentCustomerId.value, 'Value:', currentCustomerId.value)
+    console.log(
+      'Customer ID type:',
+      typeof currentCustomerId.value,
+      'Value:',
+      currentCustomerId.value,
+    )
 
     // CHỈ gửi qua WebSocket nếu đã kết nối, nếu không thì dùng REST API
     // KHÔNG gửi cả 2 để tránh duplicate
@@ -583,7 +700,7 @@ const sendMessage = async () => {
         replyToId: replyingTo.value?.id || null,
         replyTo: replyingTo.value || null,
         status: 'sending', // Mark as sending
-        isRead: false
+        isRead: false,
       }
       messages.value.push(optimisticMessage)
       await nextTick()
@@ -593,7 +710,7 @@ const sendMessage = async () => {
       // WebSocket sẽ lưu vào DB và broadcast, không cần gọi REST API nữa
       stompClient.publish({
         destination: '/app/chat.send',
-        body: JSON.stringify(messageData)
+        body: JSON.stringify(messageData),
       })
 
       // Clear input ngay
@@ -613,11 +730,12 @@ const sendMessage = async () => {
           status: error.response?.status,
           statusText: error.response?.statusText,
           errors: error.response?.data?.errors,
-          code: error.response?.data?.code
+          code: error.response?.data?.code,
         })
 
         // Hiển thị lỗi cụ thể cho user
-        const errorMessage = error.response?.data?.message ||
+        const errorMessage =
+          error.response?.data?.message ||
           error.response?.data?.errors?.[Object.keys(error.response?.data?.errors || {})[0]] ||
           'Không thể gửi tin nhắn. Vui lòng thử lại.'
         alert(errorMessage)
@@ -633,7 +751,7 @@ const sendMessage = async () => {
           // Đợi kết nối (tối đa 5 giây)
           let waitCount = 0
           while ((!stompClient || !stompClient.connected) && waitCount < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise((resolve) => setTimeout(resolve, 100))
             waitCount++
           }
         }
@@ -645,7 +763,7 @@ const sendMessage = async () => {
         connectWebSocket()
         let waitCount = 0
         while ((!stompClient || !stompClient.connected) && waitCount < 50) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+          await new Promise((resolve) => setTimeout(resolve, 100))
           waitCount++
         }
         if (stompClient && stompClient.connected) {
@@ -660,24 +778,32 @@ const sendMessage = async () => {
           response.data.status = response.data.isRead ? 'read' : 'sent'
         }
 
-        // Kiểm tra duplicate trước khi thêm
-        const existingIndex = messages.value.findIndex(m =>
-          m.id === response.data.id ||
-          (m.noiDung === response.data.noiDung &&
-            m.isFromCustomer === response.data.isFromCustomer &&
-            m.ngayPhanHoi && response.data.ngayPhanHoi &&
-            Math.abs(new Date(m.ngayPhanHoi) - new Date(response.data.ngayPhanHoi)) < 1000)
-        )
+        // Sử dụng tempId để tìm tin nhắn optimistic (chính xác hơn)
+        const optimisticIndex = messages.value.findIndex((m) => m.id === tempId)
 
-        if (existingIndex === -1) {
-          messages.value.push(response.data)
-          await nextTick()
-          scrollToBottom()
+        if (optimisticIndex !== -1) {
+          // Update existing optimistic message
+          console.log('🔄 Cập nhật optimistic message với ID thật:', response.data.id)
+          messages.value[optimisticIndex] = response.data
         } else {
-          // Nếu đã có, cập nhật message
-          messages.value[existingIndex] = response.data
-          await nextTick()
-          scrollToBottom()
+          // Fallback check (nếu không tìm thấy tempId)
+          const existingIndex = messages.value.findIndex(
+            (m) =>
+              m.id === response.data.id ||
+              (m.noiDung === response.data.noiDung &&
+                m.isFromCustomer === response.data.isFromCustomer &&
+                m.ngayPhanHoi &&
+                response.data.ngayPhanHoi &&
+                Math.abs(new Date(m.ngayPhanHoi) - new Date(response.data.ngayPhanHoi)) < 5000),
+          )
+
+          if (existingIndex === -1) {
+            messages.value.push(response.data)
+            await nextTick()
+            scrollToBottom()
+          } else {
+            messages.value[existingIndex] = response.data
+          }
         }
       } else {
         // Reload messages nếu không có data
@@ -729,8 +855,8 @@ const handleTyping = () => {
         conversationId: conversationId.value,
         userId: currentCustomerId.value,
         userName: authStore.user?.hoTen || 'Khách hàng',
-        isTyping: true
-      })
+        isTyping: true,
+      }),
     })
   }
 
@@ -746,8 +872,8 @@ const handleTyping = () => {
           conversationId: conversationId.value,
           userId: currentCustomerId.value,
           userName: authStore.user?.hoTen || 'Khách hàng',
-          isTyping: false
-        })
+          isTyping: false,
+        }),
       })
     }
   }, 1000)
@@ -822,9 +948,9 @@ const handleQuickReplyAction = async (replyValue) => {
             await fetch(`http://localhost:8080/api/v1/customer/orders/${param}/cancel`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('customer_token')}`,
-                'Content-Type': 'application/json'
-              }
+                Authorization: `Bearer ${localStorage.getItem('customer_token')}`,
+                'Content-Type': 'application/json',
+              },
             })
             toast.success('Đơn hàng đã được hủy')
             newMessage.value = 'Tôi đã hủy đơn hàng'
@@ -910,9 +1036,9 @@ const requestHumanSupport = async () => {
       await fetch(`http://localhost:8080/api/chat/escalate/${conversationId.value}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('customer_token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('customer_token')}`,
+          'Content-Type': 'application/json',
+        },
       })
     }
 
@@ -943,7 +1069,6 @@ const handleBotResponse = (message) => {
 
   nextTick(() => scrollToBottom())
 }
-
 
 const connectWebSocket = () => {
   if (stompClient && stompClient.connected) {
@@ -994,7 +1119,7 @@ const connectWebSocket = () => {
       console.error('❌ WebSocket connection error:', event)
       wsConnectionStatus.value = 'disconnected'
       handleReconnect()
-    }
+    },
   })
 
   stompClient.activate()
@@ -1023,7 +1148,9 @@ const handleReconnect = () => {
   // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
   const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.value - 1), 30000)
 
-  console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${maxReconnectAttempts})`)
+  console.log(
+    `🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${maxReconnectAttempts})`,
+  )
 
   reconnectTimer = setTimeout(() => {
     connectWebSocket()
@@ -1035,8 +1162,12 @@ const subscribeToConversation = (convId) => {
 
   // Unsubscribe trước nếu đã subscribe để tránh duplicate subscription
   const existingSubs = Object.keys(stompClient.subscriptions || {})
-  existingSubs.forEach(subId => {
-    if (subId.includes(`conversation/${convId}`) && !subId.includes('/typing') && !subId.includes('/read')) {
+  existingSubs.forEach((subId) => {
+    if (
+      subId.includes(`conversation/${convId}`) &&
+      !subId.includes('/typing') &&
+      !subId.includes('/read')
+    ) {
       stompClient.unsubscribe(subId)
       console.log('🔌 Unsubscribed old subscription:', subId)
     }
@@ -1047,14 +1178,25 @@ const subscribeToConversation = (convId) => {
     try {
       const newMsg = JSON.parse(message.body)
 
+      // 🔍 DEBUG: Log ALL incoming messages
+      console.log('📨 [ChatWidget] Received WebSocket message:', {
+        id: newMsg.id,
+        from: newMsg.isFromCustomer ? 'CUSTOMER' : 'STAFF',
+        content: newMsg.noiDung?.substring(0, 50),
+        conversationId: newMsg.conversationId,
+        timestamp: newMsg.ngayPhanHoi,
+      })
+
       // Xóa optimistic message (temp message) nếu có - ưu tiên xóa temp message trước
-      const tempIndex = messages.value.findIndex(m =>
-        (m.id && m.id.toString().startsWith('temp-')) ||
-        (m.noiDung === newMsg.noiDung &&
-          m.isFromCustomer === newMsg.isFromCustomer &&
-          !m.id &&
-          m.ngayPhanHoi && newMsg.ngayPhanHoi &&
-          Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi)) < 3000)
+      const tempIndex = messages.value.findIndex(
+        (m) =>
+          (m.id && m.id.toString().startsWith('temp-')) ||
+          (m.noiDung === newMsg.noiDung &&
+            m.isFromCustomer === newMsg.isFromCustomer &&
+            !m.id &&
+            m.ngayPhanHoi &&
+            newMsg.ngayPhanHoi &&
+            Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi)) < 3000),
       )
       if (tempIndex > -1) {
         console.log('🗑️ Xóa optimistic message:', tempIndex, messages.value[tempIndex])
@@ -1062,18 +1204,22 @@ const subscribeToConversation = (convId) => {
       }
 
       // KIỂM TRA DUPLICATE CHẶT CHẼ: cả ID và nội dung + thời gian
-      const existingIndex = messages.value.findIndex(m => {
+      const existingIndex = messages.value.findIndex((m) => {
         // Kiểm tra theo ID (chính xác nhất) - bỏ qua temp messages
         if (m.id && newMsg.id && !m.id.toString().startsWith('temp-') && m.id === newMsg.id) {
           return true
         }
         // Kiểm tra theo nội dung + người gửi + thời gian (trong vòng 3 giây)
-        if (m.noiDung === newMsg.noiDung &&
+        if (
+          m.noiDung === newMsg.noiDung &&
           m.isFromCustomer === newMsg.isFromCustomer &&
-          m.ngayPhanHoi && newMsg.ngayPhanHoi &&
-          !m.id?.toString().startsWith('temp-')) {
+          m.ngayPhanHoi &&
+          newMsg.ngayPhanHoi &&
+          !m.id?.toString().startsWith('temp-')
+        ) {
           const timeDiff = Math.abs(new Date(m.ngayPhanHoi) - new Date(newMsg.ngayPhanHoi))
-          if (timeDiff < 3000) { // Cùng thời gian (3 giây)
+          if (timeDiff < 3000) {
+            // Cùng thời gian (3 giây)
             return true
           }
         }
@@ -1095,7 +1241,7 @@ const subscribeToConversation = (convId) => {
         console.log('⚠️ Duplicate message detected, updating existing:', {
           existingId: messages.value[existingIndex].id,
           newId: newMsg.id,
-          content: newMsg.noiDung
+          content: newMsg.noiDung,
         })
         messages.value[existingIndex] = newMsg
         nextTick(() => scrollToBottom())
@@ -1169,7 +1315,12 @@ const formatDate = (date) => {
 
   if (d.toDateString() === today.toDateString()) return 'Hôm nay'
   if (d.toDateString() === yesterday.toDateString()) return 'Hôm qua'
-  return d.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  return d.toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 const formatMessageTime = (date) => {
@@ -1189,7 +1340,7 @@ const formatFileSize = (bytes) => {
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
 
 const shouldShowDateSeparator = (message, index) => {
@@ -1221,13 +1372,18 @@ const handleFileSelect = async (event) => {
 
   // Validate file type
   const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-  const allowedFileTypes = ['application/pdf', 'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  const allowedFileTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ]
   const isImage = allowedImageTypes.includes(file.type)
   const isAllowedFile = isImage || allowedFileTypes.includes(file.type)
 
   if (!isAllowedFile) {
-    alert('Loại file không được hỗ trợ. Chỉ chấp nhận: ảnh (JPG, PNG, GIF, WEBP) hoặc tài liệu (PDF, DOC, DOCX)')
+    alert(
+      'Loại file không được hỗ trợ. Chỉ chấp nhận: ảnh (JPG, PNG, GIF, WEBP) hoặc tài liệu (PDF, DOC, DOCX)',
+    )
     return
   }
 
@@ -1255,10 +1411,72 @@ const handleFileSelect = async (event) => {
   }
 }
 
+const insertEmoji = (emoji) => {
+  newMessage.value += emoji
+}
+
 const showFilePreview = (file, previewUrl, isImage) => {
   filePreview.value = file
   filePreviewUrl.value = previewUrl
   filePreviewType.value = isImage ? 'image' : 'file'
+  filePreview.value = null
+  filePreviewUrl.value = null
+  // Clear file input if exists
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+// Escalation methods
+const fetchEscalationStatus = async () => {
+  if (!conversationId.value) return
+
+  try {
+    const status = await chatService.getEscalationStatus(conversationId.value)
+    escalationMode.value = status.mode || 'BOT'
+    canReturnToBot.value = status.canReturnToBot || false
+    assignedStaffName.value = status.assignedStaffName || null
+  } catch (error) {
+    console.error('Failed to fetch escalation status:', error)
+  }
+}
+
+const escalateToHuman = async () => {
+  if (!conversationId.value) return
+
+  try {
+    await chatService.escalateToHuman(conversationId.value)
+    escalationMode.value = 'HUMAN'
+
+    messages.value.push({
+      id: 'system-' + Date.now(),
+      noiDung: '🔔 Bạn đã kết nối với nhân viên hỗ trợ. Vui lòng đợi trong giây lát...',
+      messageType: 'system',
+      ngayPhanHoi: new Date().toISOString(),
+    })
+    scrollToBottom()
+  } catch (error) {
+    console.error('Escalation error:', error)
+  }
+}
+
+const returnToBot = async () => {
+  if (!conversationId.value) return
+
+  try {
+    await chatService.returnToBot(conversationId.value)
+    escalationMode.value = 'BOT'
+
+    messages.value.push({
+      id: 'system-' + Date.now(),
+      noiDung: '🤖 Bạn đã quay lại chế độ tư vấn AI. Hãy hỏi mình bất cứ điều gì!',
+      messageType: 'system',
+      ngayPhanHoi: new Date().toISOString(),
+    })
+    scrollToBottom()
+  } catch (error) {
+    console.error('Return to bot error:', error)
+  }
 }
 
 const uploadFile = async (file) => {
@@ -1281,7 +1499,7 @@ const uploadFile = async (file) => {
 
     const response = await fetch('http://localhost:8080/api/chat/upload', {
       method: 'POST',
-      body: formData
+      body: formData,
     })
 
     clearInterval(progressInterval)
@@ -1303,14 +1521,14 @@ const uploadFile = async (file) => {
       conversationId: conversationId.value || null,
       messageType: fileData.messageType || 'file',
       isFromCustomer: true,
-      fileUrl: fileData.fileUrl
+      fileUrl: fileData.fileUrl,
     }
 
     // Send via WebSocket or REST API
     if (stompClient && stompClient.connected) {
       stompClient.publish({
         destination: '/app/chat.send',
-        body: JSON.stringify(messageData)
+        body: JSON.stringify(messageData),
       })
     } else {
       await chatService.sendMessage(messageData)
@@ -1320,7 +1538,6 @@ const uploadFile = async (file) => {
     filePreview.value = null
     filePreviewUrl.value = null
     filePreviewType.value = null
-
   } catch (error) {
     console.error('Error uploading file:', error)
     alert('Lỗi khi upload file: ' + error.message)
@@ -1351,19 +1568,22 @@ const scrollToMessage = (messageId) => {
 }
 
 // Watch auth changes
-watch(() => authStore.isAuthenticated, (isAuth) => {
-  if (isAuth) {
-    loadUnreadCount()
-    // Reset conversationId khi đăng nhập lại
-    conversationId.value = null
-  } else {
-    unreadCount.value = 0
-    conversationId.value = null
-    if (isOpen.value) {
-      closeChat()
+watch(
+  () => authStore.isAuthenticated,
+  (isAuth) => {
+    if (isAuth) {
+      loadUnreadCount()
+      // Reset conversationId khi đăng nhập lại
+      conversationId.value = null
+    } else {
+      unreadCount.value = 0
+      conversationId.value = null
+      if (isOpen.value) {
+        closeChat()
+      }
     }
-  }
-})
+  },
+)
 
 // Watch conversationId để subscribe khi có conversation mới
 watch(conversationId, (newConvId) => {
@@ -1373,8 +1593,6 @@ watch(conversationId, (newConvId) => {
 })
 
 // Lifecycle - moved to after toggleSound function
-
-
 
 const handleWelcomeOption = (topic) => {
   if (!topic) return
@@ -1401,15 +1619,15 @@ const handleConsultationComplete = async (data) => {
       consultationData: {
         purposes: data.purposes,
         budget: data.budget,
-        features: data.features
-      }
+        features: data.features,
+      },
     }
 
     // Send via WebSocket if connected
     if (stompClient && stompClient.connected) {
       stompClient.publish({
         destination: '/app/chat.send',
-        body: JSON.stringify(messageData)
+        body: JSON.stringify(messageData),
       })
     } else {
       // Fallback to REST API
@@ -1431,12 +1649,16 @@ const applyWelcomeStateIfNeeded = () => {
 
   const lastMessage = messages.value[messages.value.length - 1]
 
-  if (lastMessage?.isBotMessage && lastMessage.quickReplies && lastMessage.quickReplies.length > 0) {
+  if (
+    lastMessage?.isBotMessage &&
+    lastMessage.quickReplies &&
+    lastMessage.quickReplies.length > 0
+  ) {
     currentQuickReplies.value = lastMessage.quickReplies
   } else {
-    const latestBotWithReplies = [...messages.value].reverse().find(
-      (msg) => msg.isBotMessage && msg.quickReplies && msg.quickReplies.length > 0
-    )
+    const latestBotWithReplies = [...messages.value]
+      .reverse()
+      .find((msg) => msg.isBotMessage && msg.quickReplies && msg.quickReplies.length > 0)
     currentQuickReplies.value = latestBotWithReplies ? latestBotWithReplies.quickReplies : []
   }
 
@@ -1445,9 +1667,13 @@ const applyWelcomeStateIfNeeded = () => {
 }
 
 // Watch for bot messages with quick replies and welcome state
-watch(messages, () => {
-  applyWelcomeStateIfNeeded()
-}, { deep: true })
+watch(
+  messages,
+  () => {
+    applyWelcomeStateIfNeeded()
+  },
+  { deep: true },
+)
 
 // Initialize welcome state on component setup
 applyWelcomeStateIfNeeded()
@@ -1562,14 +1788,17 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(102, 126, 234, 0.7);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 0 0 0 rgba(102, 126, 234, 0.7);
   }
 
   50% {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 10px rgba(102, 126, 234, 0);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 0 0 10px rgba(102, 126, 234, 0);
   }
 }
 
@@ -1956,7 +2185,6 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -2033,7 +2261,6 @@ onUnmounted(() => {
 }
 
 @keyframes typing {
-
   0%,
   60%,
   100% {
@@ -2235,7 +2462,6 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;

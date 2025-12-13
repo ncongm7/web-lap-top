@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import authService from '@/service/customer/authService'
+import { useLayoutStore } from './layoutStore'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -26,10 +27,16 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const storedToken = localStorage.getItem('customer_token')
       const storedUser = localStorage.getItem('customer_user')
+      const layoutStore = useLayoutStore()
 
       if (storedToken && storedUser) {
         token.value = storedToken
         user.value = JSON.parse(storedUser)
+        // Sync layout store
+        layoutStore.setUser(user.value, token.value)
+      } else {
+        // Clear layout store if no auth data
+        layoutStore.logout()
       }
     } catch (err) {
       console.error('Error initializing auth store:', err)
@@ -37,6 +44,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('customer_token')
       localStorage.removeItem('customer_user')
       localStorage.removeItem('customer_id')
+
+      const layoutStore = useLayoutStore()
+      layoutStore.logout()
     }
   }
 
@@ -46,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     loading.value = true
     error.value = null
+    const layoutStore = useLayoutStore()
 
     try {
       const response = await authService.login(credentials)
@@ -64,7 +75,10 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = authToken
         user.value = userData
 
-        return { success: true, message: response.message || 'Đăng nhập thành công' }
+        // Sync layout store
+        layoutStore.setUser(userData, authToken)
+
+        return { success: true, message: response.message || 'Đăng nhập thành công', data: response.data }
       } else {
         throw new Error(response.message || 'Đăng nhập thất bại')
       }
@@ -83,12 +97,34 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (registerData) => {
     loading.value = true
     error.value = null
+    const layoutStore = useLayoutStore()
 
     try {
       const response = await authService.register(registerData)
 
       if (response.success) {
-        return { success: true, message: response.message || 'Đăng ký thành công' }
+        // Auto-login if token is returned
+        if (response.data && response.data.token && response.data.user) {
+          const { token: authToken, user: userData } = response.data
+
+          // Save to localStorage
+          localStorage.setItem('customer_token', authToken)
+          localStorage.setItem('customer_user', JSON.stringify(userData))
+          if (userData.userId) {
+            localStorage.setItem('customer_id', userData.userId)
+          }
+
+          // Update state
+          token.value = authToken
+          user.value = userData
+
+          // Sync layout store
+          layoutStore.setUser(userData, authToken)
+
+          return { success: true, message: response.message || 'Đăng ký thành công', data: response.data }
+        }
+
+        return { success: true, message: response.message || 'Đăng ký thành công. Vui lòng đăng nhập.' }
       } else {
         throw new Error(response.message || 'Đăng ký thất bại')
       }
@@ -107,6 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     loading.value = true
     error.value = null
+    const layoutStore = useLayoutStore()
 
     try {
       await authService.logout()
@@ -116,6 +153,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Clear state regardless of API call result
       token.value = null
       user.value = null
+
+      // Sync layout store
+      layoutStore.logout()
+
       loading.value = false
     }
   }

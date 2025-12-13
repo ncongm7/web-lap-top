@@ -33,7 +33,8 @@ axiosInstance.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('customer_token')
       localStorage.removeItem('customer_user')
-      window.location.href = '/auth/login'
+      localStorage.removeItem('customer_id')
+      window.location.href = '/login'
     }
 
     // Xử lý lỗi 403 - Forbidden

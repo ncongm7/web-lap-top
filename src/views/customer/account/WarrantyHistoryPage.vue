@@ -1,7 +1,9 @@
 <template>
   <div class="warranty-history-page">
     <div class="container pt-4 pb-5">
-      <div class="header-bar d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div
+        class="header-bar d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+      >
         <h2 class="page-title mb-0">Lịch sử bảo hành của bạn</h2>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-primary" @click="fetchHistory" :disabled="loadingHistory">
@@ -63,15 +65,21 @@
                   </td>
                   <td>
                     <div v-if="item.phieuHen && item.phieuHen.length > 0" class="appointment-info">
-                      <div v-for="phieuHen in item.phieuHen" :key="phieuHen.id" class="appointment-badge mb-1">
+                      <div
+                        v-for="phieuHen in item.phieuHen"
+                        :key="phieuHen.id"
+                        class="appointment-badge mb-1"
+                      >
                         <i class="bi bi-calendar-check me-1"></i>
                         <span class="fw-semibold">{{ phieuHen.maPhieuHen }}</span>
-                        <br>
+                        <br />
                         <small class="text-muted">
                           {{ formatDate(phieuHen.ngayHen) }} {{ formatTime(phieuHen.gioHen) }}
                         </small>
-                        <br>
-                        <span :class="['badge badge-sm', getPhieuHenStatusClass(phieuHen.trangThai)]">
+                        <br />
+                        <span
+                          :class="['badge badge-sm', getPhieuHenStatusClass(phieuHen.trangThai)]"
+                        >
                           {{ getPhieuHenStatusText(phieuHen.trangThai) }}
                         </span>
                       </div>
@@ -115,7 +123,7 @@ const fetchHistory = async () => {
           warranty.phieuHen = []
         }
         return warranty
-      })
+      }),
     )
 
     history.value = historyWithPhieuHen
@@ -144,14 +152,18 @@ const formatDate = (value) => {
 
 const getStatusText = (status) => {
   switch (status) {
-    case 1:
-      return 'Chờ xác nhận'
-    case 2:
-      return 'Đang xử lý'
-    case 3:
-      return 'Hoàn thành'
     case 0:
-      return 'Từ chối'
+      return 'Chờ xử lý'
+    case 1:
+      return 'Đã tiếp nhận'
+    case 2:
+      return 'Đang sửa chữa'
+    case 3:
+      return 'Chờ bàn giao'
+    case 4:
+      return 'Hoàn thành'
+    case 5:
+      return 'Đã hủy'
     default:
       return 'Không xác định'
   }
@@ -159,13 +171,17 @@ const getStatusText = (status) => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 1:
+    case 0:
       return 'bg-warning text-dark'
+    case 1:
+      return 'bg-info text-white'
     case 2:
       return 'bg-primary'
     case 3:
+      return 'bg-warning text-dark'
+    case 4:
       return 'bg-success'
-    case 0:
+    case 5:
       return 'bg-danger'
     default:
       return 'bg-secondary'

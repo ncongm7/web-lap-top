@@ -38,18 +38,26 @@
                 <tr v-for="item in warranties" :key="item.id">
                   <td class="ps-4">
                     <span class="fw-medium">{{ item.tenSanPham || 'Sản phẩm' }}</span>
-                    <br>
+                    <br />
                     <small class="text-muted">Mã: {{ item.maCtsp }}</small>
                   </td>
                   <td>
-                    <span class="font-monospace bg-light px-2 py-1 rounded">{{ item.serialNo }}</span>
+                    <span class="font-monospace bg-light px-2 py-1 rounded">{{
+                      item.serialNo
+                    }}</span>
                   </td>
                   <td>
-                    <span class="badge bg-success rounded-pill" v-if="item.trangThai === 2">Đã mua</span>
-                    <span class="badge bg-warning text-dark rounded-pill" v-else-if="item.trangThai === 1">Chưa kích
-                      hoạt</span>
-                    <span class="badge bg-secondary rounded-pill" v-else>{{ item.trangThaiText || 'Không xác định'
-                      }}</span>
+                    <span class="badge bg-success rounded-pill" v-if="item.trangThai === 2"
+                      >Đã mua</span
+                    >
+                    <span
+                      class="badge bg-warning text-dark rounded-pill"
+                      v-else-if="item.trangThai === 1"
+                      >Chưa kích hoạt</span
+                    >
+                    <span class="badge bg-secondary rounded-pill" v-else>{{
+                      item.trangThaiText || 'Không xác định'
+                    }}</span>
                   </td>
                   <td class="text-end pe-4">
                     <button class="btn btn-sm btn-primary" @click="createRequest(item)">
@@ -65,7 +73,8 @@
 
       <div class="alert alert-info border-0 shadow-sm">
         <i class="bi bi-info-circle-fill me-2"></i>
-        Để yêu cầu bảo hành cho sản phẩm không có trong danh sách, vui lòng liên hệ hotline: <strong>1900 1234</strong>
+        Để yêu cầu bảo hành cho sản phẩm không có trong danh sách, vui lòng liên hệ hotline:
+        <strong>1900 1234</strong>
       </div>
     </div>
 
@@ -76,7 +85,10 @@
           <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
         </button>
       </div>
-      <CreateWarrantyRequest :selectedSerial="selectedSerialForRequest" @request-created="handleRequestCreated" />
+      <CreateWarrantyRequest
+        :selectedSerial="selectedSerialForRequest"
+        @request-created="handleRequestCreated"
+      />
     </div>
   </div>
 </template>
@@ -86,6 +98,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import warrantyService from '@/service/customer/warrantyService'
 import CreateWarrantyRequest from '@/components/baohanh/CreateWarrantyRequest.vue'
+import { useAuthStore } from '@/stores/customer/authStore'
 import { useToast } from 'vue-toastification'
 
 const router = useRouter()
@@ -105,7 +118,14 @@ const fetchWarranties = async () => {
     warranties.value = await warrantyService.getMyWarranties()
   } catch (error) {
     console.error(error)
-    toast.error('Không thể tải danh sách bảo hành')
+    if (error.message.includes('Phiên đăng nhập đã hết hạn') || error.response?.status === 401) {
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')
+      const authStore = useAuthStore()
+      await authStore.logout()
+      router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+    } else {
+      toast.error('Không thể tải danh sách bảo hành')
+    }
   } finally {
     isLoading.value = false
   }

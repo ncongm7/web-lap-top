@@ -41,6 +41,51 @@ export const chatService = {
       params: { khachHangId, nhanVienId }
     })
     return res.data
+  },
+
+  // Manual escalation: Switch to human support
+  async escalateToHuman(conversationId) {
+    const response = await axios.post(
+      `${API_URL}/conversation/${conversationId}/escalate-to-human`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('customer_token')}`
+        }
+      }
+    )
+    return response.data
+  },
+
+  // Return to AI bot
+  async returnToBot(conversationId) {
+    const response = await axios.post(
+      `${API_URL}/conversation/${conversationId}/return-to-bot`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('customer_token')}`
+        }
+      }
+    )
+    return response.data
+  },
+
+  // Get escalation status
+  async getEscalationStatus(conversationId) {
+    const response = await axios.get(
+      `${API_URL}/conversation/${conversationId}/escalation-status`
+    )
+    return response.data?.data || {}
+  },
+
+  // Upload file
+  async uploadFile(formData) {
+    const response = await axios.post(`${API_URL}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
   }
 }
-

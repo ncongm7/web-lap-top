@@ -24,15 +24,27 @@
       <form v-if="isLogin" @submit.prevent="handleLogin" class="form">
         <div class="form-group">
           <label>Số điện thoại</label>
-          <input v-model="loginForm.soDienThoai" type="text" placeholder="Nhập số điện thoại" required
-            :disabled="loading" @input="error = ''" />
+          <input
+            v-model="loginForm.soDienThoai"
+            type="text"
+            placeholder="Nhập số điện thoại"
+            required
+            :disabled="loading"
+            @input="error = ''"
+          />
         </div>
 
         <div class="form-group">
           <label>Mật khẩu</label>
           <div class="password-input">
-            <input v-model="loginForm.matKhau" :type="showPassword ? 'text' : 'password'" placeholder="Nhập mật khẩu"
-              required :disabled="loading" @input="error = ''" />
+            <input
+              v-model="loginForm.matKhau"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Nhập mật khẩu"
+              required
+              :disabled="loading"
+              @input="error = ''"
+            />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -54,20 +66,36 @@
       <form v-else @submit.prevent="handleRegister" class="form">
         <div class="form-group">
           <label>Họ và tên <span class="required">*</span></label>
-          <input v-model="registerForm.hoTen" type="text" placeholder="Nhập họ và tên" required :disabled="loading" />
+          <input
+            v-model="registerForm.hoTen"
+            type="text"
+            placeholder="Nhập họ và tên"
+            required
+            :disabled="loading"
+          />
         </div>
 
         <div class="form-group">
           <label>Số điện thoại <span class="required">*</span></label>
-          <input v-model="registerForm.soDienThoai" type="text" placeholder="Nhập số điện thoại (VD: 0987654321)"
-            required pattern="^0\d{9}$" :disabled="loading" />
+          <input
+            v-model="registerForm.soDienThoai"
+            type="text"
+            placeholder="Nhập số điện thoại (VD: 0987654321)"
+            required
+            pattern="^0\d{9}$"
+            :disabled="loading"
+          />
           <small class="help-text">Số điện thoại sẽ dùng làm tên đăng nhập</small>
         </div>
 
         <div class="form-group">
           <label>Email <span class="optional">(không bắt buộc)</span></label>
-          <input v-model="registerForm.email" type="email" placeholder="Nhập email (không bắt buộc)"
-            :disabled="loading" />
+          <input
+            v-model="registerForm.email"
+            type="email"
+            placeholder="Nhập email (không bắt buộc)"
+            :disabled="loading"
+          />
           <small class="help-text">Có thể cập nhật sau trong hồ sơ</small>
         </div>
 
@@ -76,8 +104,14 @@
         <div class="form-group">
           <label>Mật khẩu <span class="required">*</span></label>
           <div class="password-input">
-            <input v-model="registerForm.matKhau" :type="showPassword ? 'text' : 'password'" placeholder="Nhập mật khẩu"
-              required minlength="6" :disabled="loading" />
+            <input
+              v-model="registerForm.matKhau"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Nhập mật khẩu"
+              required
+              minlength="6"
+              :disabled="loading"
+            />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -87,9 +121,19 @@
         <div class="form-group">
           <label>Xác nhận mật khẩu <span class="required">*</span></label>
           <div class="password-input">
-            <input v-model="registerForm.xacNhanMatKhau" :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Nhập lại mật khẩu" required minlength="6" :disabled="loading" />
-            <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+            <input
+              v-model="registerForm.xacNhanMatKhau"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Nhập lại mật khẩu"
+              required
+              minlength="6"
+              :disabled="loading"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
               <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -111,10 +155,11 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import authService from '@/service/customer/authService'
+import { useAuthStore } from '@/stores/customer/authStore'
+import { useLayoutStore } from '@/stores/customer/layoutStore'
 
-const route = useRoute()
+const authStore = useAuthStore()
+const layoutStore = useLayoutStore()
 
 const props = defineProps({
   show: {
@@ -144,12 +189,7 @@ const registerForm = ref({
   email: '', // Optional - có thể để trống
   matKhau: '',
   xacNhanMatKhau: '',
-  // Các trường gioiTinh và ngaySinh đã được bỏ - sẽ cấu hình sau trong hồ sơ
 })
-
-// Import layoutStore để lấy showRegisterTab
-import { useLayoutStore } from '@/stores/customer/layoutStore'
-const layoutStore = useLayoutStore()
 
 // Watch for show prop to reset form
 watch(
@@ -168,7 +208,6 @@ watch(
   },
 )
 
-
 // Methods
 const resetForms = () => {
   error.value = ''
@@ -182,7 +221,6 @@ const resetForms = () => {
     email: '', // Optional
     matKhau: '',
     xacNhanMatKhau: '',
-    // Các trường gioiTinh và ngaySinh đã được bỏ
   }
   showPassword.value = false
   showConfirmPassword.value = false
@@ -199,37 +237,20 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const response = await authService.login({
+    const result = await authStore.login({
       tenDangNhap: loginForm.value.soDienThoai,
       matKhau: loginForm.value.matKhau,
     })
 
-    // Lưu vào localStorage và cập nhật store
-    if (response.data) {
-      const { token, user } = response.data
-      localStorage.setItem('customer_token', token)
-      localStorage.setItem('customer_user', JSON.stringify(user))
-      localStorage.setItem('customer_id', user.userId)
-
-      // Cập nhật layoutStore để UI reactive
-      layoutStore.setUser(user, token)
+    if (result.success) {
+      emit('success', result.data)
+      emit('close')
+    } else {
+      error.value = result.message
     }
-
-    emit('success', response.data)
-    emit('close')
   } catch (err) {
     console.error('Login error:', err)
-    // Xử lý các loại lỗi cụ thể
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      error.value = 'Số điện thoại hoặc mật khẩu không chính xác. Vui lòng thử lại.'
-    } else if (err.response?.data?.message) {
-      error.value = err.response.data.message
-    } else if (err.message) {
-      error.value = err.message
-    } else {
-      error.value = 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
-    }
-    // Modal vẫn mở, không emit 'close'
+    error.value = 'Đăng nhập thất bại. Vui lòng thử lại.'
   } finally {
     loading.value = false
   }
@@ -264,32 +285,17 @@ const handleRegister = async () => {
       registerData.email = registerForm.value.email.trim()
     }
 
-    const response = await authService.register(registerData)
+    const result = await authStore.register(registerData)
 
-    // Lưu vào localStorage và cập nhật store
-    if (response.data) {
-      const { token, user } = response.data
-      localStorage.setItem('customer_token', token)
-      localStorage.setItem('customer_user', JSON.stringify(user))
-      localStorage.setItem('customer_id', user.userId)
-
-      // Cập nhật layoutStore để UI reactive
-      layoutStore.setUser(user, token)
+    if (result.success) {
+      emit('success', result.data)
+      emit('close')
+    } else {
+      error.value = result.message
     }
-
-    emit('success', response.data)
-    emit('close')
   } catch (err) {
     console.error('Register error:', err)
-    // Xử lý các loại lỗi cụ thể
-    if (err.response?.data?.message) {
-      error.value = err.response.data.message
-    } else if (err.message) {
-      error.value = err.message
-    } else {
-      error.value = 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.'
-    }
-    // Modal vẫn mở, không emit 'close'
+    error.value = 'Đăng ký thất bại. Vui lòng thử lại.'
   } finally {
     loading.value = false
   }
