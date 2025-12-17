@@ -56,6 +56,13 @@ const isInComparison = computed(() => {
 })
 
 const handleToggle = () => {
+  // Debug log to see actual data being used
+  console.log('🔄 [ProductComparisonButton] Toggling. Current props.product:', {
+    id: props.product.id,
+    variantId: props.product.variant?.id,
+    price: props.product.price,
+    variantPrice: props.product.variant?.giaBan
+  })
   try {
     if (isInComparison.value) {
       // Xóa khỏi so sánh - dùng comparison ID
@@ -68,15 +75,16 @@ const handleToggle = () => {
         showWarning(`Chỉ có thể so sánh tối đa 3 sản phẩm. Vui lòng xóa một sản phẩm khỏi danh sách so sánh trước.`)
         return
       }
-      
+
       // Lấy đầy đủ thông tin sản phẩm và variant để lưu vào comparison
       const productData = {
+        ...props.product, // Move to top to avoid overwriting explicit fields
         // Dùng comparison ID làm id chính để phân biệt các variant
         id: getComparisonId.value,
         // Giữ product ID gốc
         productId: props.product.id,
         // Tên sản phẩm kèm thông tin variant nếu có
-        tenSanPham: props.product.variant 
+        tenSanPham: props.product.variant
           ? `${props.product.tenSanPham || props.product.name} (${getVariantDisplayName(props.product.variant)})`
           : (props.product.tenSanPham || props.product.name),
         name: props.product.variant
@@ -92,9 +100,8 @@ const handleToggle = () => {
         variants: props.product.variants,
         // Lưu thông số kỹ thuật nếu có
         specs: props.product.specs,
-        ...props.product, // Giữ tất cả thông tin khác
       }
-      
+
       addToComparison(productData)
       showSuccess('Đã thêm vào danh sách so sánh')
       emit('toggle', { ...productData, added: true })
@@ -108,13 +115,13 @@ const handleToggle = () => {
 // Helper function để tạo tên hiển thị cho variant
 const getVariantDisplayName = (variant) => {
   if (!variant) return ''
-  
+
   const parts = []
   if (variant.cpu) parts.push(variant.cpu)
   if (variant.gpu) parts.push(variant.gpu)
   if (variant.ram) parts.push(variant.ram)
   if (variant.mauSac) parts.push(variant.mauSac)
-  
+
   return parts.length > 0 ? parts.join(' | ') : 'Variant'
 }
 </script>

@@ -13,7 +13,7 @@
             <span class="bar-count">{{ comparisonList.length }}/3 sản phẩm</span>
           </div>
         </div>
-        
+
         <div class="bar-products">
           <div
             v-for="product in comparisonList"
@@ -35,7 +35,7 @@
             </button>
           </div>
         </div>
-        
+
         <div class="bar-right">
           <button class="view-compare-btn" @click="goToCompare">
             Xem so sánh
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted } from 'vue'
+import { watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductComparison } from '@/composables/product-detail/useProductComparison'
 import { useToast } from '@/composables/useToast'
@@ -89,7 +89,7 @@ const getPlaceholderImage = () => {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 99999;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);

@@ -118,6 +118,13 @@ export function useProductDetail(productId) {
 
       // Auto select first variant (kể cả khi hết hàng, để người dùng có thể chọn để liên hệ và so sánh)
       if (productDetail.value.variants?.length > 0) {
+        // Map fields for frontend display
+        productDetail.value.variants.forEach(variant => {
+          variant.discountedPrice = variant.giaGiam || variant.giaBan
+          variant.originalPrice = variant.giaGoc || variant.giaBan
+          variant.hasDiscount = variant.coGiamGia
+        })
+
         // Luôn chọn variant đầu tiên, kể cả khi hết hàng
         selectedVariantId.value = productDetail.value.variants[0].id
       } else {

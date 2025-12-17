@@ -111,10 +111,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import authService from '@/service/customer/authService'
-
-const route = useRoute()
 
 const props = defineProps({
   show: {
@@ -213,6 +210,10 @@ const handleLogin = async () => {
 
       // Cập nhật layoutStore để UI reactive
       layoutStore.setUser(user, token)
+
+      // Reload page to sync auth state
+      window.location.reload()
+      return
     }
 
     emit('success', response.data)
@@ -275,6 +276,11 @@ const handleRegister = async () => {
 
       // Cập nhật layoutStore để UI reactive
       layoutStore.setUser(user, token)
+
+      // Reload page to ensure all stores (authStore, etc) are synchronized
+      // This fixes the "Need F5 to chat" issue requested by user
+      window.location.reload()
+      return // Stop execution here as page is reloading
     }
 
     emit('success', response.data)

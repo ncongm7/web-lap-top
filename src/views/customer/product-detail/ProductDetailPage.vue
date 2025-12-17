@@ -233,7 +233,7 @@ const handleBuyNow = async (data) => {
     throw error
   }
 }
-const { toggleComparison } = useProductComparison()
+// toggleComparison removed as it is handled in child component
 
 // Computed product data for comparison (reactive to variant changes)
 const comparisonProductData = computed(() => {
@@ -396,9 +396,9 @@ onUnmounted(() => {
 
 // Methods
 const handleToggleComparison = (product) => {
-  if (product && product.id) {
-    toggleComparison(product)
-  }
+  // Logic handled in child component ProductComparisonButton
+  // Just logging or visual feedback if needed
+  console.log('Comparison toggled:', product)
 }
 
 const handleSubmitReview = async (reviewData) => {

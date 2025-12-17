@@ -47,6 +47,20 @@
                     </router-link>
                   </div>
                 </th>
+                <!-- Placeholder slots for remaining items -->
+                <th v-for="n in (3 - (productsWithDetails.length > 0 ? productsWithDetails.length : comparisonList.length))" :key="`placeholder-${n}`" class="product-col placeholder-col">
+                  <div class="product-header placeholder-header">
+                    <div class="placeholder-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </div>
+                    <p class="placeholder-text">Thêm sản phẩm</p>
+                    <router-link to="/products" class="add-product-btn">
+                      Thêm
+                    </router-link>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -135,10 +149,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useProductComparison } from '@/composables/product-detail/useProductComparison'
-import { useRouter } from 'vue-router'
 import { sanPhamService } from '@/service/customer/san_pham_service'
 
-const router = useRouter()
 const { comparisonList, clearComparison, removeFromComparison } = useProductComparison()
 
 // Load full product details
@@ -184,7 +196,7 @@ const loadProductDetails = async () => {
           // Nếu id là "variant-{variantId}", cần lấy productId từ variant
           // Nhưng không có productId, nên cần load từ variant
           // Tạm thời dùng logic cũ: parse từ id
-          const variantIdFromId = product.id.replace('variant-', '')
+
           // Không thể load product từ variantId, cần có productId
           console.warn('⚠️ [ProductComparePage] Không có productId cho variant:', product.id)
           // Nếu có variantId trong product, có thể dùng nó để tìm variant
@@ -361,7 +373,6 @@ const allSpecKeys = computed(() => {
   return Array.from(keys)
 })
 
-// Get all unique categories
 const allCategories = computed(() => {
   const categories = new Set()
   productsWithDetails.value.forEach(product => {
@@ -376,29 +387,7 @@ const allCategories = computed(() => {
   return Array.from(categories).sort()
 })
 
-// Get specs grouped by category
-const specsByCategory = computed(() => {
-  const grouped = {}
-  allCategories.value.forEach(category => {
-    grouped[category] = []
-    productsWithDetails.value.forEach(product => {
-      if (product.specs && Array.isArray(product.specs)) {
-        const spec = product.specs.find(s => s.category === category)
-        if (spec) {
-          grouped[category].push({
-            key: spec.key,
-            label: spec.label,
-            values: productsWithDetails.value.map(p => {
-              const s = p.specs?.find(sp => sp.key === spec.key)
-              return s?.value || '-'
-            })
-          })
-        }
-      }
-    })
-  })
-  return grouped
-})
+// Get spec value for a product
 
 // Get spec value for a product
 const getSpecValue = (product, specKey) => {
@@ -761,10 +750,63 @@ onMounted(() => {
     padding: 16px;
   }
 
-  .product-image {
-    width: 80px;
-    height: 80px;
+
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
+}
+
+/* Placeholder Styles */
+.placeholder-col {
+  vertical-align: top;
+  background: #f9fafb;
+}
+
+.placeholder-header {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+  border-right: 1px dashed #d1d5db;
+}
+
+.placeholder-icon {
+  width: 48px;
+  height: 48px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  background: white;
+  border-radius: 50%;
+  padding: 10px;
+  border: 1px dashed #d1d5db;
+}
+
+.placeholder-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.add-product-btn {
+  padding: 8px 24px;
+  background: white;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-product-btn:hover {
+  background: #2563eb;
+  color: white;
 }
 </style>
 
