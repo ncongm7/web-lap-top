@@ -47,7 +47,7 @@
               <tbody>
                 <tr v-for="item in history" :key="item.id">
                   <td class="fw-semibold">
-                    {{ shortId(item.id) }}
+                    {{ item.maPhieuBaoHanh || shortId(item.id) }}
                   </td>
                   <td>{{ item.tenSP || 'Sản phẩm không xác định' }}</td>
                   <td>
@@ -118,6 +118,13 @@ const fetchHistory = async () => {
       })
     )
 
+    // Sắp xếp theo ngày tạo mới nhất (FE sort)
+    historyWithPhieuHen.sort((a, b) => {
+      const dateA = new Date(a.ngayTao || a.ngayBatDau)
+      const dateB = new Date(b.ngayTao || b.ngayBatDau)
+      return dateB - dateA
+    })
+
     history.value = historyWithPhieuHen
   } catch (error) {
     console.error('Lỗi tải lịch sử bảo hành:', error)
@@ -166,15 +173,15 @@ const getStatusClass = (status) => {
     case 0:
       return 'bg-warning text-dark'
     case 1:
-      return 'bg-info text-dark'
+      return 'bg-info text-white'
     case 2:
-      return 'bg-primary'
+      return 'bg-primary text-white'
     case 3:
-      return 'bg-success bg-opacity-75'
+      return 'bg-warning text-dark'
     case 4:
-      return 'bg-success'
+      return 'bg-success text-white'
     case 5:
-      return 'bg-danger'
+      return 'bg-danger text-white'
     default:
       return 'bg-secondary'
   }

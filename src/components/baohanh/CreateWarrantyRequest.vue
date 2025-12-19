@@ -20,7 +20,7 @@
       <div v-else>
         <div v-if="step !== 3">
           <!-- Selected Serial Hint -->
-          <div v-if="selectedSerial" class="alert alert-warning shadow-sm border-0 d-flex align-items-center">
+          <div v-if="selectedSerial && step === 1" class="alert alert-warning shadow-sm border-0 d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
             <div>
               <strong>Bạn đang báo lỗi cho sản phẩm: {{ selectedSerial.tenSanPham }}</strong>
@@ -31,7 +31,7 @@
           </div>
 
           <!-- Order selection -->
-          <div class="card">
+          <div class="card" v-if="step === 1">
             <div class="card-header">
               <h5 class="mb-0">Chọn hóa đơn cần trả/bảo hành</h5>
             </div>
@@ -307,13 +307,15 @@ const loadOrders = async () => {
           const response = await baohanhService.getWarrantyRequestsByInvoice(order.id)
           if (response && response.data) {
             const warranties = response.data.data || response.data || []
-            // Kiểm tra xem có bảo hành nào chưa hoàn thành (trangThai != 3) không
+            // Kiểm tra xem có bảo hành nào chưa hoàn thành không
+            // Các trạng thái được coi là hoàn thành/kết thúc: 4 (Hoàn thành), 5 (Đã hủy)
+            // Nếu có bất kỳ phiếu nào có trạng thái KHÁC 4 và 5 -> Có bảo hành đang active
             const hasActiveWarranty = warranties.some(
-              (w) => w.trangThai != null && w.trangThai !== 3,
+              (w) => w.trangThai !== 4 && w.trangThai !== 5
             )
             orderWarrantyStatus.value[order.id] = { hasActiveWarranty }
           }
-        } catch (err) {
+        } catch {
           // Nếu không tìm thấy bảo hành hoặc lỗi, coi như không có bảo hành active
           orderWarrantyStatus.value[order.id] = { hasActiveWarranty: false }
         }
@@ -470,9 +472,33 @@ const resetError = () => {
 // Lifecycle
 onMounted(() => {
   console.log('CreateWarrantyRequest component mounted')
-  console.log('Auth store:', authStore)
-  console.log('Customer ID:', authStore.getCustomerId())
-  loadOrders()
+  loadOrders().then(() => {
+    // Check if we have pre-selected serial with invoice ID
+    if (props.selectedSerial && props.selectedSerial.idHoaDon) {
+      console.log('Auto-selecting invoice:', props.selectedSerial.idHoaDon)
+      selectedHoaDonId.value = props.selectedSerial.idHoaDon
+      // Trigger condition check immediately
+      loadConditionInfo().then(() => {
+         // Auto-select serial if ID matches
+         if (props.selectedSerial.id) {
+             console.log('Auto-selecting serial:', props.selectedSerial.id)
+             // Check if this serial is in the allowed list
+             const availableSerials = conditionInfo.value?.danhSachSerial || []
+             // Note: input ID might be serial ID or detail ID depending on structure, check carefully
+             // In WarrantyPage, id is set to serialItem.idSerialDaBan || serialItem.id
+
+             const targetId = props.selectedSerial.id
+             const found = availableSerials.find(s => s.idSerialDaBan === targetId || s.id === targetId)
+
+             if (found) {
+                 formData.value.idSerialDaBan = found.idSerialDaBan
+                 // Ensure product detail ID is also correct if needed (though loadConditionInfo sets default)
+                 formData.value.idHoaDonChiTiet = found.idHoaDonChiTiet
+             }
+         }
+      })
+    }
+  })
 })
 </script>
 
