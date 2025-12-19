@@ -144,14 +144,18 @@ const formatDate = (value) => {
 
 const getStatusText = (status) => {
   switch (status) {
-    case 1:
-      return 'Chờ xác nhận'
-    case 2:
-      return 'Đang xử lý'
-    case 3:
-      return 'Hoàn thành'
     case 0:
-      return 'Từ chối'
+      return 'Chờ xử lý'
+    case 1:
+      return 'Đã tiếp nhận'
+    case 2:
+      return 'Đang sửa chữa'
+    case 3:
+      return 'Chờ bàn giao'
+    case 4:
+      return 'Hoàn thành'
+    case 5:
+      return 'Đã hủy'
     default:
       return 'Không xác định'
   }
@@ -159,13 +163,17 @@ const getStatusText = (status) => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 1:
+    case 0:
       return 'bg-warning text-dark'
+    case 1:
+      return 'bg-info text-dark'
     case 2:
       return 'bg-primary'
     case 3:
+      return 'bg-success bg-opacity-75'
+    case 4:
       return 'bg-success'
-    case 0:
+    case 5:
       return 'bg-danger'
     default:
       return 'bg-secondary'

@@ -173,21 +173,24 @@ const costInfo = ref(null)
 // Timeline steps
 const timelineSteps = computed(() => {
   if (!warranty.value) return []
-  
+
+  const isCancelled = warranty.value.trangThai === 5
+  const currentStatus = isCancelled ? -1 : warranty.value.trangThai
+
   const steps = [
     {
       title: 'Đăng ký bảo hành',
       description: 'Yêu cầu bảo hành đã được gửi và đang chờ xử lý',
       icon: 'bi bi-file-earmark-text',
-      status: warranty.value.trangThai >= 0 ? 'completed' : 'pending',
+      status: 'completed',
       date: warranty.value.ngayTao,
     },
     {
       title: 'Xác nhận yêu cầu',
       description: 'Hệ thống đã xác nhận yêu cầu bảo hành của bạn',
       icon: 'bi bi-check-circle',
-      status: warranty.value.trangThai >= 1 ? 'completed' : 'pending',
-      date: warranty.value.trangThai >= 1 ? warranty.value.ngayTao : null,
+      status: currentStatus >= 1 ? 'completed' : 'pending',
+      date: currentStatus >= 1 ? warranty.value.ngayTao : null,
     },
     {
       title: 'Phiếu hẹn',
@@ -203,32 +206,32 @@ const timelineSteps = computed(() => {
       title: 'Tiếp nhận sản phẩm',
       description: 'Sản phẩm đã được tiếp nhận tại trung tâm bảo hành',
       icon: 'bi bi-box-seam',
-      status: warranty.value.trangThai >= 2 ? 'completed' : 'pending',
+      status: currentStatus >= 2 ? 'completed' : 'pending',
       date: lichSuBaoHanh.value.length > 0 ? lichSuBaoHanh.value[0].ngayNhanHang : null,
     },
     {
       title: 'Sửa chữa',
       description: 'Sản phẩm đang được kiểm tra và sửa chữa',
       icon: 'bi bi-tools',
-      status: warranty.value.trangThai >= 3 ? 'completed' : (warranty.value.trangThai === 2 ? 'active' : 'pending'),
+      status: currentStatus >= 3 ? 'completed' : (currentStatus === 2 ? 'active' : 'pending'),
       date: lichSuBaoHanh.value.length > 0 ? lichSuBaoHanh.value[0].ngayTiepNhan : null,
     },
     {
       title: 'Bàn giao',
       description: 'Sản phẩm đã sửa xong, sẵn sàng bàn giao',
       icon: 'bi bi-box-arrow-right',
-      status: warranty.value.trangThai >= 4 ? 'completed' : 'pending',
+      status: currentStatus >= 4 ? 'completed' : 'pending',
       date: lichSuBaoHanh.value.length > 0 ? lichSuBaoHanh.value[0].ngayBanGiao : null,
     },
     {
       title: 'Hoàn thành',
-      description: 'Bảo hành đã hoàn tất',
-      icon: 'bi bi-check-circle-fill',
-      status: warranty.value.trangThai >= 4 ? 'completed' : 'pending',
-      date: warranty.value.trangThai >= 4 ? lichSuBaoHanh.value[0]?.ngayHoanThanh : null,
+      description: isCancelled ? 'Bảo hành hủy' : 'Bảo hành đã hoàn tất',
+      icon: isCancelled ? 'bi bi-x-circle-fill' : 'bi bi-check-circle-fill',
+      status: (currentStatus >= 4 || isCancelled) ? 'completed' : 'pending',
+      date: isCancelled ? warranty.value.ngayCapNhat : (currentStatus >= 4 ? lichSuBaoHanh.value[0]?.ngayHoanThanh : null),
     },
   ]
-  
+
   return steps
 })
 
@@ -265,14 +268,14 @@ const fetchWarrantyDetail = async () => {
   try {
     // Fetch warranty detail
     const warrantyData = await baohanhService.getWarrantyRequestsByInvoice(route.params.hoaDonId)
-    warranty.value = Array.isArray(warrantyData) 
-      ? warrantyData.find(w => w.id === id) 
+    warranty.value = Array.isArray(warrantyData)
+      ? warrantyData.find(w => w.id === id)
       : warrantyData
 
     if (warranty.value) {
       // Fetch lịch sử bảo hành
       // TODO: Call API to get lich su bao hanh
-      
+
       // Fetch phiếu hẹn
       try {
         const phieuHenData = await phieuHenBaoHanhService.getPhieuHenByBaoHanh(id)
