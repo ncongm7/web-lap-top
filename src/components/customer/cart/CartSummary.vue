@@ -46,13 +46,8 @@
         <span class="value">-{{ formatPrice(pointsDiscount) }}</span>
       </div>
 
-      <!-- Shipping -->
-      <div class="summary-row">
-        <span class="label">Phí vận chuyển:</span>
-        <span class="value" :class="{ 'free': shippingFee === 0 }">
-          {{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}
-        </span>
-      </div>
+     
+      
 
       <div class="divider"></div>
 

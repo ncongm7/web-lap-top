@@ -44,95 +44,50 @@ export function useVoucher() {
       const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
       const tongTienGioHang = cartSubtotal.value
 
-      // Ưu tiên dùng API suggestions mới (đã bao gồm cả phiếu cá nhân)
-      try {
-        const response = await voucherService.getVoucherSuggestions(khachHangId, tongTienGioHang)
-        if (response.success && response.data) {
-          const suggestions = response.data || []
-
-          // Tất cả suggestions từ API đều là available (đã được filter từ backend)
-          // Phân loại dựa trên thông tin voucher
-          availableVouchers.value = []
-          unavailableVouchers.value = []
-          personalVouchers.value = []
-
-          suggestions.forEach(voucher => {
-            // Voucher từ API suggestions đã được backend filter và đều hợp lệ
-            // Không cần check lại điều kiện, chỉ phân loại theo riengTu
-            const isPersonal = voucher.riengTu === true || voucher.riengTu === Boolean(true)
-
-            // Đảm bảo voucher có trạng thái hợp lệ (vì đã được filter từ backend)
-            // Thêm flag để biết voucher này đến từ suggestions API (đã được validate)
-            const voucherWithFlag = {
-              ...voucher,
-              _fromSuggestions: true, // Flag để biết đã được validate từ backend
-              trangThai: 1 // Đảm bảo trạng thái là 1 vì đã được filter
-            }
-
-            if (isPersonal) {
-              // Phiếu cá nhân
-              personalVouchers.value.push(voucherWithFlag)
-            } else {
-              // Phiếu công khai
-              availableVouchers.value.push(voucherWithFlag)
-            }
-          })
-
-          console.log('✅ [useVoucher] Đã tải', suggestions.length, 'voucher suggestions từ API mới')
-          return
-        }
-      } catch (apiError) {
-        console.warn('⚠️ API getVoucherSuggestions chưa có hoặc lỗi, dùng fallback:', apiError)
-      }
-
-      // Fallback: Dùng API getAllVouchers
-      try {
-        const response = await voucherService.getAllVouchers(khachHangId, tongTienGioHang)
-        if (response.success && response.data) {
-          availableVouchers.value = response.data.available || []
-          unavailableVouchers.value = response.data.unavailable || []
-          personalVouchers.value = response.data.personal || []
-          return
-        }
-      } catch {
-        console.warn('⚠️ API getAllVouchers chưa có, dùng fallback cũ')
-      }
-
-      // Fallback cuối: Lấy danh sách available và phân loại
-      const response = await voucherService.getAvailableVouchers(khachHangId)
-      if (response.success) {
+      // WORKAROUND: Backend filter voucher dựa trên tongTienGioHang
+      // Để lấy TẤT CẢ voucher (kể cả chưa đủ điều kiện), ta truyền giá trị rất lớn
+      // Sau đó frontend sẽ tự phân loại dựa trên tongTienGioHang thực tế
+      const VERY_HIGH_VALUE = 999999999
+      const response = await voucherService.getVoucherSuggestions(khachHangId, VERY_HIGH_VALUE)
+      
+      if (response.success && response.data) {
         const allVouchers = response.data || []
 
-        // Phân loại voucher
+        // Reset arrays
         availableVouchers.value = []
         unavailableVouchers.value = []
         personalVouchers.value = []
 
+        console.log(`📦 Nhận được ${allVouchers.length} vouchers từ backend`)
+
+        // Phân loại voucher dựa trên tongTienGioHang THỰC TẾ
         allVouchers.forEach(voucher => {
           // Kiểm tra xem có phải phiếu cá nhân không
-          const isPersonal = voucher.khachHangId !== null && voucher.khachHangId !== undefined
+          const isPersonal = voucher.riengTu === true || voucher.riengTu === 1
+
+          // Check lại điều kiện với tổng tiền THỰC TẾ của giỏ hàng
+          const check = checkVoucherConditions(voucher, tongTienGioHang)
 
           if (isPersonal) {
-            personalVouchers.value.push(voucher)
-          }
-
-          // Kiểm tra điều kiện sử dụng
-          const canUse = checkVoucherConditions(voucher, tongTienGioHang)
-
-          if (canUse.canUse) {
-            if (isPersonal) {
-              // Phiếu cá nhân dùng được
-            } else {
-              availableVouchers.value.push(voucher)
-            }
-          } else {
-            // Thêm thông tin lý do không dùng được
-            unavailableVouchers.value.push({
+            // Phiếu cá nhân - luôn hiển thị trong tab Personal
+            personalVouchers.value.push({
               ...voucher,
-              reason: canUse.reason
+              reason: check.reason // Thêm reason nếu không dùng được
             })
+          } else {
+            // Phiếu công khai
+            if (check.canUse) {
+              availableVouchers.value.push(voucher)
+            } else {
+              unavailableVouchers.value.push({
+                ...voucher,
+                reason: check.reason
+              })
+            }
           }
         })
+
+        console.log(`✅ Loaded vouchers: ${availableVouchers.value.length} available, ${unavailableVouchers.value.length} unavailable, ${personalVouchers.value.length} personal`)
       }
     } catch (error) {
       console.error('❌ Error fetching all vouchers:', error)

@@ -222,10 +222,12 @@ import { quyDoiDiemService } from '@/service/diem/quyDoiDiemService'
 import PointsRedemption from '@/components/customer/checkout/PointsRedemption.vue'
 import dayjs from 'dayjs'
 import AddressForm from '@/components/customer/checkout/AddressForm.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const { showError, showWarning } = useToast()
 
 // QR Payment composable
 const {
@@ -879,7 +881,7 @@ const formatPrice = (price) => {
 const handleSubmit = async () => {
   // Validate all fields
   if (!validateAll()) {
-    alert('Vui lòng kiểm tra và điền đầy đủ thông tin hợp lệ')
+    showError('Vui lòng kiểm tra và điền đầy đủ thông tin hợp lệ')
     // Scroll to first error
     const firstErrorField = document.querySelector('.is-invalid')
     if (firstErrorField) {
@@ -890,13 +892,13 @@ const handleSubmit = async () => {
   }
 
   if (!canSubmit.value) {
-    alert('Vui lòng điền đầy đủ thông tin')
+    showWarning('Vui lòng điền đầy đủ thông tin')
     return
   }
 
   const customerId = authStore.getCustomerId()
   if (!customerId) {
-    alert('Vui lòng đăng nhập để đặt hàng')
+    showError('Vui lòng đăng nhập để đặt hàng')
     router.push({ name: 'login' })
     return
   }
@@ -1030,12 +1032,12 @@ const handleSubmit = async () => {
     const errorCode = errorData?.code // Assuming backend sends code, or we check text
 
     if (errorMessage && errorMessage.toLowerCase().includes('hết hàng')) {
-      alert(`⚠️ Rất tiếc, ${errorMessage}\n\nVui lòng cập nhật giỏ hàng.`)
+      showError(`⚠️ Rất tiếc, ${errorMessage}\n\nVui lòng cập nhật giỏ hàng.`)
       router.push('/cart')
       return
     }
 
-    alert(errorMessage)
+    showError(errorMessage)
   } finally {
     loading.value = false
   }

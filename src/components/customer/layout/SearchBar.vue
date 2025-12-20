@@ -1,6 +1,6 @@
 <template>
     <div class="search-bar">
-        <form @submit.prevent="handleSearch" class="search-form">
+        <!-- <form @submit.prevent="handleSearch" class="search-form">
             <input v-model="searchQuery" type="text" placeholder="Tìm kiếm laptop, phụ kiện..." class="search-input"
                 @input="handleInput" @focus="showSuggestions = true" @blur="handleBlur"
                 @keydown.down.prevent="navigateDown" @keydown.up.prevent="navigateUp"
@@ -9,7 +9,7 @@
                 <span v-if="isSearching" class="spinner"></span>
                 <span v-else class="icon">🔍</span>
             </button>
-        </form>
+        </form> -->
 
         <!-- Search Suggestions with Autocomplete -->
         <div v-if="showSuggestions && (suggestions.length > 0 || isLoading || error)" class="search-suggestions">

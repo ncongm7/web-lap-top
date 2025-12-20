@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/customer/cartStore'
+import { useToast } from '@/composables/useToast'
 
 /**
  * Composable để quản lý giỏ hàng
@@ -9,6 +10,7 @@ import { useCartStore } from '@/stores/customer/cartStore'
 export function useCart() {
   const router = useRouter()
   const cartStore = useCartStore()
+  const { showWarning, showError } = useToast()
 
   // Computed properties từ store
   const cartItems = computed(() => cartStore.cartItems)
@@ -78,12 +80,59 @@ export function useCart() {
     }
   }
 
-  const checkout = () => {
+  const checkout = async () => {
     if (selectedItems.value.length === 0) {
-      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán')
-      return
+      showWarning('Vui lòng chọn ít nhất một sản phẩm để thanh toán')
+      return false
     }
-    router.push('/checkout')
+
+    // Validate stock before checkout
+    try {
+      const authStore = await import('@/stores/customer/authStore').then(m => m.useAuthStore())
+      const khachHangId = authStore.getCustomerId()
+      
+      if (!khachHangId) {
+        showError('Vui lòng đăng nhập để tiếp tục')
+        return false
+      }
+
+      // Get selected item IDs
+      const selectedItemIds = selectedItems.value.map(item => item.id)
+      console.log('🔍 Validating selected items:', selectedItemIds)
+
+      const cartService = await import('@/service/customer/cartService').then(m => m.default)
+      const validation = await cartService.validateCart(khachHangId, selectedItemIds)
+
+      if (!validation.success || !validation.data.isValid) {
+        // Show detailed error message
+        const outOfStockItems = validation.data?.outOfStockItems || []
+        
+        if (outOfStockItems.length > 0) {
+          let errorMessage = '❌ Một số sản phẩm đã hết hàng:\n\n'
+          outOfStockItems.forEach((item, index) => {
+            errorMessage += `${index + 1}. ${item.productName}`
+            if (item.variantName) {
+              errorMessage += ` (${item.variantName})`
+            }
+            errorMessage += `\n   Yêu cầu: ${item.requestedQuantity} | Còn lại: ${item.availableStock}\n`
+          })
+          errorMessage += '\nVui lòng cập nhật số lượng!'
+          showError(errorMessage)
+        } else {
+          showError(validation.data?.message || 'Không thể thanh toán. Vui lòng kiểm tra lại giỏ hàng.')
+        }
+        
+        return false
+      }
+
+      // Validation passed, proceed to checkout
+      router.push('/checkout')
+      return true
+    } catch (error) {
+      console.error('Error validating cart:', error)
+      showError('Có lỗi xảy ra khi kiểm tra giỏ hàng. Vui lòng thử lại.')
+      return false
+    }
   }
 
   // Points methods

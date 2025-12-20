@@ -69,6 +69,20 @@ const cartService = {
     })
     return response.data
   },
+
+  /**
+   * Validate cart stock before checkout
+   * Kiểm tra tồn kho trước khi thanh toán
+   * @param {string} khachHangId - ID khách hàng
+   * @param {Array<string>} selectedItemIds - Danh sách ID các sản phẩm được chọn
+   * @returns {Promise<Object>} Validation result
+   */
+  async validateCart(khachHangId, selectedItemIds = null) {
+    const response = await axios.post(`${API_BASE_URL}/validate`, selectedItemIds, {
+      params: { khachHangId }
+    })
+    return response.data
+  },
 }
 
 export default cartService
