@@ -174,18 +174,18 @@ const router = createRouter({
               component: () => import('@/views/customer/account/WarrantyHistoryPage.vue'),
               meta: { title: 'Lịch sử bảo hành - LaptopStore' },
             },
-            {
-              path: 'return-request',
-              name: 'account-return-request',
-              component: () => import('@/views/customer/account/ReturnRequestPage.vue'),
-              meta: { title: 'Yêu cầu trả hàng - LaptopStore' },
-            },
-            {
-              path: 'return-request/history',
-              name: 'account-return-history',
-              component: () => import('@/views/customer/account/ReturnHistoryPage.vue'),
-              meta: { title: 'Lịch sử trả hàng - LaptopStore' },
-            },
+            // {
+            //   path: 'return-request',
+            //   name: 'account-return-request',
+            //   component: () => import('@/views/customer/account/ReturnRequestPage.vue'),
+            //   meta: { title: 'Yêu cầu trả hàng - LaptopStore' },
+            // },
+            // {
+            //   path: 'return-request/history',
+            //   name: 'account-return-history',
+            //   component: () => import('@/views/customer/account/ReturnHistoryPage.vue'),
+            //   meta: { title: 'Lịch sử trả hàng - LaptopStore' },
+            // },
             {
               path: 'points',
               name: 'account-points',
