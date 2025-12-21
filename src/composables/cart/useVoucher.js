@@ -10,9 +10,10 @@ import authService from '@/service/customer/authService'
 export function useVoucher() {
   const cartStore = useCartStore()
   const authStore = useAuthStore()
-  const availableVouchers = ref([])
-  const unavailableVouchers = ref([])
-  const personalVouchers = ref([])
+  // const availableVouchers = ref([]) // REMOVED
+  // const unavailableVouchers = ref([]) // REMOVED
+  // const personalVouchers = ref([]) // REMOVED
+  const allVouchers = ref([]) // NEW: Store raw list
   const loading = ref(false)
 
   // Computed từ cart store
@@ -20,21 +21,45 @@ export function useVoucher() {
   const discountAmount = computed(() => cartStore.discount)
   const cartSubtotal = computed(() => cartStore.subtotal || 0)
 
-  // Fetch available vouchers
-  const fetchAvailableVouchers = async () => {
-    loading.value = true
-    try {
-      const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
-      const response = await voucherService.getAvailableVouchers(khachHangId)
-      if (response.success) {
-        availableVouchers.value = response.data || []
+  // Computed: Phân loại voucher dựa trên allVouchers và cartSubtotal hiện tại
+  const processedVouchers = computed(() => {
+    const tongTien = cartSubtotal.value
+    return allVouchers.value.map(voucher => {
+      const check = checkVoucherConditions(voucher, tongTien)
+      return {
+        ...voucher,
+        canUse: check.canUse,
+        reason: check.reason
       }
-    } catch (error) {
-      console.error('❌ Error fetching vouchers:', error)
-      availableVouchers.value = []
-    } finally {
-      loading.value = false
-    }
+    })
+  })
+
+  // Computed: List vouchers
+  const personalVouchers = computed(() => {
+    return processedVouchers.value.filter(v => v.riengTu === true || v.riengTu === 1)
+  })
+
+  const availableVouchers = computed(() => {
+    return processedVouchers.value.filter(v => {
+      const isPersonal = v.riengTu === true || v.riengTu === 1
+      return !isPersonal && v.canUse
+    })
+  })
+
+  const unavailableVouchers = computed(() => {
+    return processedVouchers.value.filter(v => {
+      const isPersonal = v.riengTu === true || v.riengTu === 1
+      return !isPersonal && !v.canUse
+    })
+  })
+
+  // Fetch available vouchers (API cũ - có thể giữ hoặc bỏ nếu không dùng)
+  const fetchAvailableVouchers = async () => {
+    // ... (Keep existing or deprecated)
+    // Logic này update availableVouchers ref cũ, nhưng giờ ta dùng computed.
+    // Nếu component gọi hàm này, nó sẽ không update allVouchers.
+    // Tốt nhất nên chuyển sang dùng fetchAllVouchers hoặc update allVouchers ở đây.
+    // Tuy nhiên, context component VoucherInput.vue dùng fetchAllVouchers.
   }
 
   // Fetch all vouchers (available, unavailable, personal)
@@ -42,58 +67,18 @@ export function useVoucher() {
     loading.value = true
     try {
       const khachHangId = authStore.getCustomerId() || authService.getCustomerId()
-      const tongTienGioHang = cartSubtotal.value
 
-      // WORKAROUND: Backend filter voucher dựa trên tongTienGioHang
-      // Để lấy TẤT CẢ voucher (kể cả chưa đủ điều kiện), ta truyền giá trị rất lớn
-      // Sau đó frontend sẽ tự phân loại dựa trên tongTienGioHang thực tế
+      // Request backend lấy tất cả voucher
       const VERY_HIGH_VALUE = 999999999
       const response = await voucherService.getVoucherSuggestions(khachHangId, VERY_HIGH_VALUE)
-      
+
       if (response.success && response.data) {
-        const allVouchers = response.data || []
-
-        // Reset arrays
-        availableVouchers.value = []
-        unavailableVouchers.value = []
-        personalVouchers.value = []
-
-        console.log(`📦 Nhận được ${allVouchers.length} vouchers từ backend`)
-
-        // Phân loại voucher dựa trên tongTienGioHang THỰC TẾ
-        allVouchers.forEach(voucher => {
-          // Kiểm tra xem có phải phiếu cá nhân không
-          const isPersonal = voucher.riengTu === true || voucher.riengTu === 1
-
-          // Check lại điều kiện với tổng tiền THỰC TẾ của giỏ hàng
-          const check = checkVoucherConditions(voucher, tongTienGioHang)
-
-          if (isPersonal) {
-            // Phiếu cá nhân - luôn hiển thị trong tab Personal
-            personalVouchers.value.push({
-              ...voucher,
-              reason: check.reason // Thêm reason nếu không dùng được
-            })
-          } else {
-            // Phiếu công khai
-            if (check.canUse) {
-              availableVouchers.value.push(voucher)
-            } else {
-              unavailableVouchers.value.push({
-                ...voucher,
-                reason: check.reason
-              })
-            }
-          }
-        })
-
-        console.log(`✅ Loaded vouchers: ${availableVouchers.value.length} available, ${unavailableVouchers.value.length} unavailable, ${personalVouchers.value.length} personal`)
+        allVouchers.value = response.data || []
+        console.log(`📦 Nhận được ${allVouchers.value.length} vouchers từ backend`)
       }
     } catch (error) {
       console.error('❌ Error fetching all vouchers:', error)
-      availableVouchers.value = []
-      unavailableVouchers.value = []
-      personalVouchers.value = []
+      allVouchers.value = []
     } finally {
       loading.value = false
     }
