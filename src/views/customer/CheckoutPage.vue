@@ -21,24 +21,43 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                    <input v-model="formData.tenKhachHang" type="text" class="form-control"
-                      :class="{ 'is-invalid': formErrors.tenKhachHang }" required placeholder="Nhập họ và tên"
-                      @input="clearError('tenKhachHang')" />
+                    <input
+                      v-model="formData.tenKhachHang"
+                      type="text"
+                      class="form-control"
+                      :class="{ 'is-invalid': formErrors.tenKhachHang }"
+                      required
+                      placeholder="Nhập họ và tên"
+                      @input="clearError('tenKhachHang')"
+                    />
                     <div class="invalid-feedback">{{ formErrors.tenKhachHang }}</div>
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                    <input v-model="formData.soDienThoai" type="tel" class="form-control"
-                      :class="{ 'is-invalid': formErrors.soDienThoai }" required placeholder="Nhập số điện thoại"
-                      @input="clearError('soDienThoai')" />
+                    <label class="form-label"
+                      >Số điện thoại <span class="text-danger">*</span></label
+                    >
+                    <input
+                      v-model="formData.soDienThoai"
+                      type="tel"
+                      class="form-control"
+                      :class="{ 'is-invalid': formErrors.soDienThoai }"
+                      required
+                      placeholder="Nhập số điện thoại"
+                      @input="clearError('soDienThoai')"
+                    />
                     <div class="invalid-feedback">{{ formErrors.soDienThoai }}</div>
                   </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Email</label>
-                  <input v-model="formData.email" type="email" class="form-control"
-                    :class="{ 'is-invalid': formErrors.email }" placeholder="Nhập email (để nhận xác nhận đơn hàng)"
-                    @input="clearError('email')" />
+                  <input
+                    v-model="formData.email"
+                    type="email"
+                    class="form-control"
+                    :class="{ 'is-invalid': formErrors.email }"
+                    placeholder="Nhập email (để nhận xác nhận đơn hàng)"
+                    @input="clearError('email')"
+                  />
                   <div class="invalid-feedback">{{ formErrors.email }}</div>
                 </div>
 
@@ -47,40 +66,68 @@
                 <!-- Địa chỉ giao hàng -->
                 <div class="mb-3">
                   <div class="d-flex align-items-center mb-2">
-                    <label class="form-label mb-0 me-3">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+                    <label class="form-label mb-0 me-3"
+                      >Địa chỉ giao hàng <span class="text-danger">*</span></label
+                    >
                   </div>
 
                   <div v-if="savedAddresses.length > 0" class="input-group mb-3">
-                    <select class="form-select" v-model="selectedSavedAddressId" @change="loadSavedAddress">
+                    <select
+                      class="form-select"
+                      v-model="selectedSavedAddressId"
+                      @change="loadSavedAddress"
+                    >
                       <option value="">-- Chọn địa chỉ đã lưu --</option>
                       <option v-for="addr in savedAddresses" :key="addr.id" :value="addr.id">
                         {{ formatAddressDisplay(addr) }}
                       </option>
                     </select>
-                    <button class="btn btn-outline-secondary" type="button" @click="switchToNewAddress"
-                      title="Thêm địa chỉ mới">
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      @click="switchToNewAddress"
+                      title="Thêm địa chỉ mới"
+                    >
                       <i class="bi bi-plus-lg"></i>
                     </button>
                   </div>
 
                   <!-- Static Address Display (ReadOnly) -->
-                  <div v-if="!isNewAddress && selectedSavedAddressId" class="alert alert-secondary mb-3">
+                  <div
+                    v-if="!isNewAddress && selectedSavedAddressId"
+                    class="alert alert-secondary mb-3"
+                  >
                     <div class="d-flex justify-content-between">
                       <strong>Địa chỉ nhận hàng:</strong>
-                      <button class="btn btn-sm btn-link p-0 text-primary" @click="switchToNewAddress">Thay đổi</button>
+                      <button
+                        class="btn btn-sm btn-link p-0 text-primary"
+                        @click="switchToNewAddress"
+                      >
+                        Thay đổi
+                      </button>
                     </div>
                     <p class="mb-0 mt-1">{{ formData.diaChi }}</p>
-                    <small v-if="formData.tenKhachHang" class="text-muted d-block mt-1">Người nhận: {{
-                      formData.tenKhachHang }} - {{ formData.soDienThoai }}</small>
+                    <small v-if="formData.tenKhachHang" class="text-muted d-block mt-1"
+                      >Người nhận: {{ formData.tenKhachHang }} - {{ formData.soDienThoai }}</small
+                    >
                   </div>
 
                   <!-- Address Form Component (Edit/New Mode) -->
                   <div v-if="isNewAddress || !selectedSavedAddressId">
-                    <div v-if="savedAddresses.length > 0 && isNewAddress" class="d-flex justify-content-between mb-2">
+                    <div
+                      v-if="savedAddresses.length > 0 && isNewAddress"
+                      class="d-flex justify-content-between mb-2"
+                    >
                       <span class="text-muted small">Nhập địa chỉ mới bên dưới:</span>
-                      <button class="btn btn-sm btn-link text-danger p-0" @click="cancelNewAddress">Hủy</button>
+                      <button class="btn btn-sm btn-link text-danger p-0" @click="cancelNewAddress">
+                        Hủy
+                      </button>
                     </div>
-                    <AddressForm ref="addressFormRef" v-model="addressFormData" :show-save-button="false" />
+                    <AddressForm
+                      ref="addressFormRef"
+                      v-model="addressFormData"
+                      :show-save-button="false"
+                    />
                   </div>
 
                   <!-- Hidden input for validation error display mapping -->
@@ -91,17 +138,26 @@
 
                 <div class="mb-3">
                   <label class="form-label">Ghi chú</label>
-                  <textarea v-model="formData.ghiChu" class="form-control" rows="2"
-                    placeholder="Ghi chú cho đơn hàng (nếu có)"></textarea>
+                  <textarea
+                    v-model="formData.ghiChu"
+                    class="form-control"
+                    rows="2"
+                    placeholder="Ghi chú cho đơn hàng (nếu có)"
+                  ></textarea>
                 </div>
               </form>
             </div>
           </div>
 
           <!-- Points Usage -->
-          <PointsRedemption v-if="customerId && availablePoints > 0" v-model="pointsToUse"
-            :available-points="availablePoints" :conversion-rate="quyDoiDiem?.tienTieuDiem || 0"
-            :max-allowed-points="maxPointsAllowed" @update:model-value="calculatePointsDiscount" />
+          <PointsRedemption
+            v-if="customerId && availablePoints > 0"
+            v-model="pointsToUse"
+            :available-points="availablePoints"
+            :conversion-rate="quyDoiDiem?.tienTieuDiem || 0"
+            :max-allowed-points="maxPointsAllowed"
+            @update:model-value="calculatePointsDiscount"
+          />
 
           <!-- Payment Method -->
           <div class="card mb-4">
@@ -110,19 +166,33 @@
             </div>
             <div class="card-body">
               <div class="form-check mb-3">
-                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
-                  :value="0" id="cod" />
+                <input
+                  v-model="formData.phuongThucThanhToan"
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  :value="0"
+                  id="cod"
+                />
                 <label class="form-check-label" for="cod">
                   <strong>Thanh toán khi nhận hàng (COD)</strong>
                   <small class="d-block text-muted">Thanh toán bằng tiền mặt khi nhận hàng</small>
                 </label>
               </div>
               <div class="form-check">
-                <input v-model="formData.phuongThucThanhToan" class="form-check-input" type="radio" name="paymentMethod"
-                  :value="1" id="online" />
+                <input
+                  v-model="formData.phuongThucThanhToan"
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  :value="1"
+                  id="online"
+                />
                 <label class="form-check-label" for="online">
                   <strong>Thanh toán online</strong>
-                  <small class="d-block text-muted">Chuyển khoản qua ngân hàng hoặc ví điện tử</small>
+                  <small class="d-block text-muted"
+                    >Chuyển khoản qua ngân hàng hoặc ví điện tử</small
+                  >
                 </label>
               </div>
             </div>
@@ -151,9 +221,17 @@
             <div class="card-body">
               <!-- Products List -->
               <div class="order-items mb-3">
-                <div v-for="(item, index) in orderItems" :key="index" class="d-flex mb-3 pb-3 border-bottom">
-                  <img :src="item.imageUrl || '/placeholder.jpg'" :alt="item.tenSp" class="product-image me-2"
-                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px" />
+                <div
+                  v-for="(item, index) in orderItems"
+                  :key="index"
+                  class="d-flex mb-3 pb-3 border-bottom"
+                >
+                  <img
+                    :src="item.imageUrl || '/placeholder.jpg'"
+                    :alt="item.tenSp"
+                    class="product-image me-2"
+                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px"
+                  />
                   <div class="flex-grow-1">
                     <h6 class="mb-1 small">{{ item.tenSp }}</h6>
                     <div class="d-flex justify-content-between">
@@ -178,7 +256,10 @@
                   <span>Giảm giá:</span>
                   <span>-{{ formatPrice(discount) }}</span>
                 </div>
-                <div v-if="pointsDiscount > 0" class="d-flex justify-content-between mb-2 text-success">
+                <div
+                  v-if="pointsDiscount > 0"
+                  class="d-flex justify-content-between mb-2 text-success"
+                >
                   <span>Giảm từ điểm:</span>
                   <span>-{{ formatPrice(pointsDiscount) }}</span>
                 </div>
@@ -190,7 +271,11 @@
               </div>
 
               <!-- Submit Button -->
-              <button @click="handleSubmit" class="btn checkout-btn w-100 btn-lg" :disabled="loading || !canSubmit">
+              <button
+                @click="handleSubmit"
+                class="btn checkout-btn w-100 btn-lg"
+                :disabled="loading || !canSubmit"
+              >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ loading ? 'Đang xử lý...' : 'Đặt hàng' }}
               </button>
@@ -201,9 +286,18 @@
     </div>
 
     <!-- QR Payment Modal -->
-    <QRPaymentModal :show="showQRPaymentModal" :qr-data="qrData" :loading="qrLoading" :error="qrError"
-      :status="qrStatus" :order-id="createdOrderId" @close="handleCloseQRModal"
-      @payment-confirmed="handlePaymentConfirmed" @retry="handleRetryQR" @expired="handleQRExpired" />
+    <QRPaymentModal
+      :show="showQRPaymentModal"
+      :qr-data="qrData"
+      :loading="qrLoading"
+      :error="qrError"
+      :status="qrStatus"
+      :order-id="createdOrderId"
+      @close="handleCloseQRModal"
+      @payment-confirmed="handlePaymentConfirmed"
+      @retry="handleRetryQR"
+      @expired="handleQRExpired"
+    />
   </div>
 </template>
 
@@ -239,14 +333,14 @@ const {
   checkStatus: checkQRStatus,
   handleExpired: handleQRExpired,
   pausePolling,
-  resumePolling
+  resumePolling,
 } = useQRPayment({
   amount: computed(() => total.value),
   orderCode: computed(() => orderCode.value),
   onPaymentConfirmed: (data) => {
     console.log('✅ Thanh toán QR đã được xác nhận!', data)
     // Payment confirmed - modal will handle the UI
-  }
+  },
 })
 
 // Form data
@@ -276,7 +370,7 @@ const addressFormData = ref({
   tinhCode: '',
   huyenCode: '',
   xaCode: '',
-  fullAddress: ''
+  fullAddress: '',
 })
 
 // Saved addresses
@@ -473,19 +567,23 @@ onMounted(async () => {
 })
 
 // Watch address form changes to update main form
-watch(addressFormData, (newVal) => {
-  if (newVal.fullAddress) {
-    formData.value.diaChi = newVal.fullAddress
-  } else {
-    // Fallback compilation if fullAddress not present
-    let full = newVal.diaChi || ''
-    if (newVal.xa) full += `, ${newVal.xa}`
-    if (newVal.huyen) full += `, ${newVal.huyen}`
-    if (newVal.tinh) full += `, ${newVal.tinh}`
-    formData.value.diaChi = full
-  }
-  formErrors.value.diaChi = '' // Clear error on change
-}, { deep: true })
+watch(
+  addressFormData,
+  (newVal) => {
+    if (newVal.fullAddress) {
+      formData.value.diaChi = newVal.fullAddress
+    } else {
+      // Fallback compilation if fullAddress not present
+      let full = newVal.diaChi || ''
+      if (newVal.xa) full += `, ${newVal.xa}`
+      if (newVal.huyen) full += `, ${newVal.huyen}`
+      if (newVal.tinh) full += `, ${newVal.tinh}`
+      formData.value.diaChi = full
+    }
+    formErrors.value.diaChi = '' // Clear error on change
+  },
+  { deep: true },
+)
 
 // Address methods
 const loadSavedAddresses = async () => {
@@ -522,7 +620,7 @@ const loadSavedAddress = () => {
   isNewAddress.value = false
   if (!selectedSavedAddressId.value) return
 
-  const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
+  const address = savedAddresses.value.find((addr) => addr.id === selectedSavedAddressId.value)
   if (!address) return
 
   const formatted = formatAddressDisplay(address)
@@ -536,7 +634,16 @@ const switchToNewAddress = () => {
   isNewAddress.value = true
   selectedSavedAddressId.value = ''
   formData.value.diaChi = ''
-  addressFormData.value = { diaChi: '', fullAddress: '', tinh: '', huyen: '', xa: '', tinhCode: '', huyenCode: '', xaCode: '' }
+  addressFormData.value = {
+    diaChi: '',
+    fullAddress: '',
+    tinh: '',
+    huyen: '',
+    xa: '',
+    tinhCode: '',
+    huyenCode: '',
+    xaCode: '',
+  }
 }
 
 const cancelNewAddress = () => {
@@ -549,7 +656,7 @@ const cancelNewAddress = () => {
 const loadSavedAddress_Old = async () => {
   if (!selectedSavedAddressId.value) return
 
-  const address = savedAddresses.value.find(addr => addr.id === selectedSavedAddressId.value)
+  const address = savedAddresses.value.find((addr) => addr.id === selectedSavedAddressId.value)
   if (!address) return
 
   // Basic fill
@@ -569,14 +676,16 @@ const loadSavedAddress_Old = async () => {
       if (!addressFormRef.value.provinces || addressFormRef.value.provinces.length === 0) {
         // Should trigger fetch? It mounts automatically.
       }
-      const province = addressFormRef.value.provinces.find(p => p.name.includes(address.tinh) || address.tinh.includes(p.name))
+      const province = addressFormRef.value.provinces.find(
+        (p) => p.name.includes(address.tinh) || address.tinh.includes(p.name),
+      )
       if (province) {
         addressFormData.value.tinhCode = province.id
         // Trigger fetch districts
         await addressFormRef.value.selectProvince(province) // This mocks selecting it
         // After this, districts should be loaded.
 
-        // Note: Saving 'huyen' is tricky if we don't have it in saved address. 
+        // Note: Saving 'huyen' is tricky if we don't have it in saved address.
         // If checking 'xa' string for district name is too complex, we skip.
         // But if we saved it previously as "Ward, District", we might parse it?
         // For now, let's just trust the text values or manual re-selection.
@@ -666,7 +775,7 @@ const createdOrderId = ref(null)
 const availablePoints = ref(0)
 const pointsToUse = computed({
   get: () => cartStore.pointsUsed,
-  set: (val) => cartStore.pointsUsed = val
+  set: (val) => (cartStore.pointsUsed = val),
 })
 const pointsDiscount = computed(() => cartStore.pointsDiscount)
 const pointsError = ref('')
@@ -787,7 +896,8 @@ const validateSoDienThoai = () => {
   const phoneRegex = /^(0|\+84)[0-9]{9,10}$/
   const phoneNumber = formData.value.soDienThoai.trim().replace(/\s+/g, '')
   if (!phoneRegex.test(phoneNumber)) {
-    formErrors.value.soDienThoai = 'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)'
+    formErrors.value.soDienThoai =
+      'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)'
     return false
   }
   formErrors.value.soDienThoai = ''
@@ -929,6 +1039,7 @@ const handleSubmit = async () => {
       sanPhams: orderItems.value.map((item) => ({
         idCtsp: item.idCtsp,
         soLuong: item.soLuong,
+        donGia: item.donGia, // Gửi giá đang hiển thị để backend check
       })),
     }
 
@@ -995,7 +1106,11 @@ const handleSubmit = async () => {
 
       // Nếu là thanh toán online, tạo QR và mở modal
       if (formData.value.phuongThucThanhToan === 1) {
-        console.log('🔄 [CheckoutPage] Tạo QR code cho đơn hàng:', { orderId, orderCode: orderCodeFromResponse, total: total.value })
+        console.log('🔄 [CheckoutPage] Tạo QR code cho đơn hàng:', {
+          orderId,
+          orderCode: orderCodeFromResponse,
+          total: total.value,
+        })
 
         // Store order ID for modal
         createdOrderId.value = orderId
@@ -1029,7 +1144,34 @@ const handleSubmit = async () => {
     // Improved Error Handling for Stock Issues
     const errorData = error.response?.data
     const errorMessage = errorData?.message || error.message || 'Có lỗi xảy ra khi đặt hàng'
-    const errorCode = errorData?.code // Assuming backend sends code, or we check text
+    const errorCode = errorData?.errorCode || errorData?.code // Assuming backend sends code
+
+    // Xử lý lỗi giá thay đổi
+    if (errorCode === 'PRICE_CHANGE') {
+      showWarning('⚠️ ' + (errorMessage || 'Giá sản phẩm đã thay đổi. Vui lòng kiểm tra lại.'))
+
+      // Refresh lại giỏ hàng để lấy giá mới
+      await cartStore.fetchCart()
+
+      // Cập nhật lại orderItems dựa trên dữ liệu mới trong cartStore
+      if (cartStore.selectedItems && cartStore.selectedItems.length > 0) {
+        orderItems.value = cartStore.selectedItems.map((item) => {
+          const itemPrice = Number(item.price) || 0
+          const itemQuantity = Number(item.quantity) || 1
+          const itemSubtotal = Number(item.subtotal) || itemPrice * itemQuantity
+
+          return {
+            idCtsp: item.ctspId || item.idCtsp || item.id,
+            tenSp: item.tenSp || item.tenSanPham || 'Sản phẩm',
+            soLuong: itemQuantity,
+            donGia: itemPrice,
+            thanhTien: itemSubtotal,
+            imageUrl: item.imageUrl || item.anhSanPham,
+          }
+        })
+      }
+      return
+    }
 
     if (errorMessage && errorMessage.toLowerCase().includes('hết hàng')) {
       showError(`⚠️ Rất tiếc, ${errorMessage}\n\nVui lòng cập nhật giỏ hàng.`)
@@ -1061,8 +1203,6 @@ const handleRetryQR = async () => {
     resumePolling()
   }
 }
-
-
 </script>
 
 <style scoped>
