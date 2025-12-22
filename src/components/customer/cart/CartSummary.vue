@@ -8,12 +8,12 @@
         <div class="points-icon">🎁</div>
         <div class="points-title">Ưu đãi thành viên</div>
       </div>
-      
+
       <div v-if="memberPoints.available > 0" class="points-row">
         <span>Điểm hiện có:</span>
         <span class="points-value">{{ formatPoints(memberPoints.available) }}</span>
       </div>
-      
+
       <div v-if="pointsEarned > 0" class="points-row earned">
         <span>Tích lũy đơn này:</span>
         <span class="points-value">
@@ -46,8 +46,8 @@
         <span class="value">-{{ formatPrice(pointsDiscount) }}</span>
       </div>
 
-     
-      
+
+
 
       <div class="divider"></div>
 
@@ -62,11 +62,14 @@
     </div>
 
     <!-- Checkout Button -->
-    <button @click="handleCheckout" class="checkout-btn" :disabled="!canCheckout || loading">
+    <button @click="handleCheckout" class="checkout-btn" :disabled="!canCheckout || loading || isOverLimit">
       <span v-if="loading" class="spinner"></span>
       <span>{{ loading ? 'Đang xử lý...' : 'Tiến hành thanh toán' }}</span>
     </button>
-    
+    <div v-if="isOverLimit" class="limit-warning">
+      ⚠️ Quá giới hạn: {{ totalSelectedQty }}/2 sản phẩm
+    </div>
+
     <!-- Policies -->
     <div class="policies-list">
        <div class="policy-item">
@@ -101,7 +104,7 @@ const {
 const pointsEarned = computed(() => {
   const rate = memberPoints.value?.earnedRate || 0
   if (rate <= 0) return 0
-  
+
   // Calculate based on total after discount (excluding points usage itself usually, but keeping logic consistent)
   // Logic: Earn points on the amount effectively paid (subtotal - discount)
   // If points are used, usually earn on the REMAINING amount.
@@ -112,6 +115,8 @@ const pointsEarned = computed(() => {
 })
 
 const canCheckout = computed(() => selectedItems.value.length > 0 && total.value > 0)
+const totalSelectedQty = computed(() => selectedItems.value.reduce((sum, item) => sum + item.quantity, 0))
+const isOverLimit = computed(() => totalSelectedQty.value > 2)
 
 const handleCheckout = () => {
   checkout()
@@ -288,6 +293,17 @@ const formatPoints = (points) => {
   background: #e2e8f0;
   color: #94a3b8;
   cursor: not-allowed;
+}
+
+.limit-warning {
+  margin-top: 8px;
+  color: #ef4444;
+  font-size: 13px;
+  text-align: center;
+  background: #fef2f2;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #fee2e2;
 }
 
 /* Policies */

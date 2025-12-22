@@ -86,11 +86,18 @@ export function useCart() {
       return false
     }
 
+    // [NEW] RULE: Max 2 items per order
+    const totalSelectedQty = selectedItems.value.reduce((sum, item) => sum + item.quantity, 0)
+    if (totalSelectedQty > 2) {
+      showError(`Bạn chỉ được chọn tối đa 2 sản phẩm cho mỗi đơn hàng (Hiện tại: ${totalSelectedQty}). Vui lòng bỏ chọn bớt.`)
+      return false
+    }
+
     // Validate stock before checkout
     try {
       const authStore = await import('@/stores/customer/authStore').then(m => m.useAuthStore())
       const khachHangId = authStore.getCustomerId()
-      
+
       if (!khachHangId) {
         showError('Vui lòng đăng nhập để tiếp tục')
         return false
@@ -106,7 +113,7 @@ export function useCart() {
       if (!validation.success || !validation.data.isValid) {
         // Show detailed error message
         const outOfStockItems = validation.data?.outOfStockItems || []
-        
+
         if (outOfStockItems.length > 0) {
           let errorMessage = '❌ Một số sản phẩm đã hết hàng:\n\n'
           outOfStockItems.forEach((item, index) => {
@@ -121,7 +128,7 @@ export function useCart() {
         } else {
           showError(validation.data?.message || 'Không thể thanh toán. Vui lòng kiểm tra lại giỏ hàng.')
         }
-        
+
         return false
       }
 
