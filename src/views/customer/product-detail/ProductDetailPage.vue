@@ -234,7 +234,7 @@ import ProductComparisonButton from '@/components/customer/product-detail/Produc
 // Composables
 import { useProductDetail } from '@/composables/product-detail/useProductDetail'
 import { useProductReviews } from '@/composables/product-detail/useProductReviews'
-import { useProductComparison } from '@/composables/product-detail/useProductComparison'
+// import { useProductComparison } from '@/composables/product-detail/useProductComparison'
 import { useProductCart } from '@/composables/product-detail/useProductCart'
 
 const route = useRoute()
@@ -274,7 +274,7 @@ const handleBuyNow = async (data) => {
     throw error
   }
 }
-const { toggleComparison } = useProductComparison()
+// const { toggleComparison } = useProductComparison()
 
 // Computed product data for comparison (reactive to variant changes)
 const comparisonProductData = computed(() => {
@@ -453,9 +453,9 @@ onUnmounted(() => {
 
 // Methods
 const handleToggleComparison = (product) => {
-  if (product && product.id) {
-    toggleComparison(product)
-  }
+  // Logic is handled in ProductComparisonButton component
+  // We just listen to the event if needed
+  console.log('Comparison toggled for:', product?.id)
 }
 
 const handleSubmitReview = async (reviewData) => {
