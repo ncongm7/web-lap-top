@@ -11,12 +11,17 @@
           <small>Hỗ trợ nhanh trong giờ làm việc</small>
         </div>
       </div>
-      <button class="chat-button" type="button" aria-label="Mở chat" :class="{ 'has-unread': unreadCount > 0 }"
-        @click.stop="openChat">
+      <button
+        class="chat-button"
+        type="button"
+        aria-label="Mở chat"
+        :class="{ 'has-unread': unreadCount > 0 }"
+        @click.stop="openChat"
+      >
         <i class="bi bi-chat-dots-fill"></i>
         <span v-if="unreadCount > 0" class="unread-badge">{{
           unreadCount > 9 ? '9+' : unreadCount
-          }}</span>
+        }}</span>
       </button>
     </div>
 
@@ -29,34 +34,59 @@
             <img :src="heroImage" alt="Dell Assistant" />
           </div>
           <div class="header-text">
-            <h6 class="mb-0">{{ escalationMode === 'HUMAN' ? (assignedStaffName || 'Nhân viên tư vấn') : 'Trợ lý AI  Dell' }}</h6>
-            <small class="text-muted">{{ escalationMode === 'HUMAN' ? 'Đang hỗ trợ bạn' : 'Tự động trả lời 24/7'
+            <h6 class="mb-0">
+              {{
+                escalationMode === 'HUMAN'
+                  ? assignedStaffName || 'Nhân viên tư vấn'
+                  : 'Trợ lý AI  Dell'
+              }}
+            </h6>
+            <small class="text-muted">{{
+              escalationMode === 'HUMAN' ? 'Đang hỗ trợ bạn' : 'Tự động trả lời 24/7'
             }}</small>
           </div>
         </div>
         <div class="header-actions">
-          <button v-if="escalationMode === 'HUMAN'"
-            class="btn btn-sm btn-light text-primary me-2 d-flex align-items-center gap-1" @click="returnToBot"
-            title="Quay lại Chatbot AI">
-            <i class="bi bi-robot"></i> <span class="d-none d-sm-inline"
-              style="font-size: 12px; font-weight: 600;">Chatbot</span>
+          <button
+            v-if="escalationMode === 'HUMAN'"
+            class="btn btn-sm btn-light text-primary me-2 d-flex align-items-center gap-1"
+            @click="returnToBot"
+            title="Quay lại Chatbot AI"
+          >
+            <i class="bi bi-robot"></i>
+            <span class="d-none d-sm-inline" style="font-size: 12px; font-weight: 600"
+              >Chatbot</span
+            >
           </button>
-          <button class="btn btn-sm btn-link" @click="toggleSound"
-            :title="soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'">
+          <button
+            class="btn btn-sm btn-link"
+            @click="toggleSound"
+            :title="soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'"
+          >
             <i :class="soundEnabled ? 'bi bi-volume-up' : 'bi bi-volume-mute'"></i>
           </button>
         </div>
         <div class="header-status">
           <!-- Connection status indicator -->
-          <div v-if="wsConnectionStatus === 'connected'" class="status-indicator connected" title="Đã kết nối">
+          <div
+            v-if="wsConnectionStatus === 'connected'"
+            class="status-indicator connected"
+            title="Đã kết nối"
+          >
             <i class="bi bi-circle-fill"></i>
           </div>
-          <div v-else-if="wsConnectionStatus === 'connecting'" class="status-indicator connecting"
-            title="Đang kết nối...">
+          <div
+            v-else-if="wsConnectionStatus === 'connecting'"
+            class="status-indicator connecting"
+            title="Đang kết nối..."
+          >
             <i class="bi bi-circle-fill"></i>
           </div>
-          <div v-else-if="wsConnectionStatus === 'reconnecting'" class="status-indicator reconnecting"
-            title="Đang kết nối lại...">
+          <div
+            v-else-if="wsConnectionStatus === 'reconnecting'"
+            class="status-indicator reconnecting"
+            title="Đang kết nối lại..."
+          >
             <i class="bi bi-arrow-clockwise"></i>
           </div>
           <div v-else class="status-indicator disconnected" title="Mất kết nối">
@@ -82,13 +112,15 @@
             <div class="welcome-intro">
               <span class="welcome-badge"><i class="bi bi-robot"></i> Trợ lý Dell AI</span>
               <h5>Xin chào {{ customerDisplayName }}!</h5>
-              <p>
-                Mình là AI hỗ trợ tra cứu Đơn hàng, Bảo hành và Tư vấn sản phẩm 24/7.
-              </p>
+              <p>Mình là AI hỗ trợ tra cứu Đơn hàng, Bảo hành và Tư vấn sản phẩm 24/7.</p>
             </div>
             <div class="welcome-topic-grid">
-              <button v-for="topic in welcomeTopics" :key="topic.id" class="welcome-topic-card"
-                @click="handleWelcomeOption(topic)">
+              <button
+                v-for="topic in welcomeTopics"
+                :key="topic.id"
+                class="welcome-topic-card"
+                @click="handleWelcomeOption(topic)"
+              >
                 <i :class="topic.icon"></i>
                 <div class="topic-text">
                   <strong>{{ topic.title }}</strong>
@@ -106,10 +138,15 @@
           </div>
 
           <div v-else class="messages-list">
-            <div v-for="(message, index) in messages" :key="message.id" class="message-wrapper" :class="{
-              'message-customer': message.isFromCustomer,
-              'message-staff': !message.isFromCustomer,
-            }">
+            <div
+              v-for="(message, index) in messages"
+              :key="message.id"
+              class="message-wrapper"
+              :class="{
+                'message-customer': message.isFromCustomer,
+                'message-staff': !message.isFromCustomer,
+              }"
+            >
               <div v-if="shouldShowDateSeparator(message, index)" class="date-separator">
                 {{ formatDate(message.ngayPhanHoi) }}
               </div>
@@ -119,7 +156,11 @@
                   <i class="bi bi-robot"></i> Trợ lý tự động
                 </div>
 
-                <div v-if="message.replyTo" class="reply-preview" @click="scrollToMessage(message.replyToId)">
+                <div
+                  v-if="message.replyTo"
+                  class="reply-preview"
+                  @click="scrollToMessage(message.replyToId)"
+                >
                   <div class="reply-line"></div>
                   <div class="reply-content">
                     <strong>{{ message.replyTo.isFromCustomer ? 'Bạn' : 'Nhân viên' }}</strong>
@@ -128,10 +169,20 @@
                 </div>
 
                 <div class="message-content">
-                  <div v-if="message.messageType === 'image' && message.fileUrl" class="message-image">
-                    <img :src="message.fileUrl" alt="Image" @click="openImageModal(message.fileUrl)" />
+                  <div
+                    v-if="message.messageType === 'image' && message.fileUrl"
+                    class="message-image"
+                  >
+                    <img
+                      :src="message.fileUrl"
+                      alt="Image"
+                      @click="openImageModal(message.fileUrl)"
+                    />
                   </div>
-                  <div v-else-if="message.messageType === 'file' && message.fileUrl" class="message-file">
+                  <div
+                    v-else-if="message.messageType === 'file' && message.fileUrl"
+                    class="message-file"
+                  >
                     <a :href="message.fileUrl" target="_blank" class="file-link">
                       <i class="bi bi-file-earmark"></i>
                       <span>Tải file</span>
@@ -143,12 +194,20 @@
                   <div class="message-meta">
                     <span class="message-time">{{ formatMessageTime(message.ngayPhanHoi) }}</span>
                     <span v-if="message.isFromCustomer" class="read-indicator">
-                      <span v-if="message.status === 'sending'" class="status-sending" title="Đang gửi...">
+                      <span
+                        v-if="message.status === 'sending'"
+                        class="status-sending"
+                        title="Đang gửi..."
+                      >
                         <i class="bi bi-clock"></i>
                       </span>
-                      <span v-else-if="
-                        message.status === 'sent' || (!message.isRead && !message.status)
-                      " class="status-sent" title="Đã gửi">
+                      <span
+                        v-else-if="
+                          message.status === 'sent' || (!message.isRead && !message.status)
+                        "
+                        class="status-sent"
+                        title="Đã gửi"
+                      >
                         <i class="bi bi-check2"></i>
                       </span>
                       <span v-else-if="message.isRead" class="status-read" title="Đã đọc">
@@ -179,8 +238,11 @@
         </div>
 
         <!-- Quick Replies (ngoài messages-list) -->
-        <ChatQuickReplies v-if="currentQuickReplies.length > 0" :quick-replies="currentQuickReplies"
-          @select="handleQuickReplySelect" />
+        <ChatQuickReplies
+          v-if="currentQuickReplies.length > 0"
+          :quick-replies="currentQuickReplies"
+          @select="handleQuickReplySelect"
+        />
       </div>
 
       <!-- Escalate to human button -->
@@ -201,7 +263,12 @@
             </button>
           </div>
           <div class="file-preview-body">
-            <img v-if="filePreviewType === 'image'" :src="filePreviewUrl" alt="Preview" class="preview-image" />
+            <img
+              v-if="filePreviewType === 'image'"
+              :src="filePreviewUrl"
+              alt="Preview"
+              class="preview-image"
+            />
             <div v-else class="preview-file">
               <i class="bi bi-file-earmark" style="font-size: 3rem"></i>
               <p>{{ filePreview.name }}</p>
@@ -210,7 +277,11 @@
           </div>
           <div class="file-preview-footer">
             <button class="btn btn-secondary btn-sm" @click="closeFilePreview">Hủy</button>
-            <button class="btn btn-primary btn-sm" @click="sendFileMessage" :disabled="uploadingFile">
+            <button
+              class="btn btn-primary btn-sm"
+              @click="sendFileMessage"
+              :disabled="uploadingFile"
+            >
               <span v-if="uploadingFile" class="spinner-border spinner-border-sm"></span>
               <span v-else>Gửi</span>
             </button>
@@ -239,27 +310,54 @@
         </div>
 
         <div class="input-group">
-          <button class="btn btn-outline-secondary btn-sm" @click="showEmojiPicker = !showEmojiPicker" title="Emoji">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="showEmojiPicker = !showEmojiPicker"
+            title="Emoji"
+          >
             <i class="bi bi-emoji-smile"></i>
           </button>
-          <button class="btn btn-outline-secondary btn-sm" @click="triggerFileUpload" title="Gửi file"
-            :disabled="uploadingFile">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="triggerFileUpload"
+            title="Gửi file"
+            :disabled="uploadingFile"
+          >
             <i class="bi bi-paperclip"></i>
           </button>
-          <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*,.pdf,.doc,.docx"
-            style="display: none" />
-          <textarea class="form-control" v-model="newMessage" @keydown.enter.exact.prevent="handleEnterKey"
-            @keydown.enter.shift.exact="newMessage += '\n'" @input="handleTyping"
-            placeholder="Hỏi bất kỳ hoặc nhập mã đơn (HD...)..." rows="1" ref="messageInput"></textarea>
-          <button class="btn btn-primary btn-sm" @click="sendMessage"
-            :disabled="!canSendMessage || isSending || uploadingFile">
+          <input
+            type="file"
+            ref="fileInput"
+            @change="handleFileSelect"
+            accept="image/*,.pdf,.doc,.docx"
+            style="display: none"
+          />
+          <textarea
+            class="form-control"
+            v-model="newMessage"
+            @keydown.enter.exact.prevent="handleEnterKey"
+            @keydown.enter.shift.exact="newMessage += '\n'"
+            @input="handleTyping"
+            placeholder="Hỏi bất kỳ hoặc nhập mã đơn (HD...)..."
+            rows="1"
+            ref="messageInput"
+          ></textarea>
+          <button
+            class="btn btn-primary btn-sm"
+            @click="sendMessage"
+            :disabled="!canSendMessage || isSending || uploadingFile"
+          >
             <span v-if="isSending" class="spinner-border spinner-border-sm"></span>
             <i v-else class="bi bi-send"></i>
           </button>
         </div>
 
         <!-- Emoji Picker -->
-        <EmojiPicker :is-open="showEmojiPicker" @select="insertEmoji" @close="showEmojiPicker = false" />
+        <EmojiPicker
+          :is-open="showEmojiPicker"
+          @select="insertEmoji"
+          @close="showEmojiPicker = false"
+        />
       </div>
     </div>
 
@@ -274,8 +372,11 @@
     </div>
 
     <!-- Consultation Flow Modal -->
-    <ConsultationFlow :show="showConsultationFlow" @close="showConsultationFlow = false"
-      @complete="handleConsultationComplete" />
+    <ConsultationFlow
+      :show="showConsultationFlow"
+      @close="showConsultationFlow = false"
+      @complete="handleConsultationComplete"
+    />
   </div>
 </template>
 
@@ -542,11 +643,14 @@ const closeChat = () => {
 const checkEscalationStatus = async (convId) => {
   try {
     const token = localStorage.getItem('customer_token')
-    const response = await fetch(`http://localhost:8080/api/chat/conversation/${convId}/escalation-status`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
+    const response = await fetch(
+      `http://localhost:8080/api/chat/conversation/${convId}/escalation-status`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
     const data = await response.json()
     if (data.data && data.data.isEscalated) {
       escalationMode.value = 'HUMAN'
@@ -1121,11 +1225,29 @@ const subscribeToConversation = (convId) => {
       // 🔍 DEBUG: Log ALL incoming messages
       console.log('📨 [ChatWidget] Received WebSocket message:', {
         id: newMsg.id,
-        from: newMsg.isFromCustomer ? 'CUSTOMER' : 'STAFF',
+        from: newMsg.isFromCustomer ? 'CUSTOMER' : newMsg.isBotMessage ? 'BOT' : 'STAFF',
+        isBotMessage: newMsg.isBotMessage,
+        isFromCustomer: newMsg.isFromCustomer,
         content: newMsg.noiDung?.substring(0, 50),
         conversationId: newMsg.conversationId,
+        currentConversationId: conversationId.value,
         timestamp: newMsg.ngayPhanHoi,
+        quickReplies: newMsg.quickReplies?.length || 0,
       })
+
+      // Kiểm tra conversationId có khớp không
+      if (
+        newMsg.conversationId &&
+        conversationId.value &&
+        newMsg.conversationId !== conversationId.value
+      ) {
+        console.warn(
+          '⚠️ [ChatWidget] ConversationId mismatch! Received:',
+          newMsg.conversationId,
+          'Expected:',
+          conversationId.value,
+        )
+      }
 
       // Xóa optimistic message (temp message) nếu có - ưu tiên xóa temp message trước
       const tempIndex = messages.value.findIndex(
@@ -1175,7 +1297,32 @@ const subscribeToConversation = (convId) => {
         // Chưa có, thêm mới
         messages.value.push(newMsg)
         nextTick(() => scrollToBottom())
-        console.log('✅ Thêm message mới từ WebSocket:', newMsg.id, newMsg.noiDung)
+
+        // Log bot messages specifically
+        if (newMsg.isBotMessage) {
+          console.log('🤖 [ChatWidget] Bot message received:', {
+            id: newMsg.id,
+            content: newMsg.noiDung?.substring(0, 100),
+            quickReplies: newMsg.quickReplies?.length || 0,
+            intent: newMsg.intentDetected,
+          })
+
+          // Update quick replies if bot message has them
+          if (
+            newMsg.quickReplies &&
+            Array.isArray(newMsg.quickReplies) &&
+            newMsg.quickReplies.length > 0
+          ) {
+            currentQuickReplies.value = newMsg.quickReplies
+            console.log('✅ [ChatWidget] Updated quick replies:', currentQuickReplies.value.length)
+          }
+        }
+
+        console.log(
+          '✅ Thêm message mới từ WebSocket:',
+          newMsg.id,
+          newMsg.noiDung?.substring(0, 50),
+        )
       } else {
         // Đã có, chỉ cập nhật (KHÔNG thêm mới)
         console.log('⚠️ Duplicate message detected, updating existing:', {
@@ -1217,8 +1364,22 @@ const subscribeToConversation = (convId) => {
     }
   })
 
-  console.log('✅ Subscribed to conversation:', convId, 'Subscription ID:', subscription.id)
+  console.log(
+    '✅ Subscribed to conversation:',
+    convId,
+    'Subscription ID:',
+    subscription.id,
+    'Topic: /topic/conversation/' + convId,
+  )
   conversationSubscription.value = subscription
+
+  // Log subscription details for debugging
+  console.log('📡 [ChatWidget] WebSocket subscription active:', {
+    conversationId: convId,
+    topic: `/topic/conversation/${convId}`,
+    subscriptionId: subscription.id,
+    isConnected: stompClient?.connected,
+  })
 
   stompClient.subscribe(`/topic/conversation/${convId}/typing`, (message) => {
     try {
@@ -1599,7 +1760,11 @@ const applyWelcomeStateIfNeeded = () => {
   const lastMessage = messages.value[messages.value.length - 1]
 
   // BOT MESSAGE LOGIC: Always offer options (Continuous Flow)
-  if (lastMessage?.isBotMessage && lastMessage.quickReplies && lastMessage.quickReplies.length > 0) {
+  if (
+    lastMessage?.isBotMessage &&
+    lastMessage.quickReplies &&
+    lastMessage.quickReplies.length > 0
+  ) {
     currentQuickReplies.value = lastMessage.quickReplies
   } else {
     // Fallback to Main Menu so user can always click (Even if last msg is from User or Bot without options)
@@ -1733,7 +1898,6 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     box-shadow:
@@ -2137,7 +2301,6 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -2214,7 +2377,6 @@ onUnmounted(() => {
 }
 
 @keyframes typing {
-
   0%,
   60%,
   100% {
@@ -2416,7 +2578,6 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
