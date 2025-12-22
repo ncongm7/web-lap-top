@@ -23,11 +23,11 @@
       <!-- Login Form -->
       <form v-if="isLogin" @submit.prevent="handleLogin" class="form">
         <div class="form-group">
-          <label>Số điện thoại</label>
+          <label>Tên đăng nhập</label>
           <input
             v-model="loginForm.soDienThoai"
             type="text"
-            placeholder="Nhập số điện thoại"
+            placeholder="Nhập tên đăng nhập"
             required
             :disabled="loading"
             @input="error = ''"
