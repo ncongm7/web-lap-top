@@ -56,7 +56,7 @@
         <span class="label">Tổng cộng:</span>
         <div class="total-wrapper">
            <span class="value">{{ formatPrice(total) }}</span>
-           <span class="vat-text">(Đã bao gồm VAT)</span>
+           <span class="vat-text" hidden>(Đã bao gồm VAT)</span>
         </div>
       </div>
     </div>

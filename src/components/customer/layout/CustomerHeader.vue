@@ -2,7 +2,7 @@
   <header class="customer-header">
     <!-- Top Bar -->
     <div class="header-top">
-      <div class="container">
+      <div class="container" hidden="">
         <div class="top-bar-content">
           <div class="top-bar-left">
             <span class="contact-item">
@@ -14,7 +14,7 @@
               <span>support@laptop.vn</span>
             </span>
           </div>
-          <div class="top-bar-right">
+          <div class="top-bar-right" hidden>
             <router-link to="/warranty-policy" class="top-link">Chính sách bảo hành</router-link>
             <router-link to="/return-policy" class="top-link">Chính sách đổi trả</router-link>
           </div>
@@ -62,7 +62,7 @@
       <div class="container">
         <ul class="nav-list">
           <li><router-link to="/" class="nav-link">Trang chủ</router-link></li>
-          <li 
+          <li
             class="nav-item-with-menu"
             @mouseenter="showMegaMenu = true"
             @mouseleave="handleNavMouseLeave"
@@ -78,8 +78,8 @@
     </nav>
 
     <!-- Mega Menu -->
-    <MegaMenu 
-      :is-visible="showMegaMenu" 
+    <MegaMenu
+      :is-visible="showMegaMenu"
       @close="showMegaMenu = false"
     />
 

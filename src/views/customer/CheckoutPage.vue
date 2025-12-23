@@ -249,8 +249,8 @@
                   <span>{{ formatPrice(subtotal) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                  <span>Phí vận chuyển:</span>
-                  <span>{{ formatPrice(shippingFee) }}</span>
+                  <span>Chúng tôi miễn phí vận chuyển</span>
+                  <span hidden>{{ formatPrice(shippingFee) }}</span>
                 </div>
                 <div v-if="discount > 0" class="d-flex justify-content-between mb-2 text-danger">
                   <span>Giảm giá:</span>

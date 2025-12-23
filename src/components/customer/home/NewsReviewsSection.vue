@@ -1,5 +1,5 @@
 <template>
-    <section class="news-reviews-section">
+    <section class="news-reviews-section" hidden="">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">{{ sectionTitle }}</h2>
@@ -25,8 +25,8 @@
                     @click="handleItemClick(item)"
                 >
                     <div class="item-thumbnail">
-                        <img 
-                            :src="getThumbnail(item)" 
+                        <img
+                            :src="getThumbnail(item)"
                             :alt="getTitle(item)"
                             @error="handleImageError"
                         />
@@ -91,12 +91,12 @@ const getThumbnail = (item) => {
     if (item.thumbnail || item.hinhAnh || item.image || item.imageUrl) {
         return item.thumbnail || item.hinhAnh || item.image || item.imageUrl
     }
-    
+
     // For reviews, try to get product image
     if (isReview(item) && item.sanPham) {
         return item.sanPham.anhDaiDien || item.sanPham.hinhAnh || ''
     }
-    
+
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='
 }
 
@@ -158,7 +158,7 @@ const fetchData = async () => {
 
         // Try to get articles first
         const articles = await getArticles(props.limit)
-        
+
         if (articles.length > 0) {
             items.value = articles
             isShowingReviews.value = false
@@ -169,7 +169,7 @@ const fetchData = async () => {
         // Fallback to reviews
         console.warn('⚠️ [NewsReviewsSection] No articles, using reviews as fallback')
         const reviews = await getTopReviews(props.limit)
-        
+
         if (reviews.length > 0) {
             items.value = reviews
             isShowingReviews.value = true

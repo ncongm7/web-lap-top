@@ -1,6 +1,6 @@
 <template>
     <section class="testimonial-slider">
-        <div class="container">
+        <div class="container" hidden>
             <div class="section-header">
                 <h2 class="section-title">Khách hàng nói gì về chúng tôi</h2>
                 <p class="section-desc">Những đánh giá chân thực từ khách hàng</p>

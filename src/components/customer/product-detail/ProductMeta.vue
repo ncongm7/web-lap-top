@@ -4,7 +4,7 @@
             <span class="meta-label">Mã SP:</span>
             <span class="meta-value meta-code">{{ metadata.code }}</span>
         </div>
-        <div class="meta-row">
+        <div class="meta-row" hidden="">
             <span class="meta-label">Đánh giá:</span>
             <div class="meta-value meta-rating">
                 <span v-for="i in 5" :key="i" class="star-icon" :class="{ filled: i <= rating }">★</span>
