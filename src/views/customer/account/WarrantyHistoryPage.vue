@@ -37,7 +37,7 @@
             <table class="table table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Mã phiếu</th>
+                  <th hidden="">Mã phiếu</th>
                   <th>Sản phẩm</th>
                   <th>Serial/IMEI</th>
                   <th>Ngày bắt đầu</th>
@@ -48,7 +48,7 @@
               </thead>
               <tbody>
                 <tr v-for="item in history" :key="item.id">
-                  <td class="fw-semibold">
+                  <td class="fw-semibold" hidden="">
                     {{ shortId(item.id) }}
                   </td>
                   <td>{{ item.tenSP || 'Sản phẩm không xác định' }}</td>
